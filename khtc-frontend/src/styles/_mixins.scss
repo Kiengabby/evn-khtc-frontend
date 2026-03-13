@@ -1,0 +1,100 @@
+// ============================================
+// KHTC Design System — Mixins
+// ============================================
+@use 'variables' as *;
+
+// --- Responsive ---
+@mixin respond-to($breakpoint) {
+    @if $breakpoint ==sm {
+        @media (min-width: $breakpoint-sm) {
+            @content;
+        }
+    }
+
+    @if $breakpoint ==md {
+        @media (min-width: $breakpoint-md) {
+            @content;
+        }
+    }
+
+    @if $breakpoint ==lg {
+        @media (min-width: $breakpoint-lg) {
+            @content;
+        }
+    }
+
+    @if $breakpoint ==xl {
+        @media (min-width: $breakpoint-xl) {
+            @content;
+        }
+    }
+
+    @if $breakpoint ==2xl {
+        @media (min-width: $breakpoint-2xl) {
+            @content;
+        }
+    }
+}
+
+// --- Card ---
+@mixin card($padding: $spacing-6) {
+    background: $surface-card;
+    border: 1px solid $surface-border;
+    border-radius: $border-radius-md;
+    box-shadow: $shadow-sm;
+    padding: $padding;
+}
+
+// --- Flex helpers ---
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@mixin flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+// --- Truncate text ---
+@mixin text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// --- Scrollbar ---
+@mixin custom-scrollbar($width: 6px) {
+    &::-webkit-scrollbar {
+        width: $width;
+        height: $width;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: $gray-400;
+        border-radius: $border-radius-full;
+
+        &:hover {
+            background-color: $gray-500;
+        }
+    }
+}
+
+// --- Glass effect ---
+@mixin glass($blur: 12px, $opacity: 0.85) {
+    background: rgba(255, 255, 255, $opacity);
+    backdrop-filter: blur($blur);
+    -webkit-backdrop-filter: blur($blur);
+}
+
+// --- Focus ring ---
+@mixin focus-ring {
+    outline: 2px solid $primary-light;
+    outline-offset: 2px;
+}

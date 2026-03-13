@@ -1,0 +1,166 @@
+<div class="page-wrapper">
+      <!-- Tiêu đề -->
+      <div class="page-head">
+        <h1 class="page-title">Quản lý Đơn vị</h1>
+        <p class="page-desc">Cấu trúc tổ chức đơn vị thành viên Tập đoàn EVN</p>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box">
+            <i class="pi pi-search"></i>
+            <input type="text" placeholder="Tìm mã hoặc tên đơn vị..."
+                   [(ngModel)]="tuKhoa" (input)="onTimKiem()">
+          </div>
+          <select class="filter-select" [(ngModel)]="locCapDonVi" (change)="onTimKiem()">
+            <option value="">Tất cả cấp</option>
+            <option value="TAP_DOAN">Tập đoàn</option>
+            <option value="TONG_CONG_TY">Tổng công ty</option>
+            <option value="CONG_TY">Công ty</option>
+            <option value="CHI_NHANH">Chi nhánh</option>
+            <option value="DIEN_LUC">Điện lực</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn-primary" (click)="moFormThemMoi()">
+            <i class="pi pi-plus"></i> Thêm đơn vị
+          </button>
+        </div>
+      </div>
+
+      <!-- Bảng dữ liệu -->
+      <div class="table-card">
+        @if (dangTai()) {
+          <div class="loading-overlay">
+            <i class="pi pi-spin pi-spinner"></i> Đang tải...
+          </div>
+        }
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:50px">STT</th>
+              <th style="width:150px">Mã đơn vị</th>
+              <th>Tên đơn vị</th>
+              <th style="width:130px">Tên viết tắt</th>
+              <th style="width:140px">Cấp đơn vị</th>
+              <th style="width:130px">Đơn vị cha</th>
+              <th style="width:80px">Trạng thái</th>
+              <th style="width:120px">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (dv of danhSach(); track dv.id; let i = $index) {
+              <tr>
+                <td class="center">{{ i + 1 }}</td>
+                <td><span class="ma-code">{{ dv.maDonVi }}</span></td>
+                <td><strong>{{ dv.tenDonVi }}</strong></td>
+                <td>{{ dv.tenVietTat }}</td>
+                <td>
+                  <span class="badge" [class]="'badge-' + dv.capDonVi.toLowerCase()">
+                    {{ tenCapDonVi(dv.capDonVi) }}
+                  </span>
+                </td>
+                <td>{{ dv.maDonViCha || '—' }}</td>
+                <td class="center">
+                  <span class="dot" [class.active]="dv.trangThai"></span>
+                </td>
+                <td class="center">
+                  <div class="action-group">
+                    <button class="action-btn" title="Sửa" (click)="moFormSua(dv)">
+                      <i class="pi pi-pencil"></i>
+                    </button>
+                    <button class="action-btn danger" title="Xóa" (click)="xacNhanXoa(dv)">
+                      <i class="pi pi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="empty-row">
+                  <i class="pi pi-inbox"></i> Không có dữ liệu
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div class="pagination-bar">
+          <span class="pagination-info">Tổng {{ danhSach().length }} đơn vị</span>
+        </div>
+      </div>
+
+      <!-- Dialog thêm/sửa -->
+      @if (hienDialog()) {
+        <div class="dialog-overlay" (click)="dongDialog()">
+          <div class="dialog-box" (click)="$event.stopPropagation()">
+            <div class="dialog-header">
+              <h3>{{ dangSua() ? 'Sửa đơn vị' : 'Thêm đơn vị mới' }}</h3>
+              <button class="close-btn" (click)="dongDialog()"><i class="pi pi-times"></i></button>
+            </div>
+            <div class="dialog-body">
+              <div class="form-row">
+                <label>Mã đơn vị <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="form.maDonVi" [disabled]="dangSua()"
+                       placeholder="VD: PC_NAM_DINH">
+              </div>
+              <div class="form-row">
+                <label>Tên đơn vị <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="form.tenDonVi"
+                       placeholder="VD: Công ty Điện lực Nam Định">
+              </div>
+              <div class="form-row-2col">
+                <div class="form-row">
+                  <label>Tên viết tắt <span class="required">*</span></label>
+                  <input type="text" [(ngModel)]="form.tenVietTat" placeholder="VD: PC Nam Định">
+                </div>
+                <div class="form-row">
+                  <label>Cấp đơn vị</label>
+                  <select [(ngModel)]="form.capDonVi">
+                    <option value="TAP_DOAN">Tập đoàn</option>
+                    <option value="TONG_CONG_TY">Tổng công ty</option>
+                    <option value="CONG_TY">Công ty</option>
+                    <option value="CHI_NHANH">Chi nhánh</option>
+                    <option value="DIEN_LUC">Điện lực</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <label>Đơn vị cha</label>
+                <select [(ngModel)]="form.maDonViCha">
+                  <option [ngValue]="null">— Gốc (Tập đoàn) —</option>
+                  @for (dv of danhSach(); track dv.id) {
+                    <option [value]="dv.maDonVi">{{ dv.maDonVi }} — {{ dv.tenVietTat }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Địa chỉ</label>
+                <input type="text" [(ngModel)]="form.diaChi" placeholder="Địa chỉ...">
+              </div>
+              @if (loiForm()) {
+                <div class="form-error">
+                  <i class="pi pi-exclamation-circle"></i> {{ loiForm() }}
+                </div>
+              }
+            </div>
+            <div class="dialog-footer">
+              <button class="btn-secondary" (click)="dongDialog()">Hủy</button>
+              <button class="btn-primary" (click)="luuDonVi()" [disabled]="dangLuu()">
+                @if (dangLuu()) { <i class="pi pi-spin pi-spinner"></i> }
+                {{ dangSua() ? 'Cập nhật' : 'Tạo mới' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Toast -->
+      @if (thongBao()) {
+        <div class="toast" [class]="'toast-' + thongBao()!.loai">
+          <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
+             [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+          {{ thongBao()!.noiDung }}
+        </div>
+      }
+    </div>

@@ -1,0 +1,282 @@
+<!-- ============================================ -->
+<!-- Page: Quản lý Người dùng -->
+<!-- ============================================ -->
+<div class="page-header">
+  <h1><i class="pi pi-users"></i> Quản lý Người dùng</h1>
+  <p>Quản lý tài khoản, vai trò và quyền hạn của người dùng</p>
+</div>
+
+<!-- Filter & Search Bar -->
+<div class="filter-bar">
+  <div class="filter-left">
+    <input
+      type="text"
+      placeholder="Tìm username, họ tên, email..."
+      [value]="tuKhoa()"
+      (input)="tuKhoa.set($any($event.target).value)"
+      (keyup.enter)="timKiem()"
+      class="search-input"
+    />
+    
+    <select [value]="entityFilter()" (change)="entityFilter.set($any($event.target).value)">
+      <option value="">Tất cả đơn vị</option>
+      @for (entity of entities(); track entity.maDonVi) {
+        <option [value]="entity.maDonVi">{{ entity.tenDonVi }}</option>
+      }
+    </select>
+
+    <select [value]="roleFilter()" (change)="roleFilter.set(+$any($event.target).value)">
+      <option [value]="0">Tất cả vai trò</option>
+      @for (role of roles(); track role.roleId) {
+        <option [value]="role.roleId">{{ role.roleName }}</option>
+      }
+    </select>
+
+    <select [value]="activeFilter() === undefined ? '' : activeFilter()" 
+            (change)="activeFilter.set($any($event.target).value === '' ? undefined : $any($event.target).value === 'true')">
+      <option value="">Tất cả trạng thái</option>
+      <option value="true">Hoạt động</option>
+      <option value="false">Vô hiệu</option>
+    </select>
+  </div>
+
+  <div class="filter-buttons">
+    <button class="btn-search" (click)="timKiem()" [disabled]="dangTai()">
+      <i class="pi pi-search"></i> Tìm kiếm
+    </button>
+    <button class="btn-reset" (click)="lamMoiBoLoc()">
+      <i class="pi pi-refresh"></i> Làm mới
+    </button>
+    <button class="btn-primary" (click)="moDialogTaoMoi()">
+      <i class="pi pi-plus"></i> Thêm người dùng
+    </button>
+  </div>
+</div>
+
+<!-- Users Table -->
+<div class="table-container">
+  @if (dangTai()) {
+    <div class="loading">
+      <i class="pi pi-spin pi-spinner"></i> Đang tải...
+    </div>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>STT</th>
+          <th>Username</th>
+          <th>Họ và tên</th>
+          <th>Email</th>
+          <th>Đơn vị</th>
+          <th>Vai trò</th>
+          <th>Trạng thái</th>
+          <th>Đăng nhập cuối</th>
+          <th>Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users(); track user.userId; let i = $index) {
+          <tr>
+            <td>{{ i + 1 }}</td>
+            <td class="username">
+              <strong>{{ user.username }}</strong>
+              @if (user.failedLoginCount > 0) {
+                <span class="fail-count">{{ user.failedLoginCount }} lỗi</span>
+              }
+            </td>
+            <td>{{ user.fullName }}</td>
+            <td>{{ user.email || '-' }}</td>
+            <td>{{ user.entityCode }}</td>
+            <td class="roles">{{ getRoleNames(user) }}</td>
+            <td>
+              <span class="status-badge" [class]="getUserStatus(user)">
+                {{ getStatusLabel(user) }}
+              </span>
+            </td>
+            <td>{{ formatDate(user.lastLoginDate) }}</td>
+            <td class="actions">
+              <button class="btn-icon edit" (click)="moDialogChinhSua(user)" title="Chỉnh sửa">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button 
+                class="btn-icon" 
+                [class]="user.isLocked ? 'unlock' : 'lock'"
+                (click)="toggleKhoaUser(user)" 
+                [title]="user.isLocked ? 'Mở khóa' : 'Khóa tài khoản'">
+                <i class="pi" [class.pi-unlock]="user.isLocked" [class.pi-lock]="!user.isLocked"></i>
+              </button>
+              <button class="btn-icon reset" (click)="resetPassword(user)" title="Reset mật khẩu">
+                <i class="pi pi-key"></i>
+              </button>
+              <button class="btn-icon delete" (click)="xoaUser(user)" title="Xóa">
+                <i class="pi pi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="9" class="empty-state">
+              <i class="pi pi-users"></i>
+              <p>Không tìm thấy người dùng</p>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<!-- Create/Edit User Dialog -->
+@if (hienDialog()) {
+  <div class="dialog-overlay" (click)="dongDialog()">
+    <div class="dialog-content" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>
+          <i class="pi pi-user"></i>
+          {{ dangChinhSua() ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới' }}
+        </h2>
+        <button class="close-btn" (click)="dongDialog()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <form (ngSubmit)="luuUser()" #form="ngForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="username">Username <span class="required">*</span></label>
+              <input
+                id="username"
+                type="text"
+                [(ngModel)]="formData.username"
+                name="username"
+                required
+                [readonly]="dangChinhSua()"
+                placeholder="Tên đăng nhập"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="fullName">Họ và tên <span class="required">*</span></label>
+              <input
+                id="fullName"
+                type="text"
+                [(ngModel)]="formData.fullName"
+                name="fullName"
+                required
+                placeholder="Họ và tên đầy đủ"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                [(ngModel)]="formData.email"
+                name="email"
+                placeholder="email@domain.com"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="phoneNumber">Điện thoại</label>
+              <input
+                id="phoneNumber"
+                type="tel"
+                [(ngModel)]="formData.phoneNumber"
+                name="phoneNumber"
+                placeholder="0123456789"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="entityCode">Đơn vị <span class="required">*</span></label>
+              <select id="entityCode" [(ngModel)]="formData.entityCode" name="entityCode" required>
+                <option value="">-- Chọn đơn vị --</option>
+                @for (entity of entities(); track entity.maDonVi) {
+                  <option [value]="entity.maDonVi">{{ entity.tenDonVi }}</option>
+                }
+              </select>
+            </div>
+
+            @if (!dangChinhSua()) {
+              <div class="form-group">
+                <label for="password">Mật khẩu <span class="required">*</span></label>
+                <input
+                  id="password"
+                  type="password"
+                  [(ngModel)]="formData.password"
+                  name="password"
+                  required
+                  placeholder="Mật khẩu"
+                />
+              </div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label>Vai trò <span class="required">*</span></label>
+            <div class="checkbox-group">
+              @for (role of roles(); track role.roleId) {
+                <label class="checkbox-item">
+                  <input
+                    type="checkbox"
+                    [checked]="isRoleSelected(role.roleId)"
+                    (change)="onRoleToggle(role.roleId, $any($event.target).checked)"
+                  />
+                  <span class="checkmark"></span>
+                  <span class="role-name">{{ role.roleName }}</span>
+                  @if (role.description) {
+                    <small class="role-desc">{{ role.description }}</small>
+                  }
+                </label>
+              }
+            </div>
+          </div>
+
+          <div class="form-group form-row">
+            <label class="checkbox-item">
+              <input
+                type="checkbox"
+                [(ngModel)]="formData.isActive"
+                name="isActive"
+              />
+              <span class="checkmark"></span>
+              Tài khoản hoạt động
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">Ghi chú</label>
+            <textarea
+              id="notes"
+              [(ngModel)]="formData.notes"
+              name="notes"
+              rows="3"
+              placeholder="Ghi chú thêm về người dùng"
+            ></textarea>
+          </div>
+
+          <div class="dialog-actions">
+            <button type="button" class="btn-secondary" (click)="dongDialog()">
+              Hủy
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="dangTai() || form.invalid">
+              <i class="pi pi-check"></i>
+              {{ dangChinhSua() ? 'Cập nhật' : 'Tạo mới' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Toast Notification -->
+@if (thongBao()) {
+  <div class="toast" [class]="thongBao()!.loai">
+    <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'" [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+    {{ thongBao()!.noiDung }}
+  </div>
+}

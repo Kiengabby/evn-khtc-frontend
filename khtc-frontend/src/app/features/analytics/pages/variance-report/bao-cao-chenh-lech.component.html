@@ -1,0 +1,78 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h1>So sánh Plan vs Actual</h1>
+      <p>Phân tích chênh lệch kế hoạch và thực hiện</p>
+    </div>
+  </div>
+
+  <!-- Bộ lọc -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label>Đơn vị</label>
+      <select [(ngModel)]="donViChon" (change)="locDuLieu()">
+        <option value="">Tất cả đơn vị</option>
+        @for (dv of danhSachDonVi(); track dv.id) {
+          <option [value]="dv.maDonVi">{{ dv.tenVietTat }}</option>
+        }
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Năm</label>
+      <select [(ngModel)]="namChon" (change)="locDuLieu()">
+        <option [value]="2026">2026</option>
+        <option [value]="2025">2025</option>
+      </select>
+    </div>
+  </div>
+
+  @if (dangTai()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i> Đang tải dữ liệu...
+    </div>
+  } @else {
+    <div class="table-card">
+      <table class="variance-table">
+        <thead>
+          <tr>
+            <th style="width: 140px">Mã chỉ tiêu</th>
+            <th>Tên chỉ tiêu</th>
+            <th class="right" style="width: 130px">Kế hoạch (Tỷ)</th>
+            <th class="right" style="width: 130px">Thực hiện (Tỷ)</th>
+            <th class="right" style="width: 130px">Chênh lệch (Tỷ)</th>
+            <th class="right" style="width: 110px">Tỷ lệ (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of duLieu(); track row.maChiTieu) {
+            <tr [class.parent-row]="row.cap === 0" [class.child-row]="row.cap > 0">
+              <td>
+                <span class="ma-code" [class.parent]="row.cap === 0">{{ row.maChiTieu }}</span>
+              </td>
+              <td [style.padding-left.px]="row.cap === 0 ? 16 : 32">
+                @if (row.cap === 0) {
+                  <strong>{{ row.tenChiTieu }}</strong>
+                } @else {
+                  {{ row.tenChiTieu }}
+                }
+              </td>
+              <td class="right mono">{{ formatSo(row.keHoach) }}</td>
+              <td class="right mono">{{ formatSo(row.thucHien) }}</td>
+              <td class="right mono" [class]="classChenhLech(row.tyLe)">
+                {{ row.chenhLech >= 0 ? '+' : '' }}{{ formatSo(row.chenhLech) }}
+              </td>
+              <td class="right mono" [class]="classChenhLech(row.tyLe)">
+                @if (row.tyLe >= 0) {
+                  <i class="pi pi-arrow-up"></i>
+                } @else {
+                  <i class="pi pi-arrow-down"></i>
+                }
+                {{ row.tyLe >= 0 ? '+' : '' }}{{ row.tyLe.toFixed(1) }}%
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

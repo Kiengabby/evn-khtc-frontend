@@ -1,0 +1,47 @@
+<header class="topbar">
+      <!-- Left: Menu toggle -->
+      <div class="topbar-left">
+        <button class="topbar-icon-btn" title="Menu" (click)="onMenuToggle.emit()">
+          <i class="pi pi-bars"></i>
+        </button>
+      </div>
+
+      <!-- Center: Search bar (white) -->
+      <div class="topbar-center">
+        <div class="search-wrap">
+          <i class="pi pi-search"></i>
+          <input type="text" class="search-input"
+                 placeholder="Tìm kiếm mã, tiêu đề, quy trình, người lập..."
+                 [(ngModel)]="searchQuery">
+        </div>
+      </div>
+
+      <!-- Right: User info -->
+      <div class="topbar-right">
+        <button class="topbar-icon-btn" title="Thông báo">
+          <i class="pi pi-bell"></i>
+          <span class="badge-dot"></span>
+        </button>
+
+        <div class="user-area" (click)="showMenu = !showMenu">
+          <div class="user-info">
+            <span class="user-name">{{ authService.userName() || 'Người dùng' }}</span>
+            <span class="user-role">{{ authService.entityCode() || 'Chuyên viên' }}</span>
+          </div>
+          <div class="user-avatar">
+            <i class="pi pi-user"></i>
+          </div>
+        </div>
+
+        @if (showMenu) {
+          <div class="dropdown-menu" (mouseleave)="showMenu = false">
+            <a class="menu-item"><i class="pi pi-user"></i> Thông tin cá nhân</a>
+            <a class="menu-item"><i class="pi pi-cog"></i> Cài đặt</a>
+            <div class="menu-divider"></div>
+            <a class="menu-item logout" (click)="logout()">
+              <i class="pi pi-sign-out"></i> Đăng xuất
+            </a>
+          </div>
+        }
+      </div>
+    </header>

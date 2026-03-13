@@ -1,0 +1,101 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h1>Hồ sơ đã nộp</h1>
+      <p>Quản lý trạng thái hồ sơ kế hoạch tài chính</p>
+    </div>
+    <div class="header-stats">
+      <span class="stat-pill">
+        <i class="pi pi-file"></i> {{ danhSach().length }} hồ sơ
+      </span>
+    </div>
+  </div>
+
+  <!-- Bộ lọc -->
+  <div class="filter-bar">
+    <div class="search-box">
+      <i class="pi pi-search"></i>
+      <input type="text" placeholder="Tìm mã hồ sơ, nội dung, đơn vị..."
+             [(ngModel)]="tuKhoa" (input)="taiDuLieu()">
+    </div>
+    <select [(ngModel)]="trangThaiLoc" (change)="taiDuLieu()">
+      <option value="">Tất cả trạng thái</option>
+      <option value="nhap">Nháp</option>
+      <option value="cho_duyet">Chờ duyệt</option>
+      <option value="da_duyet">Đã duyệt</option>
+      <option value="tu_choi">Từ chối</option>
+      <option value="tra_lai">Trả lại</option>
+    </select>
+  </div>
+
+  @if (dangTai()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i> Đang tải...
+    </div>
+  } @else if (danhSach().length === 0) {
+    <div class="empty-state">
+      <i class="pi pi-inbox"></i>
+      <p>Không tìm thấy hồ sơ nào</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <table class="ho-so-table">
+        <thead>
+          <tr>
+            <th style="width: 50px">STT</th>
+            <th style="width: 150px">Mã hồ sơ</th>
+            <th>Tiêu đề</th>
+            <th style="width: 140px">Đơn vị</th>
+            <th style="width: 110px">Trạng thái</th>
+            <th style="width: 110px">Ngày tạo</th>
+            <th style="width: 120px">Người tạo</th>
+            <th style="width: 140px">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (hs of danhSach(); track hs.id; let i = $index) {
+            <tr>
+              <td class="center">{{ i + 1 }}</td>
+              <td><span class="ma-code">{{ hs.maHoSo }}</span></td>
+              <td>{{ hs.tieuDe }}</td>
+              <td>{{ hs.tenDonVi }}</td>
+              <td>
+                <span class="status-badge" [class]="classTrangThai(hs.trangThai)">
+                  {{ tenTrangThai(hs.trangThai) }}
+                </span>
+              </td>
+              <td>{{ hs.ngayTao | date:'dd/MM/yyyy' }}</td>
+              <td>{{ hs.nguoiTao }}</td>
+              <td class="actions">
+                @if (hs.trangThai === 'nhap' || hs.trangThai === 'tra_lai') {
+                  <button class="btn-sm primary" (click)="nopHoSo(hs)" title="Nộp hồ sơ">
+                    <i class="pi pi-send"></i> Nộp
+                  </button>
+                }
+                @if (hs.trangThai === 'cho_duyet') {
+                  <button class="btn-sm outline" (click)="rutHoSo(hs)" title="Rút hồ sơ">
+                    <i class="pi pi-undo"></i> Rút
+                  </button>
+                }
+                @if (hs.trangThai === 'da_duyet' || hs.trangThai === 'tu_choi') {
+                  <span class="action-info">
+                    @if (hs.nguoiDuyet) { {{ hs.nguoiDuyet }} }
+                  </span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Toast -->
+  @if (thongBao()) {
+    <div class="toast" [class]="'toast-' + thongBao()!.loai">
+      <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
+         [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+      {{ thongBao()!.noiDung }}
+    </div>
+  }
+</div>

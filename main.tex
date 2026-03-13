@@ -1,0 +1,236 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+
+% Căn lề chuẩn đồ án
+\geometry{a4paper, left=3cm, right=2cm, top=2.5cm, bottom=2.5cm}
+
+\title{\textbf{CHƯƠNG 3: THIẾT KẾ CƠ SỞ DỮ LIỆU} \\ \large{HỆ THỐNG KẾ HOẠCH TÀI CHÍNH (KHTC)}}
+\author{Hoàng Mạnh Kiên}
+\date{Tháng 3 Năm 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Giới thiệu chung về Cơ sở dữ liệu}
+Hệ thống Kế hoạch Tài chính (KHTC) được thiết kế theo kiến trúc điều khiển bằng siêu dữ liệu (Metadata-Driven). Hệ thống sử dụng mô hình cơ sở dữ liệu lai (Hybrid Database) kết hợp giữa SQL Server (để lưu trữ cấu trúc, phân quyền, quy trình), MongoDB (lưu trữ JSON linh hoạt từ các Form động) và ClickHouse (kho dữ liệu OLAP phục vụ truy vấn báo cáo tốc độ cao).
+
+Cơ sở dữ liệu được chia thành 5 phân hệ cốt lõi để đảm bảo tính module hóa và dễ dàng mở rộng.
+
+\section{Thiết kế chi tiết các bảng dữ liệu}
+
+% ==============================
+% PHÂN HỆ 1
+% ==============================
+\subsection{Phân hệ 1: Quản trị Hệ thống và Phân quyền (RBAC)}
+Phân hệ này quản lý định danh người dùng, cấu trúc cây chức năng và ma trận phân quyền chi tiết.
+
+\begin{table}[h!]
+    \centering
+    \caption{Bảng SYS\_USER (Quản lý người dùng)}
+    \begin{tabularx}{\textwidth}{|l|l|l|X|}
+        \hline
+        \textbf{Trường dữ liệu} & \textbf{Kiểu dữ liệu} & \textbf{Ràng buộc} & \textbf{Mô tả chi tiết} \\ \hline
+        UserID & INT & PK & Khóa chính, ID định danh người dùng. \\ \hline
+        Username & VARCHAR(50) & Unique & Tên đăng nhập (VD: cuong.vp). \\ \hline
+        FullName & NVARCHAR(200) & & Họ và tên đầy đủ của người dùng. \\ \hline
+        EntityCode & VARCHAR(50) & FK & Mã đơn vị trực thuộc (Link với DIM\_ENTITY). \\ \hline
+        IsActive & BIT & & Trạng thái hoạt động (1: Active, 0: Khóa). \\ \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \caption{Bảng SYS\_ROLE và SYS\_USER\_ROLE (Phân quyền vai trò)}
+    \begin{tabularx}{\textwidth}{|l|l|l|X|}
+        \hline
+        \textbf{Bảng} & \textbf{Trường dữ liệu} & \textbf{Kiểu dữ liệu} & \textbf{Mô tả chi tiết} \\ \hline
+        SYS\_ROLE & RoleID & INT (PK) & Khóa chính, ID vai trò. \\ \cline{2-4}
+                  & RoleName & NVARCHAR(100) & Tên vai trò (Admin, Ban KH, Kế toán). \\ \hline
+        SYS\_USER\_ROLE & UserID & INT (FK) & Liên kết tới người dùng. \\ \cline{2-4}
+                  & RoleID & INT (FK) & Liên kết tới vai trò tương ứng. \\ \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \caption{Bảng SYS\_MENU và SYS\_ROLE\_PERMISSION (Cây tính năng)}
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Bảng} & \textbf{Trường dữ liệu} & \textbf{Mô tả chi tiết} \\ \hline
+        SYS\_MENU & MenuID (PK) & Khóa chính, ID Menu. \\ \cline{2-3}
+                  & MenuName & Tên hiển thị Menu (VD: Kế hoạch sản xuất). \\ \cline{2-3}
+                  & ParentID, Url & Menu cha và đường dẫn truy cập App. \\ \cline{2-3}
+                  & FormID & Mã Form liên kết (VD: F01\_SXKD). \\ \hline
+        SYS\_ROLE\_ & RoleID (FK) & Liên kết với Role. \\ \cline{2-3}
+        PERMISSION& MenuID (FK) & Liên kết với Menu. \\ \cline{2-3}
+                  & CanRead, CanWrite & Quyền xem và quyền sửa/nhập liệu (BIT). \\ \hline
+    \end{tabularx}
+\end{table}
+
+% ==============================
+% PHÂN HỆ 2
+% ==============================
+\subsection{Phân hệ 2: Danh mục Cốt lõi (Master Data)}
+Cung cấp bộ từ điển chuẩn hóa để tổng hợp số liệu từ các đơn vị thành viên lên Tập đoàn.
+
+\begin{table}[h!]
+    \centering
+    \caption{Bảng DIM\_ACCOUNT (Danh mục Chỉ tiêu - Cây báo cáo)}
+    \begin{tabularx}{\textwidth}{|l|l|l|X|}
+        \hline
+        \textbf{Trường dữ liệu} & \textbf{Kiểu dữ liệu} & \textbf{Ràng buộc} & \textbf{Mô tả chi tiết} \\ \hline
+        AccountID & INT & PK, Identity & Khóa chính tự tăng. \\ \hline
+        AccountCode & VARCHAR(50) & Unique & Mã chỉ tiêu chuẩn (VD: DOANH\_THU). \\ \hline
+        AccountName & NVARCHAR(255) & & Tên chỉ tiêu. \\ \hline
+        ParentID & INT & FK & Chỉ tiêu cha. \\ \hline
+        AccountType & VARCHAR(20) & & Phân loại: REVENUE, EXPENSE, ASSET. \\ \hline
+        DataStorage & VARCHAR(20) & & Cách lưu: STORE, DYNAMIC\_CALC, LABEL. \\ \hline
+        Operator & INT & Default 1 & Dấu tính toán khi cộng lên cha (+1, -1). \\ \hline
+        Formula & NVARCHAR(MAX) & & Công thức dọc (VD: [LN\_TruocThue] - [Thue]). \\ \hline
+        Unit & NVARCHAR(50) & & Đơn vị tính (Tỷ đồng, kWh). \\ \hline
+        IsLeaf & BIT & & 1: Chỉ tiêu lá, 0: Chỉ tiêu tổng hợp. \\ \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \caption{Bảng DIM\_ENTITY và DIM\_VERSION (Danh mục Đơn vị và Phiên bản)}
+    \begin{tabularx}{\textwidth}{|l|l|l|X|}
+        \hline
+        \textbf{Bảng} & \textbf{Trường dữ liệu} & \textbf{Ràng buộc} & \textbf{Mô tả chi tiết} \\ \hline
+        DIM\_ENTITY & EntityID, EntityCode & PK, Unique & ID và Mã đơn vị (VD: EVN, GENCO1). \\ \cline{2-4}
+                    & EntityName, ParentID & & Tên đơn vị và ID đơn vị cha. \\ \cline{2-4}
+                    & EntityType, Level & & Phân loại đơn vị (HOLDING, PC) và cấp độ. \\ \cline{2-4}
+                    & Path & & Cây phả hệ (VD: /1/5/12/) để truy vấn nhanh. \\ \hline
+        DIM\_VERSION& VersionCode & PK & Mã phiên bản số liệu (V1, Final). \\ \cline{2-4}
+                    & VersionType, IsLocked& & Nhóm phiên bản và Trạng thái khóa số liệu. \\ \hline
+    \end{tabularx}
+\end{table}
+
+% ==============================
+% PHÂN HỆ 3
+% ==============================
+\subsection{Phân hệ 3: Cấu hình Mẫu biểu và Ánh xạ (Dynamic Forms)}
+Nhóm bảng định nghĩa cấu trúc giao diện Handsontable và thuật toán ánh xạ tọa độ lưới với cơ sở dữ liệu.
+
+\begin{table}[h!]
+    \centering
+    \caption{Bảng SYS\_FORM\_TEMPLATE và SYS\_FORM\_VERSION (Khung giao diện)}
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Bảng} & \textbf{Trường dữ liệu} & \textbf{Mô tả chi tiết} \\ \hline
+        SYS\_FORM\_ & FormID (PK) & Mã loại báo cáo (VD: F01\_SXKD). \\ \cline{2-3}
+        TEMPLATE  & FormName, OrgList & Tên báo cáo và Loại đơn vị áp dụng. \\ \cline{2-3}
+                  & LayoutConfig & Cấu trúc JSON chung của Form. \\ \cline{2-3}
+                  & IsDynamicRow & 1: Cho phép thêm dòng, 0: Form tĩnh. \\ \hline
+        SYS\_FORM\_ & VersionID (PK) & ID bản mẫu theo thời gian. \\ \cline{2-3}
+        VERSION   & FormID, Year & Liên kết Template gốc và Năm áp dụng. \\ \cline{2-3}
+                  & \textbf{LayoutJSON} & \textbf{Cấu hình Handsontable hoàn chỉnh (Cột, gộp ô).} \\ \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \caption{Bảng SYS\_FORM\_MAPPING (Ánh xạ tọa độ Metadata)}
+    \begin{tabularx}{\textwidth}{|l|l|l|X|}
+        \hline
+        \textbf{Trường dữ liệu} & \textbf{Kiểu dữ liệu} & \textbf{Ràng buộc} & \textbf{Mô tả chi tiết} \\ \hline
+        MappingID & BIGINT & PK & Khóa chính. \\ \hline
+        VersionID & INT & FK & Thuộc bản mẫu form nào. \\ \hline
+        RowKey & VARCHAR(50) & Index & UUID của dòng, sợi dây neo giữ chỉ tiêu. \\ \hline
+        ColKey & VARCHAR(50) & Index & Định danh cột (VD: C\_JAN, C\_Q1). \\ \hline
+        AccountCode & VARCHAR(50) & FK & \textbf{Mã chỉ tiêu tài chính liên kết tại tọa độ này.} \\ \hline
+        IsReadOnly & BIT & & Ghi đè cấu hình, ép buộc ô này chỉ đọc. \\ \hline
+        Formula & NVARCHAR(MAX)& & Công thức HyperFormula ngang riêng cho ô. \\ \hline
+        Style\_JSON & NVARCHAR(MAX)& & Định dạng riêng (màu sắc, border) cho ô. \\ \hline
+    \end{tabularx}
+\end{table}
+
+% ==============================
+% PHÂN HỆ 4
+% ==============================
+\subsection{Phân hệ 4: Lưu trữ Dữ liệu Giao dịch và Phân tích}
+Nơi chứa các con số nghiệp vụ thực tế (Fact Data).
+
+\begin{table}[h!]
+    \centering
+    \caption{Bảng FACT\_PLANNING\_DATA (Lưu trữ Transactional SQL)}
+    \begin{tabularx}{\textwidth}{|l|l|l|X|}
+        \hline
+        \textbf{Trường dữ liệu} & \textbf{Kiểu dữ liệu} & \textbf{Ràng buộc} & \textbf{Mô tả chi tiết} \\ \hline
+        OrgCode & VARCHAR(50) & PK, FK & Mã đơn vị sở hữu số liệu. \\ \hline
+        AccountCode & VARCHAR(50) & PK, FK & Mã chỉ tiêu tài chính. \\ \hline
+        Period & INT & PK & Kỳ dữ liệu (Tháng/Quý/Năm - VD: 202601). \\ \hline
+        ScenarioCode & VARCHAR(20) & PK & Kịch bản (Plan, Actual, Forecast). \\ \hline
+        VersionCode & VARCHAR(20) & PK, FK & Phiên bản số liệu. \\ \hline
+        \textbf{Value} & DECIMAL(18,4)& & \textbf{Con số thực tế cuối cùng.} \\ \hline
+        Currency, Year& VARCHAR, INT & & Tiền tệ và Năm dữ liệu (tối ưu Filter). \\ \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \caption{Bảng Fact\_Financial\_Performance (Kho dữ liệu OLAP - ClickHouse)}
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Trường dữ liệu} & \textbf{Kiểu ClickHouse} & \textbf{Mô tả chi tiết} \\ \hline
+        EntityCode, AccountCode & String & Mã đơn vị và Mã chỉ tiêu đã làm phẳng. \\ \hline
+        PeriodID, Version & UInt32, UInt16 & Kỳ dữ liệu và Phiên bản. \\ \hline
+        Scenario & LowCardinality & Kịch bản dữ liệu. \\ \hline
+        \textbf{Amount} & Decimal(18,4) & \textbf{Giá trị số liệu để tính tổng.} \\ \hline
+        EntityPath & Array(String) & Mảng phả hệ đơn vị (VD: ['EVN', 'GENCO1']). \\ \hline
+        AccountPath & Array(String) & Mảng phả hệ chỉ tiêu. Giúp Query không cần Join. \\ \hline
+    \end{tabularx}
+\end{table}
+
+% ==============================
+% PHÂN HỆ 5
+% ==============================
+\subsection{Phân hệ 5: Quy trình Phê duyệt và Ký số (Workflow)}
+
+\begin{table}[h!]
+    \centering
+    \caption{Các bảng Cấu hình và Trạng thái Quy trình (Workflow)}
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Bảng} & \textbf{Trường dữ liệu} & \textbf{Mô tả chi tiết} \\ \hline
+        SYS\_WORKFLOW\_ & StepID, StepName & Thứ tự bước (1-10) và Tên bước (VD: Thẩm định). \\ \cline{2-3}
+        CONFIG        & DeptCode, CanEdit& Phòng ban xử lý và Quyền sửa số. \\ \cline{2-3}
+                      & RequiredPrevStep & Ràng buộc bước phải hoàn thành trước đó. \\ \hline
+        FACT\_WORKFLOW\_& WfID (PK), EntityID& ID định danh tiến độ và Đơn vị thực hiện. \\ \cline{2-3}
+        STATUS        & CurrentStepID & Đang đứng ở bước nào trong quy trình. \\ \cline{2-3}
+                      & Status & Trạng thái (DRAFT, SUBMITTED, APPROVED). \\ \hline
+        FACT\_        & SubmissionID (PK)& ID hồ sơ nộp. \\ \cline{2-3}
+        SUBMISSION    & JsonData & Toàn bộ dữ liệu thô JSON lưu lại làm bằng chứng. \\ \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \caption{Nhật ký Phê duyệt và Lưu trữ Ký số}
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Bảng} & \textbf{Trường dữ liệu} & \textbf{Mô tả chi tiết} \\ \hline
+        FACT\_APPROVAL\_& LogID (PK) & ID nhật ký thao tác. \\ \cline{2-3}
+        HISTORY       & SubmissionID & Liên kết tới hồ sơ nộp. \\ \cline{2-3}
+                      & Action, ActionBy & Hành động (APPROVE/REJECT) và Người thực hiện. \\ \cline{2-3}
+                      & Comment, ActionTime& Ghi chú phê duyệt và Thời gian thực hiện. \\ \hline
+        FACT\_DIGITAL\_ & SigID (PK) & ID chữ ký số. \\ \cline{2-3}
+        SIGNATURE     & SubmissionID & Liên kết hồ sơ. \\ \cline{2-3}
+                      & FilePath, FileHash & File PDF đã đóng mộc và Mã băm chống tráo đổi. \\ \cline{2-3}
+                      & SignatureValue & Chuỗi chữ ký số mã hóa trả về từ Provider. \\ \hline
+    \end{tabularx}
+\end{table}
+
+\section{Kết luận}
+Kiến trúc cơ sở dữ liệu kết hợp đa nền tảng này đảm bảo hệ thống KHTC vừa có sự chặt chẽ về mặt quy trình nghiệp vụ (SQL Server), vừa có sự linh hoạt trong thiết kế biểu mẫu động (MongoDB), đồng thời tối ưu hóa được tốc độ kết xuất các báo cáo tài chính hợp nhất khổng lồ (ClickHouse).
+
+\end{document}

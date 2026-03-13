@@ -1,0 +1,122 @@
+[
+    {
+        "id": 1,
+        "maDonVi": "EVN",
+        "tenDonVi": "Tập đoàn Điện lực Việt Nam",
+        "tenVietTat": "EVN",
+        "capDonVi": "TAP_DOAN",
+        "maDonViCha": null,
+        "trangThai": true,
+        "diaChi": "11 Cửa Bắc, Ba Đình, Hà Nội"
+    },
+    {
+        "id": 2,
+        "maDonVi": "EVNNPC",
+        "tenDonVi": "Tổng công ty Điện lực miền Bắc",
+        "tenVietTat": "EVNNPC",
+        "capDonVi": "TONG_CONG_TY",
+        "maDonViCha": "EVN",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 3,
+        "maDonVi": "EVNCPC",
+        "tenDonVi": "Tổng công ty Điện lực miền Trung",
+        "tenVietTat": "EVNCPC",
+        "capDonVi": "TONG_CONG_TY",
+        "maDonViCha": "EVN",
+        "trangThai": true,
+        "diaChi": "Đà Nẵng"
+    },
+    {
+        "id": 4,
+        "maDonVi": "EVNSPC",
+        "tenDonVi": "Tổng công ty Điện lực miền Nam",
+        "tenVietTat": "EVNSPC",
+        "capDonVi": "TONG_CONG_TY",
+        "maDonViCha": "EVN",
+        "trangThai": true,
+        "diaChi": "TP.HCM"
+    },
+    {
+        "id": 5,
+        "maDonVi": "EVNHCMC",
+        "tenDonVi": "Tổng công ty Điện lực TP.HCM",
+        "tenVietTat": "EVNHCMC",
+        "capDonVi": "TONG_CONG_TY",
+        "maDonViCha": "EVN",
+        "trangThai": true,
+        "diaChi": "TP.HCM"
+    },
+    {
+        "id": 6,
+        "maDonVi": "EVNHANOI",
+        "tenDonVi": "Tổng công ty Điện lực Hà Nội",
+        "tenVietTat": "EVNHANOI",
+        "capDonVi": "TONG_CONG_TY",
+        "maDonViCha": "EVN",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 7,
+        "maDonVi": "PC_NAM_DINH",
+        "tenDonVi": "Công ty Điện lực Nam Định",
+        "tenVietTat": "PC Nam Định",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Nam Định"
+    },
+    {
+        "id": 8,
+        "maDonVi": "PC_HAI_PHONG",
+        "tenDonVi": "Công ty Điện lực Hải Phòng",
+        "tenVietTat": "PC Hải Phòng",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hải Phòng"
+    },
+    {
+        "id": 9,
+        "maDonVi": "PC_QUANG_NINH",
+        "tenDonVi": "Công ty Điện lực Quảng Ninh",
+        "tenVietTat": "PC Quảng Ninh",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Quảng Ninh"
+    },
+    {
+        "id": 10,
+        "maDonVi": "PC_DA_NANG",
+        "tenDonVi": "Công ty Điện lực Đà Nẵng",
+        "tenVietTat": "PC Đà Nẵng",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNCPC",
+        "trangThai": true,
+        "diaChi": "Đà Nẵng"
+    },
+    {
+        "id": 11,
+        "maDonVi": "PC_DONG_NAI",
+        "tenDonVi": "Công ty Điện lực Đồng Nai",
+        "tenVietTat": "PC Đồng Nai",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNSPC",
+        "trangThai": true,
+        "diaChi": "Đồng Nai"
+    },
+    {
+        "id": 12,
+        "maDonVi": "PC_BINH_DUONG",
+        "tenDonVi": "Công ty Điện lực Bình Dương",
+        "tenVietTat": "PC Bình Dương",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNSPC",
+        "trangThai": true,
+        "diaChi": "Bình Dương"
+    }
+]

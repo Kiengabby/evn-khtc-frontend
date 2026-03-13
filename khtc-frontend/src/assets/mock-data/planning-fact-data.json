@@ -1,0 +1,61 @@
+[
+  {"dimensions":{"ACC":"SLD","YEA":"Y_2","SCE":"TH","ENT":"EVN","VER":"V1"},"value":245678.5},
+  {"dimensions":{"ACC":"SLD","YEA":"Y_1","SCE":"KH","ENT":"EVN","VER":"V1"},"value":260000.0},
+  {"dimensions":{"ACC":"SLD","YEA":"Y_1","SCE":"UTH","ENT":"EVN","VER":"V1"},"value":255430.8},
+  {"dimensions":{"ACC":"SLD","YEA":"YN","SCE":"KH","ENT":"EVN","VER":"V1"},"value":280000.0},
+  {"dimensions":{"ACC":"SLD","YEA":"YN","SCE":"NA","ENT":"EVN","VER":"V1"},"value":null},
+
+  {"dimensions":{"ACC":"DT","YEA":"Y_2","SCE":"TH","ENT":"EVN","VER":"V1"},"value":389500.2},
+  {"dimensions":{"ACC":"DT","YEA":"Y_1","SCE":"KH","ENT":"EVN","VER":"V1"},"value":425000.0},
+  {"dimensions":{"ACC":"DT","YEA":"Y_1","SCE":"UTH","ENT":"EVN","VER":"V1"},"value":418750.6},
+  {"dimensions":{"ACC":"DT","YEA":"YN","SCE":"KH","ENT":"EVN","VER":"V1"},"value":465000.0},
+  {"dimensions":{"ACC":"DT","YEA":"YN","SCE":"NA","ENT":"EVN","VER":"V1"},"value":null},
+
+  {"dimensions":{"ACC":"CP","YEA":"Y_2","SCE":"TH","ENT":"EVN","VER":"V1"},"value":312450.8},
+  {"dimensions":{"ACC":"CP","YEA":"Y_1","SCE":"KH","ENT":"EVN","VER":"V1"},"value":340000.0},
+  {"dimensions":{"ACC":"CP","YEA":"Y_1","SCE":"UTH","ENT":"EVN","VER":"V1"},"value":335200.4},
+  {"dimensions":{"ACC":"CP","YEA":"YN","SCE":"KH","ENT":"EVN","VER":"V1"},"value":372000.0},
+  {"dimensions":{"ACC":"CP","YEA":"YN","SCE":"NA","ENT":"EVN","VER":"V1"},"value":null},
+
+  {"dimensions":{"ACC":"GT","YEA":"Y_2","SCE":"TH","ENT":"EVN","VER":"V1"},"value":1871.32},
+  {"dimensions":{"ACC":"GT","YEA":"Y_1","SCE":"KH","ENT":"EVN","VER":"V1"},"value":1923.08},
+  {"dimensions":{"ACC":"GT","YEA":"Y_1","SCE":"UTH","ENT":"EVN","VER":"V1"},"value":1905.45},
+  {"dimensions":{"ACC":"GT","YEA":"YN","SCE":"KH","ENT":"EVN","VER":"V1"},"value":1985.71},
+  {"dimensions":{"ACC":"GT","YEA":"YN","SCE":"NA","ENT":"EVN","VER":"V1"},"value":null},
+
+  {"dimensions":{"ACC":"TH","YEA":"Y_2","SCE":"TH","ENT":"EVN","VER":"V1"},"value":77049.4},
+  {"dimensions":{"ACC":"TH","YEA":"Y_1","SCE":"KH","ENT":"EVN","VER":"V1"},"value":85000.0},
+  {"dimensions":{"ACC":"TH","YEA":"Y_1","SCE":"UTH","ENT":"EVN","VER":"V1"},"value":83550.2},
+  {"dimensions":{"ACC":"TH","YEA":"YN","SCE":"KH","ENT":"EVN","VER":"V1"},"value":93000.0},
+  {"dimensions":{"ACC":"TH","YEA":"YN","SCE":"NA","ENT":"EVN","VER":"V1"},"value":null},
+
+  {"dimensions":{"ACC":"SLD","YEA":"Y_2","SCE":"TH","ENT":"EVNNPC","VER":"V1"},"value":61420.3},
+  {"dimensions":{"ACC":"SLD","YEA":"Y_1","SCE":"KH","ENT":"EVNNPC","VER":"V1"},"value":65000.0},
+  {"dimensions":{"ACC":"SLD","YEA":"Y_1","SCE":"UTH","ENT":"EVNNPC","VER":"V1"},"value":63850.7},
+  {"dimensions":{"ACC":"SLD","YEA":"YN","SCE":"KH","ENT":"EVNNPC","VER":"V1"},"value":70000.0},
+  {"dimensions":{"ACC":"SLD","YEA":"YN","SCE":"NA","ENT":"EVNNPC","VER":"V1"},"value":null},
+
+  {"dimensions":{"ACC":"DT","YEA":"Y_2","SCE":"TH","ENT":"EVNNPC","VER":"V1"},"value":97375.1},
+  {"dimensions":{"ACC":"DT","YEA":"Y_1","SCE":"KH","ENT":"EVNNPC","VER":"V1"},"value":106250.0},
+  {"dimensions":{"ACC":"DT","YEA":"Y_1","SCE":"UTH","ENT":"EVNNPC","VER":"V1"},"value":104688.0},
+  {"dimensions":{"ACC":"DT","YEA":"YN","SCE":"KH","ENT":"EVNNPC","VER":"V1"},"value":116250.0},
+  {"dimensions":{"ACC":"DT","YEA":"YN","SCE":"NA","ENT":"EVNNPC","VER":"V1"},"value":null},
+
+  {"dimensions":{"ACC":"CP","YEA":"Y_2","SCE":"TH","ENT":"EVNNPC","VER":"V1"},"value":78112.7},
+  {"dimensions":{"ACC":"CP","YEA":"Y_1","SCE":"KH","ENT":"EVNNPC","VER":"V1"},"value":85000.0},
+  {"dimensions":{"ACC":"CP","YEA":"Y_1","SCE":"UTH","ENT":"EVNNPC","VER":"V1"},"value":83800.1},
+  {"dimensions":{"ACC":"CP","YEA":"YN","SCE":"KH","ENT":"EVNNPC","VER":"V1"},"value":93000.0},
+  {"dimensions":{"ACC":"CP","YEA":"YN","SCE":"NA","ENT":"EVNNPC","VER":"V1"},"value":null},
+
+  {"dimensions":{"ACC":"GT","YEA":"Y_2","SCE":"TH","ENT":"EVNNPC","VER":"V1"},"value":1856.20},
+  {"dimensions":{"ACC":"GT","YEA":"Y_1","SCE":"KH","ENT":"EVNNPC","VER":"V1"},"value":1910.50},
+  {"dimensions":{"ACC":"GT","YEA":"Y_1","SCE":"UTH","ENT":"EVNNPC","VER":"V1"},"value":1892.30},
+  {"dimensions":{"ACC":"GT","YEA":"YN","SCE":"KH","ENT":"EVNNPC","VER":"V1"},"value":1972.40},
+  {"dimensions":{"ACC":"GT","YEA":"YN","SCE":"NA","ENT":"EVNNPC","VER":"V1"},"value":null},
+
+  {"dimensions":{"ACC":"TH","YEA":"Y_2","SCE":"TH","ENT":"EVNNPC","VER":"V1"},"value":19262.4},
+  {"dimensions":{"ACC":"TH","YEA":"Y_1","SCE":"KH","ENT":"EVNNPC","VER":"V1"},"value":21250.0},
+  {"dimensions":{"ACC":"TH","YEA":"Y_1","SCE":"UTH","ENT":"EVNNPC","VER":"V1"},"value":20888.0},
+  {"dimensions":{"ACC":"TH","YEA":"YN","SCE":"KH","ENT":"EVNNPC","VER":"V1"},"value":23250.0},
+  {"dimensions":{"ACC":"TH","YEA":"YN","SCE":"NA","ENT":"EVNNPC","VER":"V1"},"value":null}
+]

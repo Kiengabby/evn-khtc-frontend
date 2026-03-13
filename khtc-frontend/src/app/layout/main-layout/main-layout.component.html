@@ -1,0 +1,18 @@
+<div class="app-layout" [class.sidebar-collapsed]="sidebarThuNho()">
+      <app-sidebar [thuNho]="sidebarThuNho()" />
+      <div class="main-area">
+        <app-topbar (onMenuToggle)="toggleSidebar()" />
+        <div class="breadcrumb-bar">
+          <span class="breadcrumb-item"><i class="pi pi-home"></i></span>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-item active">Trang chủ</span>
+          <span class="date-info">
+            <i class="pi pi-calendar"></i> {{ ngayHienTai }}
+          </span>
+        </div>
+        <main class="page-content">
+          <router-outlet />
+        </main>
+        <app-footer />
+      </div>
+    </div>

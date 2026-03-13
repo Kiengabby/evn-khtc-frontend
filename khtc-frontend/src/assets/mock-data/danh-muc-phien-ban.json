@@ -1,0 +1,72 @@
+[
+    {
+        "id": 1,
+        "maPhienBan": "BUDGET_2026",
+        "tenPhienBan": "Kế hoạch năm 2026",
+        "loaiPhienBan": "KE_HOACH",
+        "namKeHoach": 2026,
+        "trangThai": true,
+        "laPhienBanMacDinh": true,
+        "ghiChu": "Kế hoạch chính thức năm 2026"
+    },
+    {
+        "id": 2,
+        "maPhienBan": "BUDGET_2025",
+        "tenPhienBan": "Kế hoạch năm 2025",
+        "loaiPhienBan": "KE_HOACH",
+        "namKeHoach": 2025,
+        "trangThai": false,
+        "laPhienBanMacDinh": false,
+        "ghiChu": "Đã khóa"
+    },
+    {
+        "id": 3,
+        "maPhienBan": "FORECAST_Q1_2026",
+        "tenPhienBan": "Dự báo Quý 1/2026",
+        "loaiPhienBan": "DU_BAO",
+        "namKeHoach": 2026,
+        "trangThai": true,
+        "laPhienBanMacDinh": false,
+        "ghiChu": "Dự báo cuốn chiếu Q1"
+    },
+    {
+        "id": 4,
+        "maPhienBan": "DMT_2022",
+        "tenPhienBan": "Điện mặt trời áp mái 2022",
+        "loaiPhienBan": "THUC_HIEN",
+        "namKeHoach": 2022,
+        "trangThai": true,
+        "laPhienBanMacDinh": false,
+        "ghiChu": "Báo cáo chỉ tiêu thực tế điện mặt trời áp mái theo điện lực"
+    },
+    {
+        "id": 4,
+        "maPhienBan": "FORECAST_Q2_2026",
+        "tenPhienBan": "Dự báo Quý 2/2026",
+        "loaiPhienBan": "DU_BAO",
+        "namKeHoach": 2026,
+        "trangThai": true,
+        "laPhienBanMacDinh": false,
+        "ghiChu": ""
+    },
+    {
+        "id": 5,
+        "maPhienBan": "ACTUAL_2025",
+        "tenPhienBan": "Thực hiện năm 2025",
+        "loaiPhienBan": "THUC_HIEN",
+        "namKeHoach": 2025,
+        "trangThai": false,
+        "laPhienBanMacDinh": false,
+        "ghiChu": "Đã đối soát"
+    },
+    {
+        "id": 6,
+        "maPhienBan": "ACTUAL_2026",
+        "tenPhienBan": "Thực hiện năm 2026",
+        "loaiPhienBan": "THUC_HIEN",
+        "namKeHoach": 2026,
+        "trangThai": true,
+        "laPhienBanMacDinh": false,
+        "ghiChu": "Đang cập nhật hàng tháng"
+    }
+]

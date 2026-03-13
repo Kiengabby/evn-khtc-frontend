@@ -1,0 +1,165 @@
+<div class="page-wrapper">
+      <!-- Tiêu đề -->
+      <div class="page-head">
+        <h1 class="page-title">Quản lý Phiên bản</h1>
+        <p class="page-desc">Thiết lập và quản lý các phiên bản số liệu: Kế hoạch, Dự báo, Thực hiện</p>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box">
+            <i class="pi pi-search"></i>
+            <input type="text" placeholder="Tìm mã hoặc tên phiên bản..."
+                   [(ngModel)]="tuKhoa" (input)="onTimKiem()">
+          </div>
+          <select class="filter-select" [(ngModel)]="locLoai" (change)="onTimKiem()">
+            <option value="">Tất cả loại</option>
+            <option value="KE_HOACH">Kế hoạch</option>
+            <option value="DU_BAO">Dự báo</option>
+            <option value="THUC_HIEN">Thực hiện</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn-primary" (click)="moFormThemMoi()">
+            <i class="pi pi-plus"></i> Thêm phiên bản
+          </button>
+        </div>
+      </div>
+
+      <!-- Bảng dữ liệu -->
+      <div class="table-card">
+        @if (dangTai()) {
+          <div class="loading-overlay">
+            <i class="pi pi-spin pi-spinner"></i> Đang tải...
+          </div>
+        }
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:50px">STT</th>
+              <th style="width:180px">Mã phiên bản</th>
+              <th>Tên phiên bản</th>
+              <th style="width:120px">Loại</th>
+              <th style="width:80px">Năm</th>
+              <th style="width:90px">Trạng thái</th>
+              <th style="width:90px">Mặc định</th>
+              <th style="width:200px">Ghi chú</th>
+              <th style="width:120px">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (pb of danhSach(); track pb.id; let i = $index) {
+              <tr>
+                <td class="center">{{ i + 1 }}</td>
+                <td><span class="ma-code">{{ pb.maPhienBan }}</span></td>
+                <td><strong>{{ pb.tenPhienBan }}</strong></td>
+                <td>
+                  <span class="badge" [class]="'badge-' + pb.loaiPhienBan.toLowerCase()">
+                    {{ tenLoai(pb.loaiPhienBan) }}
+                  </span>
+                </td>
+                <td class="center">{{ pb.namKeHoach }}</td>
+                <td class="center">
+                  <span class="status-tag" [class.open]="pb.trangThai" [class.locked]="!pb.trangThai">
+                    {{ pb.trangThai ? 'Đang mở' : 'Đã khóa' }}
+                  </span>
+                </td>
+                <td class="center">
+                  @if (pb.laPhienBanMacDinh) {
+                    <i class="pi pi-star-fill default-star"></i>
+                  }
+                </td>
+                <td class="note-cell">{{ pb.ghiChu }}</td>
+                <td class="center">
+                  <div class="action-group">
+                    <button class="action-btn" title="Sửa" (click)="moFormSua(pb)">
+                      <i class="pi pi-pencil"></i>
+                    </button>
+                    <button class="action-btn" [title]="pb.trangThai ? 'Khóa' : 'Mở khóa'"
+                            (click)="toggleKhoa(pb)">
+                      <i class="pi" [class.pi-lock]="pb.trangThai" [class.pi-lock-open]="!pb.trangThai"></i>
+                    </button>
+                    <button class="action-btn danger" title="Xóa" (click)="xacNhanXoa(pb)">
+                      <i class="pi pi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="empty-row">
+                  <i class="pi pi-inbox"></i> Không có dữ liệu
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div class="pagination-bar">
+          <span class="pagination-info">Tổng {{ danhSach().length }} phiên bản</span>
+        </div>
+      </div>
+
+      <!-- Dialog thêm/sửa -->
+      @if (hienDialog()) {
+        <div class="dialog-overlay" (click)="dongDialog()">
+          <div class="dialog-box" (click)="$event.stopPropagation()">
+            <div class="dialog-header">
+              <h3>{{ dangSua() ? 'Sửa phiên bản' : 'Thêm phiên bản mới' }}</h3>
+              <button class="close-btn" (click)="dongDialog()"><i class="pi pi-times"></i></button>
+            </div>
+            <div class="dialog-body">
+              <div class="form-row">
+                <label>Mã phiên bản <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="form.maPhienBan" [disabled]="dangSua()"
+                       placeholder="VD: BUDGET_2026">
+              </div>
+              <div class="form-row">
+                <label>Tên phiên bản <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="form.tenPhienBan"
+                       placeholder="VD: Kế hoạch năm 2026">
+              </div>
+              <div class="form-row-2col">
+                <div class="form-row">
+                  <label>Loại phiên bản</label>
+                  <select [(ngModel)]="form.loaiPhienBan">
+                    <option value="KE_HOACH">Kế hoạch (Budget)</option>
+                    <option value="DU_BAO">Dự báo (Forecast)</option>
+                    <option value="THUC_HIEN">Thực hiện (Actual)</option>
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label>Năm kế hoạch <span class="required">*</span></label>
+                  <input type="number" [(ngModel)]="form.namKeHoach" min="2020" max="2030">
+                </div>
+              </div>
+              <div class="form-row">
+                <label>Ghi chú</label>
+                <textarea [(ngModel)]="form.ghiChu" rows="2" placeholder="Ghi chú..."></textarea>
+              </div>
+              @if (loiForm()) {
+                <div class="form-error">
+                  <i class="pi pi-exclamation-circle"></i> {{ loiForm() }}
+                </div>
+              }
+            </div>
+            <div class="dialog-footer">
+              <button class="btn-secondary" (click)="dongDialog()">Hủy</button>
+              <button class="btn-primary" (click)="luuPhienBan()" [disabled]="dangLuu()">
+                @if (dangLuu()) { <i class="pi pi-spin pi-spinner"></i> }
+                {{ dangSua() ? 'Cập nhật' : 'Tạo mới' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Toast -->
+      @if (thongBao()) {
+        <div class="toast" [class]="'toast-' + thongBao()!.loai">
+          <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
+             [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+          {{ thongBao()!.noiDung }}
+        </div>
+      }
+    </div>

@@ -1,0 +1,229 @@
+@use 'styles/variables' as *;
+
+.page-wrapper { max-width: 1400px; }
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+
+  h1 { font-size: 1.5rem; font-weight: 700; color: $gray-800; margin: 0; }
+  p { color: $gray-500; font-size: 0.875rem; margin-top: 4px; }
+}
+
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: white;
+  border: 1px solid $gray-200;
+  border-radius: 100px;
+  font-size: 0.8125rem;
+  color: $gray-600;
+  i { color: $primary; }
+}
+
+// Filter
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 250px;
+
+  i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $gray-400;
+    font-size: 0.875rem;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-md;
+    font-size: $font-size-sm;
+    color: $gray-700;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 2px rgba($primary, 0.12);
+    }
+
+    &::placeholder { color: $gray-400; }
+  }
+}
+
+select {
+  padding: 10px 12px;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  color: $gray-700;
+  background: white;
+  min-width: 170px;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+  }
+}
+
+.loading-state, .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: $gray-500;
+
+  i { font-size: 2rem; }
+  p { margin: 0; }
+}
+
+// Table
+.table-card {
+  background: white;
+  border-radius: 10px;
+  border: 1px solid $gray-200;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+}
+
+.ho-so-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    background: $surface-ground;
+    padding: 10px 16px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: $gray-600;
+    text-align: left;
+    border-bottom: 2px solid $gray-200;
+  }
+
+  td {
+    padding: 10px 16px;
+    font-size: 0.8125rem;
+    color: $gray-700;
+    border-bottom: 1px solid $gray-100;
+
+    &.center { text-align: center; }
+  }
+
+  tbody tr:hover td { background: $surface-hover; }
+}
+
+.ma-code {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba($primary, 0.06);
+  border-radius: 4px;
+  font-family: $font-family-mono;
+  font-size: 0.75rem;
+  color: $primary;
+  font-weight: 500;
+}
+
+.status-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.success { background: #E8F5E9; color: #28A745; }
+  &.warning { background: #FFF8E1; color: #F57C00; }
+  &.error { background: #FDECEA; color: #DC3545; }
+  &.draft { background: $gray-100; color: $gray-600; }
+}
+
+// Actions
+.actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: $transition-fast;
+
+  i { font-size: 0.6875rem; }
+
+  &.primary {
+    background: $primary;
+    color: white;
+    &:hover { filter: brightness(1.1); }
+  }
+
+  &.outline {
+    background: transparent;
+    color: $gray-600;
+    border: 1px solid $gray-300;
+    &:hover { border-color: $primary; color: $primary; }
+  }
+}
+
+.action-info {
+  font-size: 0.75rem;
+  color: $gray-500;
+  font-style: italic;
+}
+
+// Toast
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1000;
+  box-shadow: $shadow-lg;
+  animation: slideIn 0.3s ease;
+
+  &.toast-success {
+    background: #E8F5E9;
+    color: #2E7D32;
+    border: 1px solid #A5D6A7;
+  }
+
+  &.toast-error {
+    background: #FDECEA;
+    color: #C62828;
+    border: 1px solid #EF9A9A;
+  }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}

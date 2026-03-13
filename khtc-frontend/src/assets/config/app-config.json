@@ -1,0 +1,13 @@
+{
+    "apiBaseUrl": "http://localhost:5000",
+    "apiGatewayUrl": "http://localhost:5000",
+    "appTitle": "Hệ thống Kế hoạch Tài chính",
+    "version": "1.0.0",
+    "features": {
+        "workflow": true,
+        "digitalSignature": false,
+        "clickhouseAnalytics": false,
+        "exportPdf": true,
+        "exportExcel": true
+    }
+}

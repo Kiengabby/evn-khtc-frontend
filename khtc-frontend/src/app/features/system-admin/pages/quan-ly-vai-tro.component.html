@@ -1,0 +1,225 @@
+<!-- ============================================ -->
+<!-- Page: Quản lý Vai trò -->
+<!-- ============================================ -->
+<div class="page-header">
+  <h1><i class="pi pi-lock"></i> Quản lý Vai trò</h1>
+  <p>Quản lý vai trò và phân quyền truy cập hệ thống</p>
+</div>
+
+<!-- Filter & Search Bar -->
+<div class="filter-bar">
+  <div class="filter-left">
+    <input
+      type="text"
+      placeholder="Tìm tên vai trò, mô tả..."
+      [value]="tuKhoa()"
+      (input)="tuKhoa.set($any($event.target).value)"
+      (keyup.enter)="timKiem()"
+      class="search-input"
+    />
+    
+    <label class="checkbox-item">
+      <input
+        type="checkbox"
+        [checked]="includeSystemRoles()"
+        (change)="includeSystemRoles.set($any($event.target).checked)"
+      />
+      <span class="checkmark"></span>
+      Hiển thị vai trò hệ thống
+    </label>
+  </div>
+
+  <div class="filter-buttons">
+    <button class="btn-search" (click)="timKiem()" [disabled]="dangTai()">
+      <i class="pi pi-search"></i> Tìm kiếm
+    </button>
+    <button class="btn-reset" (click)="lamMoiBoLoc()">
+      <i class="pi pi-refresh"></i> Làm mới
+    </button>
+    <button class="btn-primary" (click)="moDialogTaoMoi()">
+      <i class="pi pi-plus"></i> Thêm vai trò
+    </button>
+  </div>
+</div>
+
+<!-- Roles Table -->
+<div class="table-container">
+  @if (dangTai()) {
+    <div class="loading">
+      <i class="pi pi-spin pi-spinner"></i> Đang tải...
+    </div>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>STT</th>
+          <th>Tên vai trò</th>
+          <th>Mô tả</th>
+          <th>Số người dùng</th>
+          <th>Quyền hạn</th>
+          <th>Loại</th>
+          <th>Ngày tạo</th>
+          <th>Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (role of roles(); track role.roleId; let i = $index) {
+          <tr>
+            <td>{{ i + 1 }}</td>
+            <td class="role-name">
+              <strong>{{ role.roleName }}</strong>
+            </td>
+            <td class="description">{{ role.description || '-' }}</td>
+            <td class="user-count">
+              <span class="count-badge">{{ role.userCount }}</span>
+            </td>
+            <td class="permissions">{{ getPermissionSummary(role) }}</td>
+            <td>
+              @if (role.isSystemRole) {
+                <span class="system-badge">Hệ thống</span>
+              } @else {
+                <span class="custom-badge">Tùy chỉnh</span>
+              }
+            </td>
+            <td>{{ formatDate(role.createdDate) }}</td>
+            <td class="actions">
+              <button class="btn-icon edit" (click)="moDialogChinhSua(role)" title="Chỉnh sửa">
+                <i class="pi pi-pencil"></i>
+              </button>
+              @if (!role.isSystemRole) {
+                <button class="btn-icon delete" (click)="xoaRole(role)" title="Xóa">
+                  <i class="pi pi-trash"></i>
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="empty-state">
+              <i class="pi pi-lock"></i>
+              <p>Không tìm thấy vai trò</p>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<!-- Create/Edit Role Dialog -->
+@if (hienDialog()) {
+  <div class="dialog-overlay" (click)="dongDialog()">
+    <div class="dialog-content large" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>
+          <i class="pi pi-lock"></i>
+          {{ dangChinhSua() ? 'Chỉnh sửa vai trò' : 'Thêm vai trò mới' }}
+        </h2>
+        <button class="close-btn" (click)="dongDialog()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <form (ngSubmit)="luuRole()" #form="ngForm">
+          <div class="basic-info">
+            <div class="form-group">
+              <label for="roleName">Tên vai trò <span class="required">*</span></label>
+              <input
+                id="roleName"
+                type="text"
+                [(ngModel)]="formData.roleName"
+                name="roleName"
+                required
+                placeholder="Ví dụ: Kế toán trưởng"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="description">Mô tả</label>
+              <textarea
+                id="description"
+                [(ngModel)]="formData.description"
+                name="description"
+                rows="3"
+                placeholder="Mô tả chi tiết về vai trò và trách nhiệm..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="permissions-section">
+            <h3><i class="pi pi-shield"></i> Phân quyền</h3>
+            <p class="permissions-note">
+              <strong>R</strong> = Xem, <strong>W</strong> = Thêm/Sửa, <strong>A</strong> = Phê duyệt
+            </p>
+
+            <div class="permissions-table">
+              <div class="permission-header">
+                <div class="menu-col">Menu</div>
+                <div class="permission-col">Xem (R)</div>
+                <div class="permission-col">Sửa (W)</div>
+                <div class="permission-col">Duyệt (A)</div>
+              </div>
+
+              @for (menu of menus(); track menu.menuId) {
+                <div class="permission-row">
+                  <div class="menu-info">
+                    <i class="pi" [class]="menu.icon || 'pi-circle'"></i>
+                    <span class="menu-name">{{ menu.menuName }}</span>
+                  </div>
+                  
+                  <div class="permission-checks">
+                    <label class="permission-check">
+                      <input
+                        type="checkbox"
+                        [checked]="hasPermission(menu.menuId, 'canRead')"
+                        (change)="togglePermission(menu.menuId, 'canRead', $any($event.target).checked)"
+                      />
+                      <span class="checkmark small"></span>
+                    </label>
+                    
+                    <label class="permission-check">
+                      <input
+                        type="checkbox"
+                        [checked]="hasPermission(menu.menuId, 'canWrite')"
+                        (change)="togglePermission(menu.menuId, 'canWrite', $any($event.target).checked)"
+                      />
+                      <span class="checkmark small"></span>
+                    </label>
+                    
+                    <label class="permission-check">
+                      <input
+                        type="checkbox"
+                        [checked]="hasPermission(menu.menuId, 'canApprove')"
+                        (change)="togglePermission(menu.menuId, 'canApprove', $any($event.target).checked)"
+                      />
+                      <span class="checkmark small"></span>
+                    </label>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="dialog-actions">
+            <button type="button" class="btn-secondary" (click)="dongDialog()">
+              Hủy
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="dangTai() || form.invalid">
+              <i class="pi pi-check"></i>
+              {{ dangChinhSua() ? 'Cập nhật' : 'Tạo mới' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Toast Notification -->
+@if (thongBao()) {
+  <div class="toast" [class]="thongBao()!.loai">
+    <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'" [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+    {{ thongBao()!.noiDung }}
+  </div>
+}

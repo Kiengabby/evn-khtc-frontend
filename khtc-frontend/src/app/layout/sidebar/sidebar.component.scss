@@ -1,0 +1,189 @@
+@use 'styles/variables' as *;
+@use 'styles/mixins' as *;
+
+// --- Narrow icon sidebar ---
+.sidebar {
+    width: $sidebar-width;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: $z-fixed;
+    background: $sidebar-bg;
+    border-right: 1px solid $surface-border;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: transform 250ms ease, opacity 250ms ease;
+    @include custom-scrollbar(3px);
+
+    // Thu nhỏ: trượt sang trái, ẩn hoàn toàn
+    &.collapsed {
+        transform: translateX(-100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+// Sub-panel khi sidebar thu nhỏ → dời sang trái
+.panel-shifted {
+    left: 0 !important;
+}
+
+// --- Logo ---
+.sidebar-logo {
+    width: 100%;
+    height: $topbar-height;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid $surface-border;
+    flex-shrink: 0;
+
+    .logo-img {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+    }
+}
+
+// --- Navigation ---
+.sidebar-nav {
+    width: 100%;
+    padding: $spacing-2 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.nav-item {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 4px;
+    background: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    color: $sidebar-text;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all $transition-fast;
+    position: relative;
+
+    i {
+        font-size: 1.1rem;
+        line-height: 1;
+    }
+
+    .nav-label {
+        font-size: 0.625rem;
+        font-weight: $font-weight-medium;
+        text-align: center;
+        line-height: 1.2;
+        max-width: 64px;
+        @include text-truncate;
+    }
+
+    &:hover {
+        background: $surface-hover;
+        color: $primary;
+    }
+
+    &.active {
+        color: $primary;
+        border-left-color: $primary;
+        background: $primary-lighter;
+
+        i {
+            color: $primary;
+        }
+
+        .nav-label {
+            font-weight: $font-weight-semibold;
+        }
+    }
+}
+
+// --- Sub-panel (slide-out) ---
+.sub-panel {
+    position: fixed;
+    top: 0;
+    left: $sidebar-width;
+    width: 220px;
+    height: 100vh;
+    background: $surface-card;
+    border-right: 1px solid $surface-border;
+    box-shadow: $shadow-md;
+    z-index: $z-fixed - 1;
+    animation: slideRight 200ms ease;
+    overflow-y: auto;
+    @include custom-scrollbar(3px);
+}
+
+.sub-panel-header {
+    @include flex-between;
+    padding: $spacing-4;
+    border-bottom: 1px solid $surface-border;
+
+    strong {
+        font-size: $font-size-sm;
+        color: $gray-800;
+    }
+}
+
+.close-btn {
+    @include flex-center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: $gray-500;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+
+    &:hover {
+        background: $gray-100;
+        color: $gray-800;
+    }
+}
+
+.sub-item {
+    display: block;
+    padding: 10px $spacing-4;
+    font-size: $font-size-sm;
+    color: $gray-600;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all $transition-fast;
+
+    &:hover {
+        background: $surface-hover;
+        color: $primary;
+    }
+
+    &.active {
+        color: $primary;
+        background: $primary-lighter;
+        border-left-color: $primary;
+        font-weight: $font-weight-medium;
+    }
+}
+
+@keyframes slideRight {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

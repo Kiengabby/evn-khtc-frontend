@@ -1,0 +1,64 @@
+// ============================================
+// Handsontable Theme Overrides — EVN Workflow Style
+// ============================================
+@use 'sass:color';
+@use 'styles/variables' as *;
+
+.handsontable {
+    font-family: $font-family !important;
+    font-size: $font-size-sm !important;
+
+    th {
+        background-color: $table-header-bg !important;
+        color: $gray-700 !important;
+        font-weight: $font-weight-semibold !important;
+        border-color: $table-border !important;
+        text-align: center !important;
+    }
+
+    td {
+        border-color: $gray-200 !important;
+        vertical-align: middle !important;
+        padding: 4px 8px !important;
+        color: $gray-800 !important;
+    }
+
+    .ht_clone_left th {
+        background-color: $gray-100 !important;
+        color: $gray-700 !important;
+        font-weight: $font-weight-medium !important;
+    }
+
+    td.htDimmed {
+        background-color: $gray-50 !important;
+        color: $gray-500 !important;
+    }
+
+    .ht_master td.current {
+        outline: 2px solid $primary !important;
+    }
+
+    .khtc-label-row td {
+        background-color: $table-header-bg !important;
+        font-weight: $font-weight-bold !important;
+        color: $gray-800 !important;
+    }
+
+    .khtc-dynamic-calc td {
+        background-color: #FFF8E1 !important;
+        color: $gray-700 !important;
+        font-style: italic;
+    }
+
+    .khtc-negative {
+        color: $error !important;
+    }
+
+    .htNumeric {
+        text-align: right !important;
+    }
+
+    tr:hover td {
+        background-color: $surface-hover !important;
+    }
+}

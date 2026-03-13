@@ -1,0 +1,168 @@
+// ============================================
+// KHTC Design System — Variables
+// Phong cách: EVN Workflow (Corporate Blue)
+// ============================================
+
+// --- Brand Colors (EVN Workflow — Vivid Blue) ---
+$primary: #1E38C3; // Vivid blue (topbar, buttons)
+$primary-dark: #162DA0; // Darker shade
+$primary-light: #4A5FD4; // Lighter shade
+$primary-lighter: #E8ECFA; // Very light tint (hover bg)
+$primary-bg: #CDD4F0; // Light tint
+
+// Sidebar
+$sidebar-bg: #FFFFFF;
+$sidebar-text: #606F89;
+$sidebar-active: $primary;
+
+// Neutrals
+$gray-50: #FAFBFC;
+$gray-100: #F5F6FA;
+$gray-200: #EBEDF3;
+$gray-300: #DEE2E9;
+$gray-400: #B0B7C3;
+$gray-500: #8A94A6;
+$gray-600: #606F89;
+$gray-700: #3F4E6A;
+$gray-800: #2D3748;
+$gray-900: #1A2035;
+
+// Surface aliases (for compatibility)
+$surface-50: $gray-50;
+$surface-100: $gray-100;
+
+// Semantic color system
+$red-50: #FEF2F2;
+$red-100: #FEE2E2;
+$red-200: #FECACA;
+$red-500: #EF4444;
+$red-600: #DC2626;
+$red-700: #B91C1C;
+$red-800: #991B1B;
+
+$green-50: #F0FDF4;
+$green-100: #DCFCE7;
+$green-200: #BBF7D0;
+$green-500: #22C55E;
+$green-600: #16A34A;
+$green-700: #15803D;
+$green-800: #166534;
+
+$blue-50: #EFF6FF;
+$blue-100: #DBEAFE;
+$blue-200: #BFDBFE;
+$blue-500: #3B82F6;
+$blue-600: #2563EB;
+$blue-700: #1D4ED8;
+$blue-800: #1E40AF;
+
+$orange-50: #FFF7ED;
+$orange-100: #FFEDD5;
+$orange-200: #FED7AA;
+$orange-500: #F97316;
+$orange-600: #EA580C;
+$orange-700: #C2410C;
+
+$purple-50: #FAF5FF;
+$purple-100: #F3E8FF;
+$purple-200: #E9D5FF;
+$purple-500: #A855F7;
+$purple-600: #9333EA;
+$purple-700: #7C3AED;
+
+// Semantic
+$success: #28A745; // Green
+$success-bg: #E8F5E9;
+$warning: #FFC107; // Amber
+$warning-bg: #FFF8E1;
+$error: #DC3545; // Red
+$error-bg: #FDECEA;
+$info: #17A2B8; // Cyan
+$info-bg: #E1F5FE;
+
+// Surface
+$surface-ground: #F5F6FA; // Page background
+$surface-card: #FFFFFF;
+$surface-overlay: rgba(0, 0, 0, 0.4);
+$surface-border: #E8EBF0;
+$surface-hover: #F0F2F8;
+
+// Table (EVN Workflow style)
+$table-header-bg: #F5F6FA;
+$table-border: #E8EBF0;
+
+// --- Typography ---
+$font-family: 'Roboto', 'Segoe UI', -apple-system, sans-serif;
+$font-family-mono: 'JetBrains Mono', 'Consolas', monospace;
+
+$font-size-xs: 0.75rem; // 12px
+$font-size-sm: 0.8125rem; // 13px
+$font-size-base: 0.875rem; // 14px
+$font-size-md: 1rem; // 16px
+$font-size-lg: 1.125rem; // 18px
+$font-size-xl: 1.25rem; // 20px
+$font-size-2xl: 1.5rem; // 24px
+$font-size-3xl: 2rem; // 32px
+
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+$line-height-base: 1.5;
+$line-height-tight: 1.25;
+
+// --- Spacing ---
+$spacing-1: 0.25rem;
+$spacing-2: 0.5rem;
+$spacing-3: 0.75rem;
+$spacing-4: 1rem;
+$spacing-5: 1.25rem;
+$spacing-6: 1.5rem;
+$spacing-8: 2rem;
+$spacing-10: 2.5rem;
+$spacing-12: 3rem;
+
+// --- Border Radius ---
+$border-radius-sm: 4px;
+$border-radius: 6px;
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+$border-radius-xl: 16px;
+$border-radius-full: 9999px;
+
+// --- Shadows ---
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+$shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+$shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+// --- Layout ---
+$sidebar-width: 72px; // Narrow icon sidebar (EVN Workflow)
+$sidebar-expanded-width: 240px; // When expanded
+$topbar-height: 56px;
+$breadcrumb-height: 44px;
+$footer-height: 36px;
+
+// --- Z-index ---
+$z-dropdown: 1000;
+$z-sticky: 1020;
+$z-fixed: 1030;
+$z-overlay: 1040;
+$z-modal: 1050;
+$z-popover: 1060;
+$z-tooltip: 1070;
+$z-toast: 1080;
+
+// --- Transitions ---
+$transition-fast: 150ms ease;
+$transition-base: 250ms ease;
+$transition-slow: 350ms ease;
+
+// --- Breakpoints ---
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+$breakpoint-2xl: 1400px;

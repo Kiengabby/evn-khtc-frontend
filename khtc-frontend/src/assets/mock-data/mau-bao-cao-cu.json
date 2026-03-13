@@ -1,0 +1,85 @@
+{
+  "mauBaoCaoCu": [
+    {
+      "maTemplate": "DMT_AM_2024",
+      "tenTemplate": "Điện mặt trời áp mái - 2024",
+      "kyBaoCao": "thang",
+      "namTao": 2024,
+      "cauTrucBang": {
+        "headerRows": [
+          ["STT", "Nội dung", {"label": "Thực hiện tháng 3", "colspan": 3}, {"label": "Lũy kế từ đầu năm", "colspan": 3}],
+          ["", "", "Công suất (MW)", "Sản lượng (MWh)", "Số giờ PTDTB (h)", "Công suất (MW)", "Sản lượng (MWh)", "Số giờ PTDTB (h)"]
+        ],
+        "dataRows": [
+          ["", "Tổng cộng", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["I", "Điện lực Hà Nội", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["II", "Điện lực Hải Phòng", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["III", "Điện lực Hải Dương", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["IV", "Điện lực Hưng Yên", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["V", "Điện lực Bắc Ninh", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["VI", "Điện lực Vĩnh Phúc", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["VII", "Điện lực Phú Thọ", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["VIII", "Điện lực Quảng Ninh", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["IX", "Điện lực Bắc Giang", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["X", "Điện lực Thái Nguyên", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["XI", "Điện lực Lạng Sơn", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["XII", "Điện lực Hà Nam", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["XIII", "Điện lực Nam Định", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["XIV", "Điện lực Ninh Bình", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["XV", "Điện lực Thái Bình", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["XVI", "Điện lực Thanh Hóa", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"],
+          ["XVII", "Điện lực Nghệ An", null, null, "=D{r}/C{r}", null, null, "=G{r}/F{r}"]
+        ],
+        "colWidths": [50, 230, 120, 130, 130, 120, 130, 130],
+        "cotCoDinh": 2
+      }
+    },
+    {
+      "maTemplate": "CP_IPP_2024",
+      "tenTemplate": "Chi phí mua điện IPP < 30MW - 2024",
+      "kyBaoCao": "thang",
+      "namTao": 2024,
+      "cauTrucBang": {
+        "headerRows": [
+          ["STT", "Nội dung", {"label": "Sản lượng điện (kWh)", "colspan": 4}, "Tổng SL", {"label": "Chi phí (Tỷ đồng)", "colspan": 4}, "Tổng CP", "VNĐ/kWh"],
+          ["", "", "Bình thường", "Cao điểm", "Thấp điểm", "Điện dư", "", "CP mua điện", "Thuế TNN", "Tiền DVMTR", "Tiền CQ khai thác TNN", "", ""]
+        ],
+        "dataRows": [
+          ["", "TỔNG CHI PHÍ IPP", null, null, null, null, "=SUM(C{r}:F{r})", null, null, null, null, "=SUM(H{r}:K{r})", "=L{r}/G{r}*1000000"],
+          ["1", "Bắc Giang 1", null, null, null, null, "=SUM(C{r}:F{r})", null, null, null, null, "=SUM(H{r}:K{r})", "=L{r}/G{r}*1000000"],
+          ["2", "Bắc Kạn 1", null, null, null, null, "=SUM(C{r}:F{r})", null, null, null, null, "=SUM(H{r}:K{r})", "=L{r}/G{r}*1000000"],
+          ["3", "Bắc Mê", null, null, null, null, "=SUM(C{r}:F{r})", null, null, null, null, "=SUM(H{r}:K{r})", "=L{r}/G{r}*1000000"],
+          ["4", "Bắc Mê 1", null, null, null, null, "=SUM(C{r}:F{r})", null, null, null, null, "=SUM(H{r}:K{r})", "=L{r}/G{r}*1000000"],
+          ["5", "Bạch Đằng", null, null, null, null, "=SUM(C{r}:F{r})", null, null, null, null, "=SUM(H{r}:K{r})", "=L{r}/G{r}*1000000"],
+          ["6", "Bà Thước", null, null, null, null, "=SUM(C{r}:F{r})", null, null, null, null, "=SUM(H{r}:K{r})", "=L{r}/G{r}*1000000"]
+        ],
+        "colWidths": [50, 200, 100, 100, 100, 80, 100, 120, 110, 110, 160, 130, 100],
+        "cotCoDinh": 2
+      }
+    },
+    {
+      "maTemplate": "DOANH_THU_2024",
+      "tenTemplate": "Doanh thu bán điện - 2024",
+      "kyBaoCao": "nam",
+      "namTao": 2024,
+      "cauTrucBang": {
+        "headerRows": [
+          ["STT", "Chỉ tiêu", "Đơn vị", "Kế hoạch năm", {"label": "Thực hiện", "colspan": 2}, "So sánh TH/KH (%)"],
+          ["", "", "", "", "Quý I", "6 tháng", ""]
+        ],
+        "dataRows": [
+          ["I", "Sản lượng điện thương phẩm", "Tr.kWh", null, null, null, "=F{r}/D{r}*100"],
+          ["1", "Công nghiệp - Xây dựng", "Tr.kWh", null, null, null, "=F{r}/D{r}*100"],
+          ["2", "Thương mại - Dịch vụ", "Tr.kWh", null, null, null, "=F{r}/D{r}*100"],
+          ["3", "Nông - Lâm - Thủy sản", "Tr.kWh", null, null, null, "=F{r}/D{r}*100"],
+          ["4", "Quản lý tiêu dùng dân cư", "Tr.kWh", null, null, null, "=F{r}/D{r}*100"],
+          ["5", "Hoạt động khác", "Tr.kWh", null, null, null, "=F{r}/D{r}*100"],
+          ["II", "Doanh thu bán điện", "Tỷ đồng", null, null, null, "=F{r}/D{r}*100"],
+          ["III", "Giá bán bình quân", "đ/kWh", null, null, null, "=F{r}/D{r}*100"]
+        ],
+        "colWidths": [50, 280, 80, 130, 130, 130, 140],
+        "cotCoDinh": 3
+      }
+    }
+  ]
+}

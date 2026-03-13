@@ -1,0 +1,49 @@
+<aside class="sidebar" [class.collapsed]="thuNho()">
+      <!-- Logo -->
+      <div class="sidebar-logo">
+        <img src="assets/images/evn2.png" alt="EVN" class="logo-img">
+      </div>
+
+      <!-- Nav items -->
+      <nav class="sidebar-nav">
+        @for (item of navItems; track item.label) {
+          @if (item.route) {
+            <a class="nav-item"
+               [routerLink]="item.route"
+               routerLinkActive="active"
+               [title]="item.label">
+              <i class="pi {{ item.icon }}"></i>
+              <span class="nav-label">{{ item.label }}</span>
+            </a>
+          } @else {
+            <button class="nav-item"
+                    [class.active]="activeGroup === item.label"
+                    (click)="selectGroup(item)"
+                    [title]="item.label">
+              <i class="pi {{ item.icon }}"></i>
+              <span class="nav-label">{{ item.label }}</span>
+            </button>
+          }
+        }
+      </nav>
+    </aside>
+
+    <!-- Expanded sub-panel (shows when a group is selected) -->
+    @if (activeGroup && activeChildren.length) {
+      <div class="sub-panel" [class.panel-shifted]="thuNho()">
+        <div class="sub-panel-header">
+          <strong>{{ activeGroup }}</strong>
+          <button class="close-btn" (click)="activeGroup = null">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+        @for (child of activeChildren; track child.label) {
+          <a class="sub-item"
+             [routerLink]="child.route"
+             routerLinkActive="active"
+             (click)="activeGroup = null">
+            {{ child.label }}
+          </a>
+        }
+      </div>
+    }

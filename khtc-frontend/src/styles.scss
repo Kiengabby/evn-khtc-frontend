@@ -1,0 +1,117 @@
+// ============================================
+// Global Styles — KHTC (EVN Workflow Style)
+// ============================================
+
+@use 'styles/reset';
+@use 'styles/variables' as *;
+@use 'styles/handsontable-custom';
+
+@import 'primeicons/primeicons.css';
+@import 'primeflex/primeflex.css';
+@import 'handsontable/dist/handsontable.full.css';
+
+// --- Global utilities ---
+.card {
+    background: $surface-card;
+    border-radius: $border-radius-md;
+    padding: $spacing-5;
+    box-shadow: $shadow-card;
+    border: 1px solid $surface-border;
+}
+
+.coming-soon {
+    background: $surface-card;
+    border-radius: $border-radius-md;
+    border: 1px solid $surface-border;
+    padding: 80px $spacing-6;
+    text-align: center;
+
+    i {
+        color: $gray-300;
+        font-size: 3rem;
+    }
+
+    p {
+        margin-top: $spacing-4;
+        color: $gray-500;
+        font-size: $font-size-base;
+    }
+}
+
+// Status badges
+.status-badge {
+    display: inline-flex;
+    padding: 4px 10px;
+    border-radius: $border-radius-full;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+
+    &.success {
+        background: $success-bg;
+        color: $success;
+    }
+
+    &.warning {
+        background: $warning-bg;
+        color: #E6A100;
+    }
+
+    &.error {
+        background: $error-bg;
+        color: $error;
+    }
+
+    &.info {
+        background: $info-bg;
+        color: $info;
+    }
+}
+
+// Buttons
+.btn-primary {
+    background: $primary;
+    color: white;
+    border: none;
+    border-radius: $border-radius;
+    padding: 9px 18px;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+        background: $primary-dark;
+    }
+}
+
+.btn-success {
+    background: $success;
+    color: white;
+    border: none;
+    border-radius: $border-radius;
+    padding: 9px 18px;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+        background: #1E8E3A;
+    }
+}
+
+// PrimeNG overrides
+.p-toast {
+    z-index: $z-toast !important;
+}
+
+.p-datatable .p-datatable-thead>tr>th {
+    background: $table-header-bg !important;
+    color: $gray-700 !important;
+    font-weight: $font-weight-semibold;
+    border-color: $table-border !important;
+}
+
+.p-datatable .p-datatable-tbody>tr:hover {
+    background: $surface-hover !important;
+}

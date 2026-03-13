@@ -1,0 +1,142 @@
+[
+    {
+        "id": 1,
+        "maChiTieu": "KH_DT",
+        "tenChiTieu": "Kế hoạch doanh thu",
+        "donViTinh": "VND",
+        "moTa": "Kế hoạch doanh thu năm",
+        "maChiTieuCha": null,
+        "thuTu": 1,
+        "trangThai": true
+    },
+    {
+        "id": 2,
+        "maChiTieu": "TH_DT",
+        "tenChiTieu": "Thực hiện doanh thu",
+        "donViTinh": "VND",
+        "moTa": "Thực hiện doanh thu tháng",
+        "maChiTieuCha": null,
+        "thuTu": 2,
+        "trangThai": true
+    },
+    {
+        "id": 6,
+        "maChiTieu": "DMT_TH_C2",
+        "tenChiTieu": "Điện mặt trời - TH Cột 2",
+        "donViTinh": "MW",
+        "moTa": "Thực hiện tháng - Cột 2 (Công suất)",
+        "maChiTieuCha": null,
+        "thuTu": 6,
+        "trangThai": true
+    },
+    {
+        "id": 7,
+        "maChiTieu": "DMT_TH_C3",
+        "tenChiTieu": "Điện mặt trời - TH Cột 3",
+        "donViTinh": "MWh",
+        "moTa": "Thực hiện tháng - Cột 3 (Sản lượng)",
+        "maChiTieuCha": null,
+        "thuTu": 7,
+        "trangThai": true
+    },
+    {
+        "id": 8,
+        "maChiTieu": "DMT_TH_C4",
+        "tenChiTieu": "Điện mặt trời - TH Cột 4",
+        "donViTinh": "h",
+        "moTa": "Thực hiện tháng - Cột 4 (Giờ vận hành = Cột 3 / Cột 2)",
+        "maChiTieuCha": null,
+        "thuTu": 8,
+        "trangThai": true
+    },
+    {
+        "id": 9,
+        "maChiTieu": "DMT_TH_C5",
+        "tenChiTieu": "Điện mặt trời - TH Cột 5",
+        "donViTinh": "MW",
+        "moTa": "Thực hiện tháng - Cột 5 (Công suất khác)",
+        "maChiTieuCha": null,
+        "thuTu": 9,
+        "trangThai": true
+    },
+    {
+        "id": 10,
+        "maChiTieu": "DMT_TH_C6",
+        "tenChiTieu": "Điện mặt trời - TH Cột 6",
+        "donViTinh": "MWh", 
+        "moTa": "Thực hiện tháng - Cột 6 (Sản lượng khác)",
+        "maChiTieuCha": null,
+        "thuTu": 10,
+        "trangThai": true
+    },
+    {
+        "id": 11,
+        "maChiTieu": "DMT_TH_C7",
+        "tenChiTieu": "Điện mặt trời - TH Cột 7",
+        "donViTinh": "h",
+        "moTa": "Thực hiện tháng - Cột 7 (Giờ vận hành = Cột 6 / Cột 5)",
+        "maChiTieuCha": null,
+        "thuTu": 11,
+        "trangThai": true
+    },
+    {
+        "id": 12,
+        "maChiTieu": "DMT_LK_C2",
+        "tenChiTieu": "Điện mặt trời - LK Cột 2",
+        "donViTinh": "MW",
+        "moTa": "Lũy kế từ đầu năm - Cột 2 (Công suất)",
+        "maChiTieuCha": null,
+        "thuTu": 12,
+        "trangThai": true
+    },
+    {
+        "id": 13,
+        "maChiTieu": "DMT_LK_C3",
+        "tenChiTieu": "Điện mặt trời - LK Cột 3",
+        "donViTinh": "MWh",
+        "moTa": "Lũy kế từ đầu năm - Cột 3 (Sản lượng)",
+        "maChiTieuCha": null,
+        "thuTu": 13,
+        "trangThai": true
+    },
+    {
+        "id": 14,
+        "maChiTieu": "DMT_LK_C4",
+        "tenChiTieu": "Điện mặt trời - LK Cột 4",
+        "donViTinh": "h",
+        "moTa": "Lũy kế từ đầu năm - Cột 4 (Giờ vận hành)",
+        "maChiTieuCha": null,
+        "thuTu": 14,
+        "trangThai": true
+    },
+    {
+        "id": 15,
+        "maChiTieu": "DMT_LK_C5",
+        "tenChiTieu": "Điện mặt trời - LK Cột 5",
+        "donViTinh": "MW",
+        "moTa": "Lũy kế từ đầu năm - Cột 5 (Công suất khác)",
+        "maChiTieuCha": null,
+        "thuTu": 15,
+        "trangThai": true
+    },
+    {
+        "id": 16,
+        "maChiTieu": "DMT_LK_C6",
+        "tenChiTieu": "Điện mặt trời - LK Cột 6",
+        "donViTinh": "MWh",
+        "moTa": "Lũy kế từ đầu năm - Cột 6 (Sản lượng khác)",
+        "maChiTieuCha": null,
+        "thuTu": 16,
+        "trangThai": true
+    },
+    {
+        "id": 17,
+        "maChiTieu": "DMT_LK_C7",
+        "tenChiTieu": "Điện mặt trời - LK Cột 7",
+        "donViTinh": "h",
+        "moTa": "Lũy kế từ đầu năm - Cột 7 (Giờ vận hành)",
+        "maChiTieuCha": null,
+        "thuTu": 17,
+        "trangThai": true
+    }
+]

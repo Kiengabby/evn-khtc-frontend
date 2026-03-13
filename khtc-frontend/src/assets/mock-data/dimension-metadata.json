@@ -1,0 +1,33 @@
+{
+  "SCE": {
+    "TH":  { "Name": "Thực hiện" },
+    "KH":  { "Name": "Kế hoạch" },
+    "UTH": { "Name": "Ước TH" },
+    "NA":  { "Name": "" }
+  },
+  "ACC": {
+    "SLD": { "Name": "Sản lượng điện SX và mua" },
+    "DT":  { "Name": "Doanh thu bán điện" },
+    "CP":  { "Name": "Chi phí mua điện" },
+    "GT":  { "Name": "Giá thành bán điện" },
+    "TH":  { "Name": "Tổng hợp chỉ tiêu" }
+  },
+  "YEA": {
+    "Y_2":  { "Name": "Năm N-2" },
+    "Y_1":  { "Name": "Năm N-1" },
+    "YN":   { "Name": "Năm N" }
+  },
+  "ENT": {
+    "EVN":      { "Name": "Tập đoàn Điện lực Việt Nam" },
+    "EVNNPC":   { "Name": "TCT Điện lực miền Bắc" },
+    "EVNCPC":   { "Name": "TCT Điện lực miền Trung" },
+    "EVNSPC":   { "Name": "TCT Điện lực miền Nam" },
+    "EVNHCMC":  { "Name": "TCT Điện lực TP.HCM" },
+    "EVNHANOI": { "Name": "TCT Điện lực Hà Nội" }
+  },
+  "VER": {
+    "V1":    { "Name": "Lần 1" },
+    "V2":    { "Name": "Lần 2" },
+    "FINAL": { "Name": "Chính thức" }
+  }
+}

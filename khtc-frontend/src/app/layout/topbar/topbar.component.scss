@@ -1,0 +1,201 @@
+@use 'styles/variables' as *;
+@use 'styles/mixins' as *;
+
+.topbar {
+    height: $topbar-height;
+    background: $primary;
+    @include flex-between;
+    padding: 0 $spacing-5;
+    position: sticky;
+    top: 0;
+    z-index: $z-sticky;
+    color: white;
+}
+
+// --- Left ---
+.topbar-left {
+    display: flex;
+    align-items: center;
+}
+
+// --- Center search ---
+.topbar-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    max-width: 600px;
+    margin: 0 $spacing-6;
+}
+
+.search-wrap {
+    position: relative;
+    width: 100%;
+
+    i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $gray-400;
+        font-size: 0.85rem;
+    }
+}
+
+.search-input {
+    width: 100%;
+    padding: 9px 16px 9px 38px;
+    background: white;
+    border: none;
+    border-radius: $border-radius-full;
+    font-size: $font-size-sm;
+    color: $gray-800;
+    transition: all $transition-base;
+
+    &::placeholder {
+        color: $gray-400;
+    }
+
+    &:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+    }
+}
+
+// --- Right ---
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+    position: relative;
+}
+
+.topbar-icon-btn {
+    @include flex-center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: $border-radius-full;
+    color: white;
+    cursor: pointer;
+    position: relative;
+    transition: all $transition-fast;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+}
+
+.badge-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background: $error;
+    border-radius: 50%;
+    border: 2px solid $primary;
+}
+
+.user-area {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    padding: 4px 8px;
+    border-radius: $border-radius;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+    line-height: 1.2;
+}
+
+.user-name {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: white;
+}
+
+.user-role {
+    font-size: $font-size-xs;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.user-avatar {
+    @include flex-center;
+    width: 36px;
+    height: 36px;
+    border-radius: $border-radius-full;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: $font-size-sm;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+// --- Dropdown ---
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background: $surface-card;
+    border: 1px solid $surface-border;
+    border-radius: $border-radius-md;
+    box-shadow: $shadow-lg;
+    z-index: $z-dropdown;
+    overflow: hidden;
+    padding: 4px;
+    animation: dropIn 150ms ease;
+}
+
+.menu-divider {
+    height: 1px;
+    background: $surface-border;
+    margin: 4px 0;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    padding: 10px $spacing-3;
+    color: $gray-600;
+    font-size: $font-size-sm;
+    cursor: pointer;
+    border-radius: $border-radius-sm;
+    text-decoration: none;
+    transition: all $transition-fast;
+
+    &:hover {
+        background: $surface-hover;
+        color: $gray-800;
+    }
+
+    &.logout {
+        color: $error;
+
+        &:hover {
+            background: $error-bg;
+        }
+    }
+}
+
+@keyframes dropIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

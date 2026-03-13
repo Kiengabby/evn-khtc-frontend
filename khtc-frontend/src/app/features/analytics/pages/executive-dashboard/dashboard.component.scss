@@ -1,0 +1,206 @@
+@use 'styles/variables' as *;
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 80px 0;
+  color: $gray-500;
+  font-size: $font-size-base;
+  i { font-size: 1.5rem; }
+}
+
+.dashboard { max-width: 1400px; }
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: $shadow-sm;
+  border: 1px solid $gray-200;
+}
+
+.kpi-icon {
+  width: 48px; height: 48px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  i { font-size: 1.2rem; color: white; }
+  &.blue { background: $primary; }
+  &.orange { background: #FF9800; }
+  &.green { background: #28A745; }
+  &.purple { background: #7C3AED; }
+}
+
+.kpi-body { display: flex; flex-direction: column; }
+.kpi-label { font-size: 0.8125rem; color: $gray-500; font-weight: 500; }
+.kpi-value {
+  font-size: 1.5rem; font-weight: 700; color: $gray-800;
+  small { font-size: 0.875rem; font-weight: 400; color: $gray-500; }
+}
+
+// Stats pills
+.stats-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid $gray-200;
+  border-radius: 100px;
+  font-size: 0.8125rem;
+  color: $gray-600;
+
+  i { font-size: 0.875rem; color: $primary; }
+  strong { color: $gray-800; }
+
+  &.warning i { color: #F57C00; }
+  &.success i { color: #28A745; }
+  &.error i { color: #DC3545; }
+}
+
+// Content grid
+.content-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.section-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: $shadow-sm;
+  border: 1px solid $gray-200;
+  padding: 0;
+  overflow: hidden;
+  &.full { grid-column: 1 / -1; }
+}
+
+.section-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid $gray-200;
+  h3 { font-size: 1rem; font-weight: 600; color: $gray-800; margin: 0; }
+}
+
+.btn-outline {
+  padding: 6px 14px;
+  border: 1px solid $primary;
+  background: transparent;
+  color: $primary;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  &:hover { background: rgba($primary, 0.05); }
+}
+
+// Progress section
+.progress-list { padding: 16px 20px; }
+
+.progress-item {
+  margin-bottom: 14px;
+  &:last-child { margin-bottom: 0; }
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.entity-name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: $gray-700;
+}
+
+.entity-stats {
+  font-size: 0.75rem;
+  color: $gray-500;
+}
+
+.progress-bar {
+  height: 6px;
+  background: $gray-100;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: $primary;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+  min-width: 2px;
+}
+
+// Data table
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    background: $surface-ground;
+    padding: 10px 16px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: $gray-600;
+    text-align: left;
+    border-bottom: 1px solid $gray-200;
+  }
+
+  td {
+    padding: 12px 16px;
+    font-size: 0.8125rem;
+    color: $gray-700;
+    border-bottom: 1px solid $gray-100;
+  }
+
+  tr:hover td { background: $surface-hover; }
+
+  .link {
+    color: $primary;
+    font-weight: 500;
+    cursor: pointer;
+    &:hover { text-decoration: underline; }
+  }
+}
+
+.status-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  &.success { background: #E8F5E9; color: #28A745; }
+  &.warning { background: #FFF8E1; color: #F57C00; }
+  &.info { background: #E3F2FD; color: #1976D2; }
+  &.error { background: #FDECEA; color: #DC3545; }
+}
+
+@media (max-width: 1200px) {
+  .content-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 991px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 576px) { .kpi-row { grid-template-columns: 1fr; } }

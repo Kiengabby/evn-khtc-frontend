@@ -1,0 +1,179 @@
+<div class="page-wrapper">
+      <!-- Header -->
+      <div class="builder-header">
+        <div class="header-left">
+          <button class="btn-back" (click)="quayLai()">
+            <i class="pi pi-arrow-left"></i>
+          </button>
+          <div>
+            <h1 class="page-title">
+              @if (bieuMau()) {
+                {{ bieuMau()!.formName }}
+              } @else {
+                Thiết kế Biểu mẫu
+              }
+            </h1>
+            <p class="page-desc">
+              @if (bieuMau()) {
+                Mã: {{ bieuMau()!.formId }} — {{ bieuMau()!.orgList.join(', ') }}
+              } @else {
+                Đang tải...
+              }
+            </p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span class="col-count" title="Số cột">
+            <i class="pi pi-table"></i> {{ danhSachCot().length }} cột
+          </span>
+        </div>
+      </div>
+
+      @if (dangTai()) {
+        <div class="loading-state">
+          <i class="pi pi-spin pi-spinner"></i> Đang tải cấu hình biểu mẫu...
+        </div>
+      } @else if (!bieuMau()) {
+        <div class="error-state">
+          <i class="pi pi-exclamation-triangle"></i>
+          <p>Không tìm thấy biểu mẫu</p>
+          <button class="btn-primary" (click)="quayLai()">Quay lại danh sách</button>
+        </div>
+      } @else {
+        <!-- Tab bar -->
+        <div class="tab-bar">
+          <button class="tab-item" [class.active]="tabHienTai === 'columns'"
+                  (click)="tabHienTai = 'columns'">
+            <i class="pi pi-list"></i> Cấu hình cột
+          </button>
+          <button class="tab-item" [class.active]="tabHienTai === 'preview'"
+                  (click)="tabHienTai = 'preview'; khoiTaoPreview()">
+            <i class="pi pi-eye"></i> Xem trước
+          </button>
+          <button class="tab-item" [class.active]="tabHienTai === 'info'"
+                  (click)="tabHienTai = 'info'">
+            <i class="pi pi-info-circle"></i> Thông tin chung
+          </button>
+        </div>
+
+        <!-- Tab: Cấu hình cột -->
+        @if (tabHienTai === 'columns') {
+          <div class="columns-panel">
+            <div class="panel-toolbar">
+              <h3>Danh sách cột ({{ danhSachCot().length }})</h3>
+            </div>
+
+            @if (danhSachCot().length === 0) {
+              <div class="empty-cols">
+                <i class="pi pi-inbox"></i>
+                <p>Biểu mẫu này chưa có cấu hình cột</p>
+              </div>
+            } @else {
+              <div class="col-table-wrap">
+                <table class="col-table">
+                  <thead>
+                    <tr>
+                      <th style="width:50px">STT</th>
+                      <th style="width:120px">Mã cột</th>
+                      <th>Tên cột</th>
+                      <th style="width:160px">Nhóm header</th>
+                      <th style="width:100px">Kiểu dữ liệu</th>
+                      <th style="width:80px">Độ rộng</th>
+                      <th style="width:100px">Định dạng</th>
+                      <th style="width:80px">Sửa được</th>
+                      <th>Công thức</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (col of danhSachCot(); track col.colKey; let i = $index) {
+                      <tr [class.formula-row]="col.dataType === 'formula'">
+                        <td class="center">{{ i + 1 }}</td>
+                        <td><span class="col-key">{{ col.colKey }}</span></td>
+                        <td><strong>{{ col.colName }}</strong></td>
+                        <td>{{ col.groupHeader || '—' }}</td>
+                        <td>
+                          <span class="type-badge" [class]="'type-' + col.dataType">
+                            {{ col.dataType }}
+                          </span>
+                        </td>
+                        <td class="center">{{ col.width }}px</td>
+                        <td><code>{{ col.format }}</code></td>
+                        <td class="center">
+                          @if (col.isEditable) {
+                            <i class="pi pi-check-circle editable-yes"></i>
+                          } @else {
+                            <i class="pi pi-lock readonly-icon"></i>
+                          }
+                        </td>
+                        <td>
+                          @if (col.formula) {
+                            <code class="formula-code">{{ col.formula }}</code>
+                          } @else {
+                            —
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Tab: Xem trước Handsontable -->
+        @if (tabHienTai === 'preview') {
+          <div class="preview-panel">
+            <div class="panel-toolbar">
+              <h3>Xem trước biểu mẫu (dữ liệu mẫu)</h3>
+            </div>
+            <div class="hot-container" #hotContainer></div>
+          </div>
+        }
+
+        <!-- Tab: Thông tin chung -->
+        @if (tabHienTai === 'info') {
+          <div class="info-panel">
+            <div class="info-grid">
+              <div class="info-row">
+                <span class="info-label">Mã biểu mẫu</span>
+                <span class="info-value code">{{ bieuMau()!.formId }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Tên biểu mẫu</span>
+                <span class="info-value"><strong>{{ bieuMau()!.formName }}</strong></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Loại</span>
+                <span class="info-value">{{ bieuMau()!.layoutConfig.type || 'N/A' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Đơn vị áp dụng</span>
+                <span class="info-value">{{ bieuMau()!.orgList.join(', ') }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Dynamic Rows</span>
+                <span class="info-value">{{ bieuMau()!.isDynamicRow ? 'Có' : 'Không' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Cố định cột</span>
+                <span class="info-value">{{ bieuMau()!.layoutConfig.freezeColumns || 0 }} cột</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Số cột dữ liệu</span>
+                <span class="info-value">{{ danhSachCot().length }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      }
+
+      <!-- Toast -->
+      @if (thongBao()) {
+        <div class="toast" [class]="'toast-' + thongBao()!.loai">
+          <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
+             [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+          {{ thongBao()!.noiDung }}
+        </div>
+      }
+    </div>

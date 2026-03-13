@@ -1,0 +1,321 @@
+{
+  "_metadata": {
+    "description": "Mock planning data for EVNNPC 2026 - Kế hoạch tài chính IPP",
+    "orgCode": "EVNNPC",
+    "year": 2026,
+    "scenarioCode": "PLAN",
+    "versionCode": "V1",
+    "lastUpdated": "2026-03-11T10:00:00Z",
+    "dataPoints": 84
+  },
+
+  "planningData": [
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_GIANG_1",
+      "period": 202601,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1", 
+      "value": 1250.5,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_BT",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_GIANG_1", 
+      "period": 202602,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 980.2,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_CD", 
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_GIANG_1",
+      "period": 202603,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 760.1,
+      "currency": "VND", 
+      "year": 2026,
+      "colKey": "C_TD",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_GIANG_1",
+      "period": 202604,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 345.8,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_DD",
+      "unit": "kWh"
+    },
+
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_KAN_1",
+      "period": 202601,
+      "scenarioCode": "PLAN", 
+      "versionCode": "V1",
+      "value": 1180.3,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_BT",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_KAN_1",
+      "period": 202602,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 920.4,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_CD",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_KAN_1",
+      "period": 202603,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 710.6,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_TD",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_KAN_1",
+      "period": 202604,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 290.1,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_DD",
+      "unit": "kWh"
+    },
+
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_ME",
+      "period": 202601,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1", 
+      "value": 890.7,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_BT",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_ME",
+      "period": 202602,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 750.8,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_CD",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_ME",
+      "period": 202603,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 620.5,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_TD",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_ME",
+      "period": 202604,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 280.3,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_DD",
+      "unit": "kWh"
+    },
+
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_ME_1",
+      "period": 202601,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 1350.2,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_BT", 
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_ME_1",
+      "period": 202602,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 1120.5,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_CD",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_ME_1",
+      "period": 202603,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1", 
+      "value": 890.8,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_TD",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BAC_ME_1",
+      "period": 202604,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 420.1,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_DD",
+      "unit": "kWh"
+    },
+
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BACH_DANG",
+      "period": 202601,
+      "scenarioCode": "PLAN", 
+      "versionCode": "V1",
+      "value": 2100.1,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_BT",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BACH_DANG",
+      "period": 202602,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 1850.3,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_CD",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BACH_DANG",
+      "period": 202603,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 1420.7,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_TD",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BACH_DANG",
+      "period": 202604,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",  
+      "value": 650.9,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_DD",
+      "unit": "kWh"
+    },
+
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BA_THUOC",
+      "period": 202601,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 675.8,
+      "currency": "VND", 
+      "year": 2026,
+      "colKey": "C_BT",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BA_THUOC",
+      "period": 202602,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 580.2,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_CD",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BA_THUOC",
+      "period": 202603,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 450.1,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_TD",
+      "unit": "kWh"
+    },
+    {
+      "orgCode": "EVNNPC",
+      "accountCode": "BA_THUOC", 
+      "period": 202604,
+      "scenarioCode": "PLAN",
+      "versionCode": "V1",
+      "value": 220.5,
+      "currency": "VND",
+      "year": 2026,
+      "colKey": "C_DD",
+      "unit": "kWh"
+    }
+  ],
+
+  "columnMappings": {
+    "C_BT": { "period": 202601, "label": "Bình thường" },
+    "C_CD": { "period": 202602, "label": "Cao điểm" },
+    "C_TD": { "period": 202603, "label": "Thấp điểm" },
+    "C_DD": { "period": 202604, "label": "Điện dư" },
+    "C_TONG_SL": { "formula": "=SUM(C{row}:F{row})", "label": "Tổng SL" },
+    "C_CP_MUA": { "period": 202605, "label": "CP mua điện" },
+    "C_THUE_TNN": { "period": 202606, "label": "Thuế TNN" },
+    "C_DVMTR": { "period": 202607, "label": "Tiền DVMTR" },
+    "C_CQKT": { "period": 202608, "label": "Tiền CQ khai thác TNN" },
+    "C_TONG_CP": { "formula": "=SUM(H{row}:K{row})", "label": "Tổng CP" },
+    "C_GIA_BQ": { "formula": "=IF(G{row}>0, L{row}/G{row}*1000, 0)", "label": "VNĐ/kWh" }
+  }
+}

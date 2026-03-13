@@ -1,0 +1,192 @@
+[
+    {
+        "id": 1,
+        "maDonVi": "EVN",
+        "tenDonVi": "Tập đoàn Điện lực Việt Nam",
+        "tenVietTat": "EVN",
+        "capDonVi": "TAP_DOAN",
+        "maDonViCha": null,
+        "trangThai": true,
+        "diaChi": "11 Cửa Bắc, Ba Đình, Hà Nội"
+    },
+    {
+        "id": 2,
+        "maDonVi": "EVNNPC",
+        "tenDonVi": "Tổng công ty Điện lực miền Bắc",
+        "tenVietTat": "EVNNPC",
+        "capDonVi": "TONG_CONG_TY",
+        "maDonViCha": "EVN",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 4,
+        "maDonVi": "070100",
+        "tenDonVi": "Công ty Điện lực Hoàn Kiếm",
+        "tenVietTat": "PC Hoàn Kiếm",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 5,
+        "maDonVi": "070200",
+        "tenDonVi": "Công ty Điện lực Hai Bà Trưng",
+        "tenVietTat": "PC Hai Bà Trưng",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 6,
+        "maDonVi": "070300",
+        "tenDonVi": "Công ty Điện lực Ba Đình",
+        "tenVietTat": "PC Ba Đình",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 7,
+        "maDonVi": "070400",
+        "tenDonVi": "Công ty Điện lực Đống Đa",
+        "tenVietTat": "PC Đống Đa",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 8,
+        "maDonVi": "070500",
+        "tenDonVi": "Công ty Điện lực Nam Từ Liêm",
+        "tenVietTat": "PC Nam Từ Liêm",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 9,
+        "maDonVi": "070600",
+        "tenDonVi": "Công ty Điện lực Thanh Trì",
+        "tenVietTat": "PC Thanh Trì",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 10,
+        "maDonVi": "070700",
+        "tenDonVi": "Công ty Điện lực Gia Lâm",
+        "tenVietTat": "PC Gia Lâm",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 11,
+        "maDonVi": "070800",
+        "tenDonVi": "Công ty Điện lực Đông Anh",
+        "tenVietTat": "PC Đông Anh",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 12,
+        "maDonVi": "070900",
+        "tenDonVi": "Công ty Điện lực Sóc Sơn",
+        "tenVietTat": "PC Sóc Sơn",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 13,
+        "maDonVi": "071000",
+        "tenDonVi": "Công ty Điện lực Tây Hồ",
+        "tenVietTat": "PC Tây Hồ",
+        "capDonVi": "CONG_TY", 
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 14,
+        "maDonVi": "071100",
+        "tenDonVi": "Công ty Điện lực Thanh Xuân",
+        "tenVietTat": "PC Thanh Xuân",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 15,
+        "maDonVi": "071200",
+        "tenDonVi": "Công ty Điện lực Cầu Giấy",
+        "tenVietTat": "PC Cầu Giấy",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 16,
+        "maDonVi": "071300",
+        "tenDonVi": "Công ty Điện lực Hoàng Mai",
+        "tenVietTat": "PC Hoàng Mai",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 17,
+        "maDonVi": "071400",
+        "tenDonVi": "Công ty Điện lực Long Biên",
+        "tenVietTat": "PC Long Biên",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 18,
+        "maDonVi": "071500",
+        "tenDonVi": "Công ty Điện lực Mê Linh",
+        "tenVietTat": "PC Mê Linh",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 19,
+        "maDonVi": "071600",
+        "tenDonVi": "Công ty Điện lực Hà Đông",
+        "tenVietTat": "PC Hà Đông",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    },
+    {
+        "id": 20,
+        "maDonVi": "071700",
+        "tenDonVi": "Công ty Điện lực Sơn Tây",
+        "tenVietTat": "PC Sơn Tây",
+        "capDonVi": "CONG_TY",
+        "maDonViCha": "EVNNPC",
+        "trangThai": true,
+        "diaChi": "Hà Nội"
+    }
+]

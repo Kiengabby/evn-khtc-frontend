@@ -1,0 +1,24 @@
+.page-header {
+  margin-bottom: 24px;
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  p {
+    color: #757575;
+    font-size: 0.875rem;
+    margin-top: 4px;
+  }
+}
+
+.coming-soon {
+  background: white;
+  border: 1px solid #DEE2E6;
+  border-radius: 12px;
+  padding: 60px;
+  text-align: center;
+  p {
+    margin-top: 16px;
+    color: #757575;
+  }
+}

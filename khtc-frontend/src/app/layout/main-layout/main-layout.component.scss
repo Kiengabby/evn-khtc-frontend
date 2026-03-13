@@ -1,0 +1,56 @@
+.app-layout {
+      display: flex;
+      min-height: 100vh;
+      background: #F5F6FA;
+    }
+
+    .main-area {
+      flex: 1;
+      margin-left: 72px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      transition: margin-left 250ms ease;
+    }
+
+    // Khi sidebar thu nhỏ → chỉ còn 0px (ẩn hoàn toàn)
+    .sidebar-collapsed .main-area {
+      margin-left: 0;
+    }
+
+    .breadcrumb-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 24px;
+      background: white;
+      border-bottom: 1px solid #E8EBF0;
+      font-size: 0.8125rem;
+    }
+
+    .breadcrumb-item {
+      color: #8A94A6;
+      &.active { color: #2D3748; font-weight: 500; }
+      i { font-size: 0.8rem; }
+    }
+
+    .breadcrumb-sep { color: #B0B7C3; }
+
+    .date-info {
+      margin-left: auto;
+      color: #606F89;
+      font-size: 0.8125rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      i { color: #1E38C3; }
+    }
+
+    .page-content {
+      flex: 1;
+      padding: 20px 24px;
+    }
+
+    @media (max-width: 768px) {
+      .main-area { margin-left: 0; }
+    }

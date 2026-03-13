@@ -1,0 +1,113 @@
+@if (dangTai()) {
+  <div class="loading-state">
+    <i class="pi pi-spin pi-spinner"></i> Đang tải dữ liệu dashboard...
+  </div>
+} @else if (thongKe()) {
+  <div class="dashboard">
+    <!-- KPI row -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-icon blue"><i class="pi pi-chart-bar"></i></div>
+        <div class="kpi-body">
+          <span class="kpi-label">Doanh thu</span>
+          <span class="kpi-value">{{ formatSo(thongKe()!.doanhThu) }} <small>Tỷ</small></span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon orange"><i class="pi pi-wallet"></i></div>
+        <div class="kpi-body">
+          <span class="kpi-label">Chi phí</span>
+          <span class="kpi-value">{{ formatSo(thongKe()!.chiPhi) }} <small>Tỷ</small></span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon green"><i class="pi pi-arrow-up-right"></i></div>
+        <div class="kpi-body">
+          <span class="kpi-label">Lợi nhuận</span>
+          <span class="kpi-value">{{ formatSo(thongKe()!.loiNhuan) }} <small>Tỷ</small></span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon purple"><i class="pi pi-check-circle"></i></div>
+        <div class="kpi-body">
+          <span class="kpi-label">Tỷ lệ duyệt</span>
+          <span class="kpi-value">{{ thongKe()!.tyLeDuyet }}<small>%</small></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-row">
+      <div class="stat-pill">
+        <i class="pi pi-file"></i>
+        <span>Tổng hồ sơ: <strong>{{ thongKe()!.tongHoSo }}</strong></span>
+      </div>
+      <div class="stat-pill warning">
+        <i class="pi pi-clock"></i>
+        <span>Chờ duyệt: <strong>{{ thongKe()!.hoSoChoDuyet }}</strong></span>
+      </div>
+      <div class="stat-pill success">
+        <i class="pi pi-check-circle"></i>
+        <span>Đã duyệt: <strong>{{ thongKe()!.hoSoDaDuyet }}</strong></span>
+      </div>
+      <div class="stat-pill error">
+        <i class="pi pi-times-circle"></i>
+        <span>Từ chối: <strong>{{ thongKe()!.hoSoTuChoi }}</strong></span>
+      </div>
+    </div>
+
+    <!-- Content sections -->
+    <div class="content-row">
+      <!-- Tiến độ đơn vị -->
+      <div class="section-card">
+        <div class="section-header">
+          <h3>Tiến độ nộp báo cáo</h3>
+        </div>
+        <div class="progress-list">
+          @for (td of thongKe()!.tienDoTheoEntity; track td.maDonVi) {
+            <div class="progress-item">
+              <div class="progress-info">
+                <span class="entity-name">{{ td.tenDonVi }}</span>
+                <span class="entity-stats">{{ td.daNop }}/{{ td.tongBieuMau }} nộp · {{ td.daDuyet }} duyệt</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="tinhPhanTram(td.daNop, td.tongBieuMau)">
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Hồ sơ gần đây -->
+      <div class="section-card">
+        <div class="section-header">
+          <h3>Hồ sơ gần đây</h3>
+          <a class="btn-outline" routerLink="/app/workflow/submissions">Xem tất cả</a>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Số hồ sơ</th>
+              <th>Nội dung</th>
+              <th>Trạng thái</th>
+              <th>Ngày lập</th>
+              <th>Người lập</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (hs of thongKe()!.hoSoGanDay; track hs.id) {
+              <tr>
+                <td class="link">{{ hs.maHoSo }}</td>
+                <td>{{ hs.tieuDe }}</td>
+                <td><span class="status-badge" [class]="classTrangThai(hs.trangThai)">{{ tenTrangThai(hs.trangThai) }}</span></td>
+                <td>{{ hs.ngayTao | date:'dd/MM/yyyy' }}</td>
+                <td>{{ hs.nguoiTao }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+}

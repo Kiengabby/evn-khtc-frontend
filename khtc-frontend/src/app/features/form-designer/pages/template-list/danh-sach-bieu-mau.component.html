@@ -1,0 +1,153 @@
+<div class="page-wrapper">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Danh sách Biểu mẫu</h1>
+          <p class="page-desc">Quản lý các Form Template — Thêm, sửa, xóa và thiết kế biểu mẫu báo cáo</p>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box">
+            <i class="pi pi-search"></i>
+            <input type="text" placeholder="Tìm mã hoặc tên biểu mẫu..."
+                   [(ngModel)]="tuKhoa" (input)="onTimKiem()">
+          </div>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn-primary" (click)="moFormThemMoi()">
+            <i class="pi pi-plus"></i> Thêm biểu mẫu
+          </button>
+        </div>
+      </div>
+
+      <!-- Cards grid -->
+      <div class="template-grid">
+        @if (dangTai()) {
+          <div class="loading-overlay">
+            <i class="pi pi-spin pi-spinner"></i> Đang tải...
+          </div>
+        }
+
+        @for (bm of danhSach(); track bm.formId) {
+          <div class="template-card">
+            <div class="card-header">
+              <span class="card-id">{{ bm.formId }}</span>
+              <div class="action-group">
+                <button class="action-btn" title="Sửa" (click)="moFormSua(bm)">
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button class="action-btn danger" title="Xóa" (click)="xacNhanXoa(bm)">
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
+            </div>
+            <h3 class="card-title">{{ bm.formName }}</h3>
+            <div class="card-meta">
+              <span class="meta-item">
+                <i class="pi pi-building"></i> {{ bm.orgList.length }} đơn vị
+              </span>
+              <span class="meta-item">
+                <i class="pi pi-table"></i> {{ bm.layoutConfig.type || 'N/A' }}
+              </span>
+              @if (bm.isDynamicRow) {
+                <span class="badge badge-dynamic">Dynamic rows</span>
+              }
+            </div>
+            <div class="card-orgs">
+              @for (org of bm.orgList; track org) {
+                <span class="org-tag">{{ org }}</span>
+              }
+            </div>
+            <div class="card-footer">
+              <button class="btn-outline" (click)="moThietKe(bm.formId)">
+                <i class="pi pi-external-link"></i> Thiết kế
+              </button>
+            </div>
+          </div>
+        } @empty {
+          @if (!dangTai()) {
+            <div class="empty-state">
+              <i class="pi pi-inbox"></i>
+              <p>Chưa có biểu mẫu nào</p>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="pagination-bar">
+        <span class="pagination-info">Tổng {{ danhSach().length }} biểu mẫu</span>
+      </div>
+
+      <!-- Dialog thêm/sửa -->
+      @if (hienDialog()) {
+        <div class="dialog-overlay" (click)="dongDialog()">
+          <div class="dialog-box" (click)="$event.stopPropagation()">
+            <div class="dialog-header">
+              <h3>{{ dangSua() ? 'Sửa biểu mẫu' : 'Thêm biểu mẫu mới' }}</h3>
+              <button class="close-btn" (click)="dongDialog()"><i class="pi pi-times"></i></button>
+            </div>
+            <div class="dialog-body">
+              <div class="form-row">
+                <label>Mã biểu mẫu <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="form.formId" [disabled]="dangSua()"
+                       placeholder="VD: F04_LUONG_NHAN_VIEN">
+              </div>
+              <div class="form-row">
+                <label>Tên biểu mẫu <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="form.formName"
+                       placeholder="VD: BKH.KH.04 — Lương nhân viên">
+              </div>
+              <div class="form-row-2col">
+                <div class="form-row">
+                  <label>Loại biểu mẫu</label>
+                  <select [(ngModel)]="form.layoutType">
+                    <option value="financial_planning">Financial Planning</option>
+                    <option value="revenue_forecast">Revenue Forecast</option>
+                    <option value="production_plan">Production Plan</option>
+                    <option value="cost_analysis">Cost Analysis</option>
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label>Cố định cột</label>
+                  <input type="number" [(ngModel)]="form.freezeColumns" min="0" max="10">
+                </div>
+              </div>
+              <div class="form-row">
+                <label>Đơn vị áp dụng</label>
+                <input type="text" [(ngModel)]="form.orgListStr"
+                       placeholder="EVNNPC, EVNCPC, EVNSPC (phân cách bằng dấu phẩy)">
+              </div>
+              <div class="form-row checkbox-row">
+                <label>
+                  <input type="checkbox" [(ngModel)]="form.isDynamicRow">
+                  Cho phép thêm dòng động (Dynamic Rows)
+                </label>
+              </div>
+              @if (loiForm()) {
+                <div class="form-error">
+                  <i class="pi pi-exclamation-circle"></i> {{ loiForm() }}
+                </div>
+              }
+            </div>
+            <div class="dialog-footer">
+              <button class="btn-secondary" (click)="dongDialog()">Hủy</button>
+              <button class="btn-primary" (click)="luuBieuMau()" [disabled]="dangLuu()">
+                @if (dangLuu()) { <i class="pi pi-spin pi-spinner"></i> }
+                {{ dangSua() ? 'Cập nhật' : 'Tạo mới' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Toast -->
+      @if (thongBao()) {
+        <div class="toast" [class]="'toast-' + thongBao()!.loai">
+          <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
+             [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+          {{ thongBao()!.noiDung }}
+        </div>
+      }
+    </div>

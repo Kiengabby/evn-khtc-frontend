@@ -1,0 +1,81 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h1>Báo cáo Hợp nhất</h1>
+      <p>Tổng hợp số liệu kế hoạch tài chính từ các đơn vị</p>
+    </div>
+  </div>
+
+  <!-- KPI tổng -->
+  <div class="summary-row">
+    <div class="summary-card">
+      <span class="summary-label">Tổng doanh thu</span>
+      <span class="summary-value blue">{{ formatSo(tongDoanhThu()) }} <small>Tỷ</small></span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Tổng chi phí</span>
+      <span class="summary-value orange">{{ formatSo(tongChiPhi()) }} <small>Tỷ</small></span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Tổng lợi nhuận</span>
+      <span class="summary-value green">{{ formatSo(tongLoiNhuan()) }} <small>Tỷ</small></span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Số đơn vị</span>
+      <span class="summary-value purple">{{ duLieu().length }}</span>
+    </div>
+  </div>
+
+  @if (dangTai()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i> Đang tải dữ liệu hợp nhất...
+    </div>
+  } @else {
+    <div class="table-card">
+      <table class="consolidation-table">
+        <thead>
+          <tr>
+            <th style="width: 50px">STT</th>
+            <th>Đơn vị</th>
+            <th class="right" style="width: 120px">Doanh thu (Tỷ)</th>
+            <th class="right" style="width: 120px">Chi phí (Tỷ)</th>
+            <th class="right" style="width: 120px">Lợi nhuận (Tỷ)</th>
+            <th class="center" style="width: 110px">Hồ sơ nộp</th>
+            <th class="center" style="width: 110px">Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of duLieu(); track row.maDonVi; let i = $index) {
+            <tr>
+              <td class="center">{{ i + 1 }}</td>
+              <td>
+                <div class="entity-cell">
+                  <strong>{{ row.tenDonVi }}</strong>
+                  <span class="entity-code">{{ row.maDonVi }}</span>
+                </div>
+              </td>
+              <td class="right mono">{{ formatSo(row.doanhThu) }}</td>
+              <td class="right mono">{{ formatSo(row.chiPhi) }}</td>
+              <td class="right mono" [class.positive]="row.loiNhuan > 0">{{ formatSo(row.loiNhuan) }}</td>
+              <td class="center">{{ row.daDuyet }}/{{ row.tongHoSo }}</td>
+              <td class="center">
+                <span class="status-badge" [class]="classTrangThai(row.trangThai)">
+                  {{ tenTrangThai(row.trangThai) }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2"><strong>TỔNG CỘNG</strong></td>
+            <td class="right mono"><strong>{{ formatSo(tongDoanhThu()) }}</strong></td>
+            <td class="right mono"><strong>{{ formatSo(tongChiPhi()) }}</strong></td>
+            <td class="right mono positive"><strong>{{ formatSo(tongLoiNhuan()) }}</strong></td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  }
+</div>

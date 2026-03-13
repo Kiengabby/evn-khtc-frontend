@@ -1,0 +1,105 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <div>
+      <h1>Duyệt báo cáo</h1>
+      <p>Inbox phê duyệt hồ sơ kế hoạch tài chính</p>
+    </div>
+    <div class="header-stats">
+      <span class="stat-pill warning">
+        <i class="pi pi-clock"></i> {{ danhSach().length }} hồ sơ chờ duyệt
+      </span>
+    </div>
+  </div>
+
+  @if (dangTai()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i> Đang tải hộp thư phê duyệt...
+    </div>
+  } @else if (danhSach().length === 0) {
+    <div class="empty-state">
+      <i class="pi pi-check-circle"></i>
+      <p>Không có hồ sơ nào cần duyệt</p>
+    </div>
+  } @else {
+    <div class="inbox-list">
+      @for (item of danhSach(); track item.id) {
+        <div class="inbox-card">
+          <div class="card-left">
+            <span class="priority-dot" [class]="classMucDo(item.mucDoUuTien)" [title]="tenMucDo(item.mucDoUuTien)"></span>
+            <div class="card-info">
+              <div class="card-title">
+                <span class="ma-code">{{ item.hoSo.maHoSo }}</span>
+                <span class="priority-badge" [class]="classMucDo(item.mucDoUuTien)">{{ tenMucDo(item.mucDoUuTien) }}</span>
+              </div>
+              <h3>{{ item.hoSo.tieuDe }}</h3>
+              <div class="card-meta">
+                <span><i class="pi pi-building"></i> {{ item.hoSo.tenDonVi }}</span>
+                <span><i class="pi pi-user"></i> {{ item.hoSo.nguoiTao }}</span>
+                <span><i class="pi pi-calendar"></i> {{ item.hoSo.ngayTao | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-action approve" (click)="moDialog(item, 'duyet')" title="Duyệt">
+              <i class="pi pi-check"></i> Duyệt
+            </button>
+            <button class="btn-action return" (click)="moDialog(item, 'tra_lai')" title="Trả lại">
+              <i class="pi pi-undo"></i> Trả lại
+            </button>
+            <button class="btn-action reject" (click)="moDialog(item, 'tu_choi')" title="Từ chối">
+              <i class="pi pi-times"></i> Từ chối
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Dialog xác nhận -->
+  @if (hienDialog()) {
+    <div class="dialog-overlay" (click)="hienDialog.set(false)">
+      <div class="dialog-panel" (click)="$event.stopPropagation()">
+        <div class="dialog-header">
+          <h2>Xác nhận {{ tenHanhDong(hanhDongChon) }}</h2>
+          <button class="close-btn" (click)="hienDialog.set(false)">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <div class="confirm-info">
+            <p><strong>Hồ sơ:</strong> {{ itemDangXuLy()?.hoSo?.maHoSo }}</p>
+            <p><strong>Nội dung:</strong> {{ itemDangXuLy()?.hoSo?.tieuDe }}</p>
+            <p><strong>Hành động:</strong>
+              <span class="action-tag" [class]="classHanhDong(hanhDongChon)">
+                {{ tenHanhDong(hanhDongChon) }}
+              </span>
+            </p>
+          </div>
+          <div class="form-group">
+            <label>Ghi chú (tùy chọn)</label>
+            <textarea rows="3" [(ngModel)]="ghiChu" placeholder="Nhập ghi chú nếu cần..."></textarea>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn-cancel" (click)="hienDialog.set(false)">Hủy</button>
+          <button class="btn-confirm" [class]="classHanhDong(hanhDongChon)"
+                  [disabled]="dangXuLy()" (click)="xacNhan()">
+            @if (dangXuLy()) {
+              <i class="pi pi-spin pi-spinner"></i>
+            }
+            {{ tenHanhDong(hanhDongChon) }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Toast -->
+  @if (thongBao()) {
+    <div class="toast" [class]="'toast-' + thongBao()!.loai">
+      <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
+         [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+      {{ thongBao()!.noiDung }}
+    </div>
+  }
+</div>

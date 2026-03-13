@@ -1,0 +1,50 @@
+{
+  "templateId": "BKH_KH_01",
+  "templateName": "BKH.KH.01 — Kế hoạch Điện sản xuất và Mua",
+  "version": "2022",
+  "description": "Kế hoạch điện sản xuất và mua — Hệ thống báo cáo KHTC Công ty mẹ EVN",
+  
+  
+  "POV": {
+    "Dimension": ["ENT","VER"],
+    "Promt": ["Đơn vị","Phiên bản"]
+    	 },
+  "GRID":
+         {
+	  "COLS":  [
+				{"Key": "A", "Type": "Text" ,"Promt": "STT", "ListValues":["1","1.2","1.3","2","2.1","2.2"]} ,
+				{"Key": "B", "Type": "Dim" ,"Promt": "Chỉ tiêu"} ,
+				{"Key": "C", "Type": "Text" ,"Promt": "Đơn vị tính","ListValues":["-","-","Trieu vnd","-","Trieu Kwh","Kwh/vnd"]} ,
+				{"Key": "D", "Type": "Data" ,"Promt": "", "Dimension": [{"Key":"YEA","ListType" :"Var", "ListValue": [{ "Key":"Y_2" ,"Display": { "Type" : "Text", "Value": "Năm N-2"  } }] },
+
+											{"Key":"SCE","ListType" :"Mem", "ListValue": [{ "Key":"TH" ,"Display": { "Type" : "Dim", "Value": "Name"  } }] } ] } ,
+
+				{"Key": "E", "Type": "Data" ,"Promt": "", "Dimension": [{"Key":"YEA","ListType" :"Var", "ListValue": [{ "Key":"Y_1" ,"Display": { "Type" : "Text", "Value": "Năm N-1" } }] },
+
+											{"Key":"SCE","ListType" :"Mem", "ListValue": [{ "Key":"KH" ,"Display": { "Type" : "Dim", "Value": "Name"  } },{ "Key":"UTH" ,"Display": { "Type" : "Dim", "Value": "Name"  } }  ] } ] } ,
+				
+				{"Key": "F", "Type": "Data" ,"Promt": "", "Dimension": [{"Key":"YEA","ListType" :"Var", "ListValue": [{ "Key":"YN" ,"Display": { "Type" : "Text", "Value": "Năm N-1"  } }] },
+
+											{"Key":"SCE","ListType" :"Mem", "ListValue": [{ "Key":"KH" ,"Display": { "Type" : "Dim", "Value": "Name"  } }] } ] } ,
+				
+				
+				{"Key": "G", "Type": "Data" ,"Promt": "Ghi chú", "Dimension": [{"Key":"YEA","ListType" :"Var", "ListValue": [{ "Key":"YN" ,"Display": { "Type" : "Dim", "Value": "Name"  } }] },
+
+											{"Key":"SCE","ListType" :"Mem", "ListValue": [{ "Key":"NA" ,"Display": { "Type" : "Dim", "Value": "Name"  }}] } ] } 
+
+			 ]	
+ 				
+	   "ROWS" : [   {"Key" : "A", "Type": "Data" ,"Promt": "", "Dimension": [{"Key":"ACC","ListType" :"Mem", "ListValue": [{ "Key":"SLD" ,"Display": { "Type" : "Dim", "Value": "Name"  } }, 
+															       { "Key":"DT" ,"Display": { "Type" : "Dim", "Value": "Name"  } } ,
+															       { "Key":"CP" ,"Display": { "Type" : "Dim", "Value": "Name"  } }, 
+															       { "Key":"GT" ,"Display": { "Type" : "Dim", "Value": "Name"  } },
+															       { "Key":"TH" ,"Display": { "Type" : "Dim", "Value": "Name"  } } ]
+									        } ]  } ,
+                        
+			{"Key" : "B", "Type": "Formula" ,"Promt": "Tổng cộng", "Formula" : "A" }
+				
+
+			]
+			 
+          }
+}

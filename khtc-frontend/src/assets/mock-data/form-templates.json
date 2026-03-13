@@ -1,0 +1,206 @@
+{
+  "formTemplates": [
+    {
+      "formID": "F01_CP_IPP",
+      "formName": "BKH.KH.01 — Chi phí mua điện IPP dưới 30MW",
+      "orgList": ["EVNNPC", "EVNCPC", "EVNSPC"],
+      "layoutConfig": {
+        "type": "financial_planning",
+        "allowDynamicRows": false,
+        "freezeColumns": 2
+      }
+    },
+    {
+      "formID": "F02_DOANH_THU", 
+      "formName": "BKH.KH.02 — Doanh thu bán điện",
+      "orgList": ["EVNNPC", "EVNCPC", "EVNSPC"],
+      "layoutConfig": {
+        "type": "revenue_forecast",
+        "allowDynamicRows": true,
+        "freezeColumns": 2
+      }
+    },
+    {
+      "formID": "F03_SAN_LUONG",
+      "formName": "BKH.KH.03 — Sản lượng điện thương phẩm", 
+      "orgList": ["EVNNPC", "EVNCPC", "EVNSPC"],
+      "layoutConfig": {
+        "type": "production_plan",
+        "allowDynamicRows": false,
+        "freezeColumns": 2
+      }
+    }
+  ],
+
+  "accountHierarchy": [
+    {
+      "accountCode": "TONG_CP_IPP",
+      "accountName": "TỔNG CHI PHÍ IPP",
+      "accountType": "EXPENSE",
+      "dataStorage": "DYNAMIC_CALC",
+      "level": 1,
+      "isParent": true,
+      "formula": "[BAC_GIANG_1] + [BAC_KAN_1] + [BAC_ME] + [BAC_ME_1] + [BACH_DANG] + [BA_THUOC]",
+      "children": [
+        {
+          "accountCode": "BAC_GIANG_1",
+          "accountName": "Bắc Giang 1",
+          "accountType": "EXPENSE",
+          "dataStorage": "STORE",
+          "level": 2,
+          "unit": "Tỷ đồng",
+          "isLeaf": true
+        },
+        {
+          "accountCode": "BAC_KAN_1", 
+          "accountName": "Bắc Kạn 1",
+          "accountType": "EXPENSE",
+          "dataStorage": "STORE",
+          "level": 2,
+          "unit": "Tỷ đồng",
+          "isLeaf": true
+        },
+        {
+          "accountCode": "BAC_ME",
+          "accountName": "Bắc Mê",
+          "accountType": "EXPENSE", 
+          "dataStorage": "STORE",
+          "level": 2,
+          "unit": "Tỷ đồng",
+          "isLeaf": true
+        },
+        {
+          "accountCode": "BAC_ME_1",
+          "accountName": "Bắc Mê 1",
+          "accountType": "EXPENSE",
+          "dataStorage": "STORE", 
+          "level": 2,
+          "unit": "Tỷ đồng",
+          "isLeaf": true
+        },
+        {
+          "accountCode": "BACH_DANG",
+          "accountName": "Bạch Đằng",
+          "accountType": "EXPENSE",
+          "dataStorage": "STORE",
+          "level": 2,
+          "unit": "Tỷ đồng",
+          "isLeaf": true
+        },
+        {
+          "accountCode": "BA_THUOC",
+          "accountName": "Bà Thước", 
+          "accountType": "EXPENSE",
+          "dataStorage": "STORE",
+          "level": 2,
+          "unit": "Tỷ đồng",
+          "isLeaf": true
+        }
+      ]
+    }
+  ],
+
+  "columnDefinitions": {
+    "F01_CP_IPP": [
+      {
+        "colKey": "C_BT",
+        "colName": "Bình thường", 
+        "groupHeader": "Sản lượng điện (kWh)",
+        "dataType": "numeric",
+        "width": 95,
+        "format": "#,##0.0",
+        "isEditable": true
+      },
+      {
+        "colKey": "C_CD",
+        "colName": "Cao điểm",
+        "groupHeader": "Sản lượng điện (kWh)",
+        "dataType": "numeric", 
+        "width": 95,
+        "format": "#,##0.0",
+        "isEditable": true
+      },
+      {
+        "colKey": "C_TD",
+        "colName": "Thấp điểm",
+        "groupHeader": "Sản lượng điện (kWh)",
+        "dataType": "numeric",
+        "width": 95, 
+        "format": "#,##0.0",
+        "isEditable": true
+      },
+      {
+        "colKey": "C_DD",
+        "colName": "Điện dư",
+        "groupHeader": "Sản lượng điện (kWh)",
+        "dataType": "numeric",
+        "width": 75,
+        "format": "#,##0.0", 
+        "isEditable": true
+      },
+      {
+        "colKey": "C_TONG_SL",
+        "colName": "Tổng SL", 
+        "dataType": "formula",
+        "width": 95,
+        "format": "#,##0.0",
+        "formula": "=SUM(C{row}:F{row})",
+        "isEditable": false
+      },
+      {
+        "colKey": "C_CP_MUA",
+        "colName": "CP mua điện",
+        "groupHeader": "Chi phí (Tỷ đồng)",
+        "dataType": "numeric",
+        "width": 115,
+        "format": "#,##0.00",
+        "isEditable": true
+      },
+      {
+        "colKey": "C_THUE_TNN", 
+        "colName": "Thuế TNN",
+        "groupHeader": "Chi phí (Tỷ đồng)",
+        "dataType": "numeric",
+        "width": 105,
+        "format": "#,##0.00",
+        "isEditable": true
+      },
+      {
+        "colKey": "C_DVMTR",
+        "colName": "Tiền DVMTR",
+        "groupHeader": "Chi phí (Tỷ đồng)",
+        "dataType": "numeric",
+        "width": 105,
+        "format": "#,##0.00",
+        "isEditable": true
+      },
+      {
+        "colKey": "C_CQKT",
+        "colName": "Tiền CQ khai thác TNN",
+        "groupHeader": "Chi phí (Tỷ đồng)",
+        "dataType": "numeric",
+        "width": 155,
+        "format": "#,##0.00", 
+        "isEditable": true
+      },
+      {
+        "colKey": "C_TONG_CP",
+        "colName": "Tổng CP",
+        "dataType": "formula",
+        "width": 125,
+        "format": "#,##0.00",
+        "formula": "=SUM(H{row}:K{row})",
+        "isEditable": false
+      },
+      {
+        "colKey": "C_GIA_BQ",
+        "colName": "VNĐ/kWh",
+        "dataType": "formula", 
+        "width": 95,
+        "format": "#,##0",
+        "formula": "=IF(G{row}>0, L{row}/G{row}*1000, 0)",
+        "isEditable": false
+      }
+    ]
+  }
+}
