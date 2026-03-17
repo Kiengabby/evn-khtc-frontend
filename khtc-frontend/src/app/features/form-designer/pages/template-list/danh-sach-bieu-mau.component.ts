@@ -148,6 +148,10 @@ export class DanhSachBieuMauComponent implements OnInit {
         this.router.navigate(['/app/form-designer/builder', formId]);
     }
 
+    moThietKeMoi(): void {
+        this.router.navigate(['/app/form-designer/builder']);
+    }
+
     // === HELPERS ===
     dongDialog(): void { this.hienDialog.set(false); this.loiForm.set(null); }
 

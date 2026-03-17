@@ -1,179 +1,268 @@
-<div class="page-wrapper">
-      <!-- Header -->
-      <div class="builder-header">
-        <div class="header-left">
-          <button class="btn-back" (click)="quayLai()">
-            <i class="pi pi-arrow-left"></i>
-          </button>
-          <div>
-            <h1 class="page-title">
-              @if (bieuMau()) {
-                {{ bieuMau()!.formName }}
-              } @else {
-                Thiết kế Biểu mẫu
-              }
-            </h1>
-            <p class="page-desc">
-              @if (bieuMau()) {
-                Mã: {{ bieuMau()!.formId }} — {{ bieuMau()!.orgList.join(', ') }}
-              } @else {
-                Đang tải...
-              }
-            </p>
-          </div>
+<div class="designer-layout">
+
+  <!-- ===== TOP BAR ===== -->
+  <div class="designer-topbar">
+    <div class="topbar-left">
+      <button class="btn-icon" (click)="quayLai()" title="Quay lại">
+        <i class="pi pi-arrow-left"></i>
+      </button>
+      <div class="template-title">
+        <h1>
+          @if (bieuMau()) {
+            {{ bieuMau()!.formName }}
+          } @else {
+            {{ templateInfo.templateName || 'Biểu mẫu mới' }}
+          }
+        </h1>
+        <span class="template-id">{{ templateInfo.templateId || formId || 'Chưa có mã' }}</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-text" (click)="showInfoDialog.set(true)" title="Thông tin biểu mẫu">
+        <i class="pi pi-info-circle"></i> Thông tin
+      </button>
+      <button class="btn-text" (click)="exportJsonToClipboard()" title="Copy JSON">
+        <i class="pi pi-copy"></i> Copy JSON
+      </button>
+      <button class="btn-primary" (click)="saveTemplate()" [disabled]="dangLuu()">
+        @if (dangLuu()) {
+          <i class="pi pi-spin pi-spinner"></i>
+        } @else {
+          <i class="pi pi-save"></i>
+        }
+        Lưu biểu mẫu
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== TOOLBAR ===== -->
+  <div class="designer-toolbar">
+    <!-- Grid structure -->
+    <div class="toolbar-group">
+      <span class="group-label">Lưới</span>
+      <button class="toolbar-btn" (click)="addRow()" title="Thêm dòng">
+        <i class="pi pi-plus"></i> Dòng
+      </button>
+      <button class="toolbar-btn" (click)="addCol()" title="Thêm cột">
+        <i class="pi pi-plus"></i> Cột
+      </button>
+      <button class="toolbar-btn danger" (click)="removeRow()" title="Xóa dòng">
+        <i class="pi pi-minus"></i> Dòng
+      </button>
+      <button class="toolbar-btn danger" (click)="removeCol()" title="Xóa cột">
+        <i class="pi pi-minus"></i> Cột
+      </button>
+    </div>
+
+    <div class="toolbar-sep"></div>
+
+    <!-- Merge cells -->
+    <div class="toolbar-group">
+      <span class="group-label">Gộp ô</span>
+      <button class="toolbar-btn" (click)="mergeCellsAction()" title="Gộp ô đã chọn">
+        <i class="pi pi-arrows-h"></i> Gộp
+      </button>
+      <button class="toolbar-btn" (click)="unmergeCellsAction()" title="Tách ô">
+        <i class="pi pi-minus-circle"></i> Tách
+      </button>
+    </div>
+
+    <div class="toolbar-sep"></div>
+
+    <!-- Cell type quick marks -->
+    <div class="toolbar-group">
+      <span class="group-label">Loại ô</span>
+      <button class="toolbar-btn mark-header" (click)="markAs('header')" title="Đánh dấu Header">
+        H
+      </button>
+      <button class="toolbar-btn mark-text" (click)="markAs('text')" title="Đánh dấu Text (chỉ đọc)">
+        T
+      </button>
+      <button class="toolbar-btn mark-dim" (click)="markAs('dim')" title="Đánh dấu Dimension">
+        D
+      </button>
+      <button class="toolbar-btn mark-data" (click)="markAs('data')" title="Đánh dấu Data (nhập liệu)">
+        $
+      </button>
+      <button class="toolbar-btn mark-formula" (click)="markAs('formula')" title="Đánh dấu Formula">
+        <i class="pi pi-calculator"></i>
+      </button>
+    </div>
+
+    <div class="toolbar-sep"></div>
+
+    <!-- Fixed columns / rows -->
+    <div class="toolbar-group">
+      <span class="group-label">Cố định</span>
+      <label class="inline-field">
+        Cột:
+        <input type="number" [ngModel]="fixedCols" (ngModelChange)="setFixedCols($event)"
+               min="0" max="10" class="input-sm">
+      </label>
+      <label class="inline-field">
+        Dòng:
+        <input type="number" [ngModel]="fixedRows" (ngModelChange)="setFixedRows($event)"
+               min="0" max="10" class="input-sm">
+      </label>
+    </div>
+
+    <div class="toolbar-sep"></div>
+
+    <!-- Properties toggle -->
+    <div class="toolbar-group">
+      <button class="toolbar-btn" [class.active]="showPropsPanel()"
+              (click)="togglePropsPanel()" title="Bảng thuộc tính">
+        <i class="pi pi-sliders-h"></i> Thuộc tính
+      </button>
+    </div>
+
+    <!-- Cell info -->
+    <div class="toolbar-right-info">
+      <span class="cell-address">{{ cellInfo() || '—' }}</span>
+    </div>
+  </div>
+
+  <!-- ===== MAIN AREA ===== -->
+  <div class="designer-main" [class.with-panel]="showPropsPanel()">
+
+    <!-- Grid canvas -->
+    <div class="designer-canvas">
+      @if (dangTai()) {
+        <div class="loading-overlay">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Đang tải biểu mẫu...</span>
         </div>
-        <div class="header-actions">
-          <span class="col-count" title="Số cột">
-            <i class="pi pi-table"></i> {{ danhSachCot().length }} cột
-          </span>
+      }
+      <div class="hot-wrapper" #hotDesigner></div>
+    </div>
+
+    <!-- Properties panel -->
+    @if (showPropsPanel()) {
+      <div class="props-panel">
+        <div class="panel-header">
+          <h3>Thuộc tính ô</h3>
+          <button class="btn-icon-sm" (click)="showPropsPanel.set(false)">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+        <div class="panel-body">
+          <div class="prop-section">
+            <label>Vị trí</label>
+            <div class="prop-value">{{ cellInfo() || '—' }}</div>
+          </div>
+
+          <div class="prop-section">
+            <label>Loại ô</label>
+            <select [(ngModel)]="propCellRole" class="prop-select">
+              <option value="header">Header (tiêu đề)</option>
+              <option value="text">Text (văn bản tĩnh)</option>
+              <option value="dim">Dimension (chiều dữ liệu)</option>
+              <option value="data">Data (nhập liệu)</option>
+              <option value="formula">Formula (công thức)</option>
+            </select>
+          </div>
+
+          <div class="prop-section">
+            <label>
+              <input type="checkbox" [(ngModel)]="propReadOnly">
+              Chỉ đọc (Read-only)
+            </label>
+          </div>
+
+          @if (propCellRole === 'formula') {
+            <div class="prop-section">
+              <label>Công thức</label>
+              <input type="text" [(ngModel)]="propFormula" class="prop-input"
+                     placeholder="VD: =SUM(D3:D10)">
+            </div>
+          }
+
+          <div class="prop-section">
+            <label>Độ rộng cột (px)</label>
+            <div class="prop-row">
+              <input type="number" [(ngModel)]="propColWidth" class="prop-input" min="30" max="500">
+              <button class="btn-sm" (click)="applyColWidth()">
+                <i class="pi pi-check"></i>
+              </button>
+            </div>
+          </div>
+
+          <button class="btn-primary full-width" (click)="applyCellProps()">
+            <i class="pi pi-check"></i> Áp dụng
+          </button>
+
+          <div class="prop-section legend">
+            <label>Chú thích màu</label>
+            <div class="legend-items">
+              <div class="legend-item">
+                <span class="legend-color header"></span> Header
+              </div>
+              <div class="legend-item">
+                <span class="legend-color text"></span> Text
+              </div>
+              <div class="legend-item">
+                <span class="legend-color dim"></span> Dimension
+              </div>
+              <div class="legend-item">
+                <span class="legend-color data"></span> Data
+              </div>
+              <div class="legend-item">
+                <span class="legend-color formula"></span> Formula
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+    }
+  </div>
 
-      @if (dangTai()) {
-        <div class="loading-state">
-          <i class="pi pi-spin pi-spinner"></i> Đang tải cấu hình biểu mẫu...
-        </div>
-      } @else if (!bieuMau()) {
-        <div class="error-state">
-          <i class="pi pi-exclamation-triangle"></i>
-          <p>Không tìm thấy biểu mẫu</p>
-          <button class="btn-primary" (click)="quayLai()">Quay lại danh sách</button>
-        </div>
-      } @else {
-        <!-- Tab bar -->
-        <div class="tab-bar">
-          <button class="tab-item" [class.active]="tabHienTai === 'columns'"
-                  (click)="tabHienTai = 'columns'">
-            <i class="pi pi-list"></i> Cấu hình cột
-          </button>
-          <button class="tab-item" [class.active]="tabHienTai === 'preview'"
-                  (click)="tabHienTai = 'preview'; khoiTaoPreview()">
-            <i class="pi pi-eye"></i> Xem trước
-          </button>
-          <button class="tab-item" [class.active]="tabHienTai === 'info'"
-                  (click)="tabHienTai = 'info'">
-            <i class="pi pi-info-circle"></i> Thông tin chung
+  <!-- ===== TEMPLATE INFO DIALOG ===== -->
+  @if (showInfoDialog()) {
+    <div class="dialog-overlay" (click)="showInfoDialog.set(false)">
+      <div class="dialog-box" (click)="$event.stopPropagation()">
+        <div class="dialog-header">
+          <h3>Thông tin biểu mẫu</h3>
+          <button class="btn-icon-sm" (click)="showInfoDialog.set(false)">
+            <i class="pi pi-times"></i>
           </button>
         </div>
-
-        <!-- Tab: Cấu hình cột -->
-        @if (tabHienTai === 'columns') {
-          <div class="columns-panel">
-            <div class="panel-toolbar">
-              <h3>Danh sách cột ({{ danhSachCot().length }})</h3>
-            </div>
-
-            @if (danhSachCot().length === 0) {
-              <div class="empty-cols">
-                <i class="pi pi-inbox"></i>
-                <p>Biểu mẫu này chưa có cấu hình cột</p>
-              </div>
-            } @else {
-              <div class="col-table-wrap">
-                <table class="col-table">
-                  <thead>
-                    <tr>
-                      <th style="width:50px">STT</th>
-                      <th style="width:120px">Mã cột</th>
-                      <th>Tên cột</th>
-                      <th style="width:160px">Nhóm header</th>
-                      <th style="width:100px">Kiểu dữ liệu</th>
-                      <th style="width:80px">Độ rộng</th>
-                      <th style="width:100px">Định dạng</th>
-                      <th style="width:80px">Sửa được</th>
-                      <th>Công thức</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (col of danhSachCot(); track col.colKey; let i = $index) {
-                      <tr [class.formula-row]="col.dataType === 'formula'">
-                        <td class="center">{{ i + 1 }}</td>
-                        <td><span class="col-key">{{ col.colKey }}</span></td>
-                        <td><strong>{{ col.colName }}</strong></td>
-                        <td>{{ col.groupHeader || '—' }}</td>
-                        <td>
-                          <span class="type-badge" [class]="'type-' + col.dataType">
-                            {{ col.dataType }}
-                          </span>
-                        </td>
-                        <td class="center">{{ col.width }}px</td>
-                        <td><code>{{ col.format }}</code></td>
-                        <td class="center">
-                          @if (col.isEditable) {
-                            <i class="pi pi-check-circle editable-yes"></i>
-                          } @else {
-                            <i class="pi pi-lock readonly-icon"></i>
-                          }
-                        </td>
-                        <td>
-                          @if (col.formula) {
-                            <code class="formula-code">{{ col.formula }}</code>
-                          } @else {
-                            —
-                          }
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
+        <div class="dialog-body">
+          <div class="form-row">
+            <label>Mã biểu mẫu <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="templateInfo.templateId"
+                   placeholder="VD: BKH_KH_01" [disabled]="!!formId">
           </div>
-        }
-
-        <!-- Tab: Xem trước Handsontable -->
-        @if (tabHienTai === 'preview') {
-          <div class="preview-panel">
-            <div class="panel-toolbar">
-              <h3>Xem trước biểu mẫu (dữ liệu mẫu)</h3>
-            </div>
-            <div class="hot-container" #hotContainer></div>
+          <div class="form-row">
+            <label>Tên biểu mẫu <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="templateInfo.templateName"
+                   placeholder="VD: BKH.KH.01 — Kế hoạch Điện sản xuất và Mua">
           </div>
-        }
-
-        <!-- Tab: Thông tin chung -->
-        @if (tabHienTai === 'info') {
-          <div class="info-panel">
-            <div class="info-grid">
-              <div class="info-row">
-                <span class="info-label">Mã biểu mẫu</span>
-                <span class="info-value code">{{ bieuMau()!.formId }}</span>
-              </div>
-              <div class="info-row">
-                <span class="info-label">Tên biểu mẫu</span>
-                <span class="info-value"><strong>{{ bieuMau()!.formName }}</strong></span>
-              </div>
-              <div class="info-row">
-                <span class="info-label">Loại</span>
-                <span class="info-value">{{ bieuMau()!.layoutConfig.type || 'N/A' }}</span>
-              </div>
-              <div class="info-row">
-                <span class="info-label">Đơn vị áp dụng</span>
-                <span class="info-value">{{ bieuMau()!.orgList.join(', ') }}</span>
-              </div>
-              <div class="info-row">
-                <span class="info-label">Dynamic Rows</span>
-                <span class="info-value">{{ bieuMau()!.isDynamicRow ? 'Có' : 'Không' }}</span>
-              </div>
-              <div class="info-row">
-                <span class="info-label">Cố định cột</span>
-                <span class="info-value">{{ bieuMau()!.layoutConfig.freezeColumns || 0 }} cột</span>
-              </div>
-              <div class="info-row">
-                <span class="info-label">Số cột dữ liệu</span>
-                <span class="info-value">{{ danhSachCot().length }}</span>
-              </div>
-            </div>
+          <div class="form-row">
+            <label>Phiên bản</label>
+            <input type="text" [(ngModel)]="templateInfo.version" placeholder="VD: 2026">
           </div>
-        }
-      }
-
-      <!-- Toast -->
-      @if (thongBao()) {
-        <div class="toast" [class]="'toast-' + thongBao()!.loai">
-          <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
-             [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
-          {{ thongBao()!.noiDung }}
+          <div class="form-row">
+            <label>Mô tả</label>
+            <textarea [(ngModel)]="templateInfo.description" rows="3"
+                      placeholder="Mô tả chi tiết về biểu mẫu này..."></textarea>
+          </div>
         </div>
-      }
+        <div class="dialog-footer">
+          <button class="btn-secondary" (click)="showInfoDialog.set(false)">Đóng</button>
+          <button class="btn-primary" (click)="saveTemplateInfo()">
+            <i class="pi pi-check"></i> Xác nhận
+          </button>
+        </div>
+      </div>
     </div>
+  }
+
+  <!-- ===== TOAST ===== -->
+  @if (thongBao()) {
+    <div class="toast" [class]="'toast-' + thongBao()!.loai">
+      <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
+         [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+      {{ thongBao()!.noiDung }}
+    </div>
+  }
+</div>
