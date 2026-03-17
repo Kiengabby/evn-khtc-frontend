@@ -1,6 +1,6 @@
 import {
   Component, inject, signal, OnInit, AfterViewInit, OnDestroy,
-  ViewChild, ElementRef,
+  ViewChild, ElementRef, HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -120,6 +120,11 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     this.hot?.destroy();
   }
 
+  @HostListener('window:resize')
+  onResize(): void {
+    this.refreshGridViewport();
+  }
+
   // === Load existing template ===
   private async loadTemplate(): Promise<void> {
     this.dangTai.set(true);
@@ -141,13 +146,14 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     if (!this.hotDesignerRef?.nativeElement) return;
 
     const defaultData = this.createDefaultGrid();
+    const gridHeight = this.calculateGridHeight();
 
     this.hot = new Handsontable(this.hotDesignerRef.nativeElement, {
       data: defaultData,
       colHeaders: true,
       rowHeaders: true,
       width: '100%',
-      height: '100%',
+      height: gridHeight,
       stretchH: 'none',
       licenseKey: 'non-commercial-and-evaluation',
 
@@ -234,6 +240,8 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         return cellProps;
       },
     });
+
+    setTimeout(() => this.refreshGridViewport(), 0);
   }
 
   private createDefaultGrid(): any[][] {
@@ -359,6 +367,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   togglePropsPanel(): void {
     this.showPropsPanel.set(!this.showPropsPanel());
+    setTimeout(() => this.refreshGridViewport(), 0);
   }
 
   applyCellProps(): void {
@@ -528,6 +537,22 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   // === Helpers ===
+
+  private calculateGridHeight(): number {
+    const canvas = this.hotDesignerRef?.nativeElement?.parentElement;
+    if (!canvas) return 620;
+
+    const rect = canvas.getBoundingClientRect();
+    return Math.max(420, Math.floor(rect.height));
+  }
+
+  private refreshGridViewport(): void {
+    const hot = this.hot;
+    if (!hot) return;
+
+    hot.updateSettings({ height: this.calculateGridHeight() });
+    hot.render();
+  }
 
   private notify(noiDung: string, loai: 'success' | 'error'): void {
     this.thongBao.set({ noiDung, loai });

@@ -37,87 +37,43 @@
 
   <!-- ===== TOOLBAR ===== -->
   <div class="designer-toolbar">
-    <!-- Grid structure -->
-    <div class="toolbar-group">
-      <span class="group-label">Lưới</span>
-      <button class="toolbar-btn" (click)="addRow()" title="Thêm dòng">
-        <i class="pi pi-plus"></i> Dòng
-      </button>
-      <button class="toolbar-btn" (click)="addCol()" title="Thêm cột">
-        <i class="pi pi-plus"></i> Cột
-      </button>
-      <button class="toolbar-btn danger" (click)="removeRow()" title="Xóa dòng">
-        <i class="pi pi-minus"></i> Dòng
-      </button>
-      <button class="toolbar-btn danger" (click)="removeCol()" title="Xóa cột">
-        <i class="pi pi-minus"></i> Cột
-      </button>
+    <div class="toolbar-clusters">
+      <div class="toolbar-section">
+        <span class="group-label">Cấu trúc</span>
+        <div class="toolbar-actions">
+          <button class="toolbar-btn" (click)="addRow()" title="Thêm dòng">
+            <i class="pi pi-plus"></i> Dòng
+          </button>
+          <button class="toolbar-btn" (click)="addCol()" title="Thêm cột">
+            <i class="pi pi-plus"></i> Cột
+          </button>
+          <button class="toolbar-btn danger" (click)="removeRow()" title="Xóa dòng">
+            <i class="pi pi-minus"></i> Dòng
+          </button>
+          <button class="toolbar-btn danger" (click)="removeCol()" title="Xóa cột">
+            <i class="pi pi-minus"></i> Cột
+          </button>
+        </div>
+      </div>
+
+      <div class="toolbar-section">
+        <span class="group-label">Gộp ô</span>
+        <div class="toolbar-actions">
+          <button class="toolbar-btn" (click)="mergeCellsAction()" title="Gộp ô đã chọn">
+            <i class="pi pi-arrows-h"></i> Gộp
+          </button>
+          <button class="toolbar-btn" (click)="unmergeCellsAction()" title="Tách ô">
+            <i class="pi pi-minus-circle"></i> Tách
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="toolbar-sep"></div>
-
-    <!-- Merge cells -->
-    <div class="toolbar-group">
-      <span class="group-label">Gộp ô</span>
-      <button class="toolbar-btn" (click)="mergeCellsAction()" title="Gộp ô đã chọn">
-        <i class="pi pi-arrows-h"></i> Gộp
-      </button>
-      <button class="toolbar-btn" (click)="unmergeCellsAction()" title="Tách ô">
-        <i class="pi pi-minus-circle"></i> Tách
-      </button>
-    </div>
-
-    <div class="toolbar-sep"></div>
-
-    <!-- Cell type quick marks -->
-    <div class="toolbar-group">
-      <span class="group-label">Loại ô</span>
-      <button class="toolbar-btn mark-header" (click)="markAs('header')" title="Đánh dấu Header">
-        H
-      </button>
-      <button class="toolbar-btn mark-text" (click)="markAs('text')" title="Đánh dấu Text (chỉ đọc)">
-        T
-      </button>
-      <button class="toolbar-btn mark-dim" (click)="markAs('dim')" title="Đánh dấu Dimension">
-        D
-      </button>
-      <button class="toolbar-btn mark-data" (click)="markAs('data')" title="Đánh dấu Data (nhập liệu)">
-        $
-      </button>
-      <button class="toolbar-btn mark-formula" (click)="markAs('formula')" title="Đánh dấu Formula">
-        <i class="pi pi-calculator"></i>
-      </button>
-    </div>
-
-    <div class="toolbar-sep"></div>
-
-    <!-- Fixed columns / rows -->
-    <div class="toolbar-group">
-      <span class="group-label">Cố định</span>
-      <label class="inline-field">
-        Cột:
-        <input type="number" [ngModel]="fixedCols" (ngModelChange)="setFixedCols($event)"
-               min="0" max="10" class="input-sm">
-      </label>
-      <label class="inline-field">
-        Dòng:
-        <input type="number" [ngModel]="fixedRows" (ngModelChange)="setFixedRows($event)"
-               min="0" max="10" class="input-sm">
-      </label>
-    </div>
-
-    <div class="toolbar-sep"></div>
-
-    <!-- Properties toggle -->
-    <div class="toolbar-group">
+    <div class="toolbar-right-info">
       <button class="toolbar-btn" [class.active]="showPropsPanel()"
               (click)="togglePropsPanel()" title="Bảng thuộc tính">
         <i class="pi pi-sliders-h"></i> Thuộc tính
       </button>
-    </div>
-
-    <!-- Cell info -->
-    <div class="toolbar-right-info">
       <span class="cell-address">{{ cellInfo() || '—' }}</span>
     </div>
   </div>
