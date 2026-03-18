@@ -23,15 +23,14 @@ $color-formula: #ea4335;
 
 $topbar-h: 56px;
 $breadcrumb-h: 44px;
-$footer-h: 40px;
-$workspace-offset: $topbar-h + $breadcrumb-h + $footer-h;
+$workspace-offset: $topbar-h + $breadcrumb-h;
 
 :host {
   display: block;
   width: calc(100% + 48px);
   height: calc(100vh - #{$workspace-offset});
   min-height: 680px;
-  margin: -20px -24px 0;
+  margin: -20px -24px -20px;
   overflow: hidden;
 }
 
@@ -264,7 +263,8 @@ $workspace-offset: $topbar-h + $breadcrumb-h + $footer-h;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 0;
+  flex: 1;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -275,6 +275,7 @@ $workspace-offset: $topbar-h + $breadcrumb-h + $footer-h;
   position: relative;
   display: flex;
   padding: 12px;
+  height: calc(100% - 60px); // Subtract formula bar height
 }
 
 .hot-wrapper {
@@ -287,6 +288,11 @@ $workspace-offset: $topbar-h + $breadcrumb-h + $footer-h;
   border: 1px solid $border;
   border-radius: 10px;
   overflow: hidden;
+  
+  // Ensure Handsontable fills the container properly
+  :deep(.handsontable) {
+    height: 100% !important;
+  }
 }
 
 .loading-overlay {
@@ -1499,7 +1505,7 @@ $workspace-offset: $topbar-h + $breadcrumb-h + $footer-h;
 @media (max-width: 768px) {
   :host {
     width: calc(100% + 32px);
-    margin: -20px -16px 0;
+    margin: -20px -16px -20px;
   }
 
   .designer-topbar {

@@ -95,8 +95,8 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   cellInfo = signal('');
   gridRows = 20;
   gridCols = 10;
-  fixedCols = 2;
-  fixedRows = 2;
+  fixedCols = 0;
+  fixedRows = 0;
 
   cellMetadata: Map<string, { role: CellRole; readOnly: boolean; formula?: string }> = new Map();
   mergedCells: { row: number; col: number; rowspan: number; colspan: number }[] = [];
@@ -186,7 +186,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       colHeaders: true,
       rowHeaders: true,
       width: '100%',
-      height: this.calculateGridHeight(),
+      height: '100%',
       stretchH: 'none',
       licenseKey: 'non-commercial-and-evaluation',
       manualColumnResize: true,
@@ -1203,7 +1203,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     const rows: DesignerRow[] = [];
     for (let r = this.fixedRows; r < data.length; r++) {
       const firstDataMeta = this.cellMetadata.get(`${r},${this.fixedCols}`);
-      rows.push({ key: `R${r - this.fixedRows + 1}`, role: firstDataMeta?.role === 'formula' ? 'formula' : 'data', formula: firstDataMeta?.formula });
+      rows.push({ key: `R${r + 1}`, role: firstDataMeta?.role === 'formula' ? 'formula' : 'data', formula: firstDataMeta?.formula });
     }
 
     const cellMeta: Record<string, { role: CellRole; readOnly: boolean; formula?: string }> = {};
@@ -1266,7 +1266,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   private refreshGridViewport(): void {
     if (!this.hot) return;
-    this.hot.updateSettings({ height: this.calculateGridHeight() });
+    this.hot.updateSettings({ height: '100%' });
     this.hot.render();
   }
 
