@@ -249,26 +249,36 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         this.attachEditorListener();
       },
 
-      // When user finishes editing normally (not through our formula mode)
       afterChange: (changes: any, source: string) => {
-        if (source === 'loadData' || source === 'formula-commit') return;
+        if (source === 'loadData') return;
         if (!changes) return;
+
+        // If the change came from our own recalculation, don't recurse
+        if (source === 'formula-commit') {
+          return;
+        }
+
+        let hasNewFormula = false;
 
         for (const [row, prop, , newVal] of changes) {
           const colIdx = typeof prop === 'number' ? prop : parseInt(prop, 10);
           if (isNaN(colIdx)) continue;
 
           if (typeof newVal === 'string' && newVal.startsWith('=')) {
-            // User typed a formula via normal editing (Enter without formula mode)
             const result = this.evaluateFormula(newVal, row, colIdx);
             this.cellMetadata.set(`${row},${colIdx}`, {
               role: 'formula', readOnly: false, formula: newVal,
             });
-            // Replace display value with result
             this.suppressEditorOpen = true;
             this.hot?.setDataAtCell(row, colIdx, result, 'formula-commit');
             this.suppressEditorOpen = false;
+            hasNewFormula = true;
           }
+        }
+
+        // Recalculate ALL existing formula cells whenever any cell value changes
+        if (!hasNewFormula) {
+          this.recalculateAllFormulas();
         }
       },
 
@@ -535,6 +545,39 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   // ==========================================
+  // Recalculate all formula cells
+  // ==========================================
+
+  private recalculateAllFormulas(): void {
+    if (!this.hot) return;
+
+    const updates: [number, number, any][] = [];
+
+    this.cellMetadata.forEach((meta, key) => {
+      if (!meta.formula) return;
+
+      const [rowStr, colStr] = key.split(',');
+      const row = parseInt(rowStr, 10);
+      const col = parseInt(colStr, 10);
+      const newResult = this.evaluateFormula(meta.formula, row, col);
+      const currentValue = this.hot!.getDataAtCell(row, col);
+
+      // Only update if result actually changed to avoid infinite loops
+      if (currentValue !== newResult) {
+        updates.push([row, col, newResult]);
+      }
+    });
+
+    if (updates.length > 0) {
+      this.suppressEditorOpen = true;
+      for (const [row, col, value] of updates) {
+        this.hot!.setDataAtCell(row, col, value, 'formula-commit');
+      }
+      this.suppressEditorOpen = false;
+    }
+  }
+
+  // ==========================================
   // Hook into Handsontable TEXTAREA editor
   // ==========================================
 
@@ -710,6 +753,9 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
     this.cleanupFormulaMode();
     this.hot.selectCell(cell.row, cell.col);
+
+    // Recalc other formulas that might depend on this cell
+    this.recalculateAllFormulas();
     this.hot.render();
   }
 
