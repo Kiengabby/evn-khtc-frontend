@@ -10,13 +10,12 @@ import { BieuMauService } from '../../services/bieu-mau.service';
 import { FormTemplate } from '../../../../core/models/form-template.model';
 
 // === Cell type in designer context ===
-type CellRole = 'text' | 'dim' | 'data' | 'formula' | 'header';
+type CellRole = 'text' | 'data' | 'formula' | 'header';
 
 interface DesignerCell {
   role: CellRole;
   value: any;
   readOnly: boolean;
-  dimKey?: string;
   formula?: string;
 }
 
@@ -25,7 +24,6 @@ interface DesignerColumn {
   title: string;
   width: number;
   role: CellRole;
-  dimKey?: string;
 }
 
 interface DesignerRow {
@@ -39,7 +37,9 @@ interface ExportedTemplate {
   templateId: string;
   templateName: string;
   version: string;
-  description: string;
+  entValues: string[];
+  sceValues: string[];
+  yeaValues: string[];
   gridData: any[][];
   nestedHeaders: any[][];
   columns: DesignerColumn[];
@@ -47,7 +47,7 @@ interface ExportedTemplate {
   mergeCells: { row: number; col: number; rowspan: number; colspan: number }[];
   fixedColumnsStart: number;
   fixedRowsTop: number;
-  cellMeta: Record<string, { role: CellRole; readOnly: boolean; formula?: string; dimKey?: string }>;
+  cellMeta: Record<string, { role: CellRole; readOnly: boolean; formula?: string }>;
 }
 
 @Component({
@@ -59,6 +59,7 @@ interface ExportedTemplate {
 export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('hotDesigner') hotDesignerRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('formulaInput') formulaInputRef?: ElementRef<HTMLInputElement>;
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -92,14 +93,28 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   propFormula = '';
   propColWidth = 100;
 
+  // === Excel-like features ===
+  formulaValue = signal('');
+  zoomLevel = signal(100);
+  dangChonThamChieuCongThuc = signal(false);
+  private formulaTargetCell: { row: number; col: number } | null = null;
+  private formulaTargetRange: { r1: number; c1: number; r2: number; c2: number } | null = null;
+  private formulaCaretStart = 0;
+  private formulaCaretEnd = 0;
+  private dangKhoiPhucLuaChonCongThuc = false;
+
   // === Template info dialog ===
   showInfoDialog = signal(false);
   templateInfo = {
     templateId: '',
     templateName: '',
     version: '2026',
-    description: '',
   };
+
+  // === Dimensions (fixed by nghiệp vụ) ===
+  entValues: string[] = ['EVN', 'EVNHCMC', 'EVNHANOI'];
+  sceValues: string[] = ['KH', 'TH'];
+  yeaValues: string[] = ['2025', '2026'];
 
   // === Lifecycle ===
 
@@ -177,6 +192,19 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       colWidths: this.createDefaultColWidths(),
 
       afterSelection: (r: number, c: number, r2: number, c2: number) => {
+        if (this.dangKhoiPhucLuaChonCongThuc) {
+          this.dangKhoiPhucLuaChonCongThuc = false;
+          return;
+        }
+
+        if (this.dangChonThamChieuCongThuc() && this.formulaTargetCell && this.formulaTargetRange) {
+          const ref = this.buildRangeReference(r, c, r2, c2);
+          this.chenThamChieuCongThuc(ref);
+          this.dangChonThamChieuCongThuc.set(false);
+          this.khoiPhucLuaChonOCongThuc();
+          return;
+        }
+
         this.selectedCell.set({ row: r, col: c });
         this.selectedRange.set({ r1: r, c1: c, r2, c2 });
         this.updateCellInfo(r, c);
@@ -222,8 +250,6 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
             cellProps.className = 'cell-designer-header';
           } else if (meta.role === 'text') {
             cellProps.className = 'cell-designer-text';
-          } else if (meta.role === 'dim') {
-            cellProps.className = 'cell-designer-dim';
           } else if (meta.role === 'data') {
             cellProps.className = 'cell-designer-data';
           } else if (meta.role === 'formula') {
@@ -344,23 +370,28 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   // === Cell Properties ===
 
   private updateCellInfo(row: number, col: number): void {
-    const colLetter = String.fromCharCode(65 + (col % 26));
-    this.cellInfo.set(`${colLetter}${row + 1}`);
+    this.cellInfo.set(this.toCellAddress(row, col));
   }
 
   private loadCellProps(row: number, col: number): void {
     const meta = this.cellMetadata.get(`${row},${col}`);
+    const cellValue = this.hot?.getDataAtCell(row, col);
+    const formulaFromCell = typeof cellValue === 'string' && cellValue.startsWith('=')
+      ? cellValue
+      : '';
+
     if (meta) {
       this.propCellRole = meta.role;
       this.propReadOnly = meta.readOnly;
-      this.propFormula = meta.formula || '';
+      this.propFormula = meta.formula || formulaFromCell || '';
     } else {
-      this.propCellRole = row < this.fixedRows ? 'header' : 'data';
+      // Default to 'data' for all cells (including headers initially)
+      this.propCellRole = 'data';
       this.propReadOnly = false;
-      this.propFormula = '';
+      this.propFormula = formulaFromCell || '';
     }
 
-    // Get column width
+    // Get column width (keep for internal use)
     const colWidth = this.hot?.getColWidth(col);
     this.propColWidth = typeof colWidth === 'number' ? colWidth : 100;
   }
@@ -379,17 +410,25 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     const c1 = range?.c1 ?? sel.col;
     const r2 = range?.r2 ?? sel.row;
     const c2 = range?.c2 ?? sel.col;
+    const formulaValue = this.propCellRole === 'formula'
+      ? this.normalizeFormula(this.propFormula)
+      : undefined;
 
     for (let r = Math.min(r1, r2); r <= Math.max(r1, r2); r++) {
       for (let c = Math.min(c1, c2); c <= Math.max(c1, c2); c++) {
         this.cellMetadata.set(`${r},${c}`, {
           role: this.propCellRole,
           readOnly: this.propReadOnly,
-          formula: this.propFormula || undefined,
+          formula: formulaValue,
         });
+
+        if (formulaValue) {
+          this.hot?.setDataAtCell(r, c, formulaValue, 'apply-formula');
+        }
       }
     }
 
+    this.dangChonThamChieuCongThuc.set(false);
     this.hot?.render();
     this.notify('Đã áp dụng thuộc tính ô', 'success');
   }
@@ -403,6 +442,54 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       plugin.setManualSize(sel.col, this.propColWidth);
       this.hot?.render();
     }
+  }
+
+  toggleChonThamChieuCongThuc(): void {
+    if (this.dangChonThamChieuCongThuc()) {
+      this.dangChonThamChieuCongThuc.set(false);
+      this.focusFormulaInput();
+      return;
+    }
+
+    const cell = this.selectedCell();
+    const range = this.selectedRange();
+    if (!cell || !range) {
+      this.notify('Hãy chọn ô công thức trước khi chèn tham chiếu', 'error');
+      return;
+    }
+
+    this.propCellRole = 'formula';
+    this.propReadOnly = true;
+    this.formulaTargetCell = { ...cell };
+    this.formulaTargetRange = { ...range };
+
+    if (!this.propFormula.trim()) {
+      this.propFormula = '=';
+      this.formulaCaretStart = 1;
+      this.formulaCaretEnd = 1;
+    } else {
+      this.captureFormulaCaret();
+    }
+
+    this.dangChonThamChieuCongThuc.set(true);
+    this.focusFormulaInput();
+  }
+
+  chenHamCongThuc(tenHam: 'SUM' | 'AVERAGE' | 'MIN' | 'MAX'): void {
+    this.propCellRole = 'formula';
+    this.propReadOnly = true;
+
+    const prefix = this.propFormula.trim().length === 0 ? '=' : '';
+    const text = `${prefix}${tenHam}()`;
+    const cursorOffset = prefix.length + tenHam.length + 1;
+    this.insertTextVaoCongThuc(text, cursorOffset);
+  }
+
+  capNhatConTroCongThuc(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    if (!input) return;
+    this.formulaCaretStart = input.selectionStart ?? input.value.length;
+    this.formulaCaretEnd = input.selectionEnd ?? input.value.length;
   }
 
   // Quick role buttons for marking cell types
@@ -504,7 +591,9 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       templateId: this.templateInfo.templateId || this.formId || 'NEW_TEMPLATE',
       templateName: this.templateInfo.templateName || 'Biểu mẫu mới',
       version: this.templateInfo.version,
-      description: this.templateInfo.description,
+      entValues: this.entValues.map(v => v.trim()).filter(Boolean),
+      sceValues: this.sceValues.map(v => v.trim()).filter(Boolean),
+      yeaValues: this.yeaValues.map(v => v.trim()).filter(Boolean),
       gridData: data,
       nestedHeaders,
       columns,
@@ -538,6 +627,80 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   // === Helpers ===
 
+  private chenThamChieuCongThuc(ref: string): void {
+    if (this.propFormula.trim().length === 0) {
+      this.propFormula = '=';
+      this.formulaCaretStart = 1;
+      this.formulaCaretEnd = 1;
+    }
+
+    this.insertTextVaoCongThuc(ref);
+  }
+
+  private insertTextVaoCongThuc(text: string, cursorOffset = text.length): void {
+    const current = this.propFormula || '';
+    const start = Math.min(this.formulaCaretStart, current.length);
+    const end = Math.min(this.formulaCaretEnd, current.length);
+
+    this.propFormula = current.slice(0, start) + text + current.slice(end);
+    const nextPos = start + cursorOffset;
+    this.formulaCaretStart = nextPos;
+    this.formulaCaretEnd = nextPos;
+    this.focusFormulaInput(nextPos);
+  }
+
+  private focusFormulaInput(caretPosition?: number): void {
+    setTimeout(() => {
+      const input = this.formulaInputRef?.nativeElement;
+      if (!input) return;
+
+      input.focus();
+      const pos = caretPosition ?? this.formulaCaretEnd ?? input.value.length;
+      input.setSelectionRange(pos, pos);
+    }, 0);
+  }
+
+  private captureFormulaCaret(): void {
+    const input = this.formulaInputRef?.nativeElement;
+    if (!input) return;
+
+    this.formulaCaretStart = input.selectionStart ?? input.value.length;
+    this.formulaCaretEnd = input.selectionEnd ?? input.value.length;
+  }
+
+  private khoiPhucLuaChonOCongThuc(): void {
+    if (!this.hot || !this.formulaTargetRange) return;
+
+    const { r1, c1, r2, c2 } = this.formulaTargetRange;
+    this.dangKhoiPhucLuaChonCongThuc = true;
+    this.hot.selectCell(r1, c1, r2, c2);
+    this.focusFormulaInput();
+  }
+
+  private buildRangeReference(r1: number, c1: number, r2: number, c2: number): string {
+    const start = this.toCellAddress(Math.min(r1, r2), Math.min(c1, c2));
+    const end = this.toCellAddress(Math.max(r1, r2), Math.max(c1, c2));
+    return start === end ? start : `${start}:${end}`;
+  }
+
+  private toCellAddress(row: number, col: number): string {
+    let column = '';
+    let current = col;
+
+    while (current >= 0) {
+      column = String.fromCharCode((current % 26) + 65) + column;
+      current = Math.floor(current / 26) - 1;
+    }
+
+    return `${column}${row + 1}`;
+  }
+
+  private normalizeFormula(formula: string): string | undefined {
+    const value = formula.trim();
+    if (!value) return undefined;
+    return value.startsWith('=') ? value : `=${value}`;
+  }
+
   private calculateGridHeight(): number {
     const canvas = this.hotDesignerRef?.nativeElement?.parentElement;
     if (!canvas) return 620;
@@ -557,5 +720,88 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   private notify(noiDung: string, loai: 'success' | 'error'): void {
     this.thongBao.set({ noiDung, loai });
     setTimeout(() => this.thongBao.set(null), 3000);
+  }
+
+  // === Properties Panel Handlers ===
+  
+  onCellRoleChange(): void {
+    // Auto-apply when role changes
+    this.applyCellProps();
+  }
+
+  onReadOnlyChange(): void {
+    // Auto-apply when read-only changes
+    this.applyCellProps();
+  }
+
+  // === Excel-style Formula Bar Methods ===
+  
+  onFormulaKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.applyFormulaValue();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cancelFormulaEdit();
+    }
+  }
+
+  onFormulaFocus(): void {
+    // When formula bar is focused, show current cell value
+    const sel = this.selectedCell();
+    if (sel && this.hot) {
+      const cellValue = this.hot.getDataAtCell(sel.row, sel.col);
+      this.formulaValue.set(cellValue || '');
+    }
+  }
+
+  applyFormulaValue(): void {
+    const sel = this.selectedCell();
+    if (!sel || !this.hot) return;
+
+    const value = this.formulaValue();
+    this.hot.setDataAtCell(sel.row, sel.col, value);
+    
+    // If it's a formula, mark the cell as formula type
+    if (value && value.toString().startsWith('=')) {
+      this.cellMetadata.set(`${sel.row},${sel.col}`, {
+        role: 'formula',
+        readOnly: false,
+        formula: value.toString(),
+      });
+      this.propCellRole = 'formula';
+      this.hot.render();
+    }
+    
+    // Focus back to grid
+    this.hot.selectCell(sel.row, sel.col);
+  }
+
+  cancelFormulaEdit(): void {
+    // Restore original cell value
+    const sel = this.selectedCell();
+    if (sel && this.hot) {
+      const cellValue = this.hot.getDataAtCell(sel.row, sel.col);
+      this.formulaValue.set(cellValue || '');
+    }
+  }
+
+  // === Dimension values management (ENT/SCE/YEA) ===
+  addEntValue(): void { this.entValues.push(''); }
+  removeEntValue(index: number): void {
+    if (this.entValues.length <= 1) return;
+    this.entValues.splice(index, 1);
+  }
+
+  addSceValue(): void { this.sceValues.push(''); }
+  removeSceValue(index: number): void {
+    if (this.sceValues.length <= 1) return;
+    this.sceValues.splice(index, 1);
+  }
+
+  addYeaValue(): void { this.yeaValues.push(''); }
+  removeYeaValue(index: number): void {
+    if (this.yeaValues.length <= 1) return;
+    this.yeaValues.splice(index, 1);
   }
 }
