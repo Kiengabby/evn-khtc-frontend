@@ -10,37 +10,34 @@ import { HyperFormula } from 'hyperformula';
 import { BieuMauService } from '../../services/bieu-mau.service';
 import { FormTemplate } from '../../../../core/models/form-template.model';
 
+import {
+  FormLayoutConfig, ColumnConfig, HeaderRow, HeaderCell, MergeCell,
+} from '../../../../core/models/form-template.model';
+
 // === Types ===
 type CellRole = 'text' | 'data' | 'formula' | 'header';
 
-interface DesignerColumn {
-  key: string;
-  title: string;
-  width: number;
-  role: CellRole;
-}
-
-interface DesignerRow {
-  key: string;
-  role: 'data' | 'formula' | 'header';
-  formula?: string;
-}
-
+/** JSON chuẩn gửi xuống Backend — khớp SYS_FORM_TEMPLATE + SYS_FORM_VERSION + SYS_FORM_MAPPING */
 interface ExportedTemplate {
-  templateId: string;
-  templateName: string;
-  version: string;
-  entValues: string[];
-  sceValues: string[];
-  yeaValues: string[];
-  gridData: any[][];
-  nestedHeaders: any[][];
-  columns: DesignerColumn[];
-  rows: DesignerRow[];
-  mergeCells: { row: number; col: number; rowspan: number; colspan: number }[];
-  fixedColumnsStart: number;
-  fixedRowsTop: number;
-  cellMeta: Record<string, { role: CellRole; readOnly: boolean; formula?: string }>;
+  formId: string;
+  formName: string;
+  orgList: string[];
+  isDynamicRow: boolean;
+  layoutConfig: { type: string; allowDynamicRows: boolean; freezeColumns: number };
+  version: {
+    year: number;
+    layoutJSON: FormLayoutConfig;
+  };
+  mappings: FormMappingExport[];
+}
+
+interface FormMappingExport {
+  rowKey: string;
+  colKey: string;
+  accountCode: string;
+  cellRole: CellRole;
+  formula?: string;
+  isReadOnly: boolean;
 }
 
 interface FormulaHint {
@@ -323,8 +320,29 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   private getSourceFormula(row: number, col: number): string | null {
     if (!this.hot) return null;
+    // Try HyperFormula engine first (most reliable for formulas)
+    const hfFormula = this.getHyperFormulaCellFormula(row, col);
+    if (hfFormula) return hfFormula;
+    // Fallback to source data
     const src = this.hot.getSourceDataAtCell(row, col);
     return this.isFormula(src) ? String(src) : null;
+  }
+
+  /** Read formula directly from HyperFormula engine — guaranteed correct */
+  private getHyperFormulaCellFormula(row: number, col: number): string | null {
+    try {
+      const plugin = this.hot?.getPlugin('formulas') as any;
+      const engine = plugin?.engine;
+      if (!engine) return null;
+      const sheetName = engine.getSheetName(0);
+      if (sheetName === undefined) return null;
+      const sheetId = engine.getSheetId(sheetName);
+      if (sheetId === undefined) return null;
+      const formula = engine.getCellFormula({ sheet: sheetId, row, col });
+      return typeof formula === 'string' ? formula : null;
+    } catch {
+      return null;
+    }
   }
 
   // Used by visual highlight to resolve a range like "A1:B5" into cell coordinates
@@ -937,53 +955,214 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private exportToJson(): ExportedTemplate {
-    // Use getSourceData() to preserve formulas (not calculated results)
-    const data = this.hot!.getSourceData() as any[][];
+    const sourceData = this.hot!.getSourceData() as any[][];
     const colCount = this.hot!.countCols();
+    const rowCount = sourceData.length;
 
-    const columns: DesignerColumn[] = [];
+    // --- 1. Detect header rows (rows where ALL cells are text/header, no real data) ---
+    const headerRowCount = this.detectHeaderRowCount(sourceData, colCount);
+
+    // --- 2. Build columns (from header row labels + widths + types) ---
+    const columns: ColumnConfig[] = [];
     for (let c = 0; c < colCount; c++) {
-      const headerValue = data[0]?.[c] || `Col_${c}`;
-      const width = this.hot!.getColWidth(c) || 100;
-      const meta = this.cellMetadata.get(`${this.fixedRows},${c}`);
-      columns.push({
-        key: String.fromCharCode(65 + c), title: String(headerValue),
-        width: typeof width === 'number' ? width : 100,
-        role: meta?.role || (c < this.fixedCols ? 'text' : 'data'),
-      });
+      const rawWidth = this.hot!.getColWidth(c);
+      const width = typeof rawWidth === 'number' ? rawWidth : 100;
+      const colKey = this.colIndexToKey(c);
+      const title = this.resolveColumnTitle(sourceData, c, headerRowCount);
+      const colType = this.inferColumnType(sourceData, c, headerRowCount, rowCount);
+      columns.push({ key: colKey, title, width, type: colType });
     }
 
-    const rows: DesignerRow[] = [];
-    for (let r = this.fixedRows; r < data.length; r++) {
-      const firstDataMeta = this.cellMetadata.get(`${r},${this.fixedCols}`);
-      rows.push({ key: `R${r + 1}`, role: firstDataMeta?.role === 'formula' ? 'formula' : 'data', formula: firstDataMeta?.formula });
-    }
+    // --- 3. Build headerRows (label + rowspan/colspan from merge info) ---
+    const mergeCells = this.collectMergeCells();
+    const headerRows = this.buildHeaderRows(sourceData, headerRowCount, colCount, mergeCells);
 
-    const cellMeta: Record<string, { role: CellRole; readOnly: boolean; formula?: string }> = {};
-    this.cellMetadata.forEach((value, key) => { cellMeta[key] = value; });
+    // --- 4. Build mappings — only cells with formula or explicit role ---
+    // Read formula directly from HyperFormula engine for accuracy
+    const mappings: FormMappingExport[] = [];
+    for (let r = headerRowCount; r < rowCount; r++) {
+      for (let c = 0; c < colCount; c++) {
+        const meta = this.cellMetadata.get(`${r},${c}`);
+        const hfFormula = this.getHyperFormulaCellFormula(r, c);
+        const formula = hfFormula || meta?.formula || null;
 
-    const nestedHeaders: any[][] = [];
-    for (let r = 0; r < this.fixedRows; r++) nestedHeaders.push(data[r] || []);
+        if (formula || (meta && (meta.role === 'formula' || meta.readOnly))) {
+          const rowKey = `R${r + 1}`;
+          const colKey = this.colIndexToKey(c);
+          const rowLabel = this.getRowLabel(sourceData, r, colCount);
+          const accountCode = rowLabel
+            ? `${this.sanitizeCode(rowLabel)}_${colKey}`
+            : `${rowKey}_${colKey}`;
 
-    const mergePlugin = this.hot!.getPlugin('mergeCells');
-    const mergedCells: any[] = [];
-    if (mergePlugin && (mergePlugin as any).mergedCellsCollection?.mergedCells) {
-      for (const mc of (mergePlugin as any).mergedCellsCollection.mergedCells) {
-        mergedCells.push({ row: mc.row, col: mc.col, rowspan: mc.rowspan, colspan: mc.colspan });
+          mappings.push({
+            rowKey,
+            colKey,
+            accountCode,
+            cellRole: meta?.role || (formula ? 'formula' : 'data'),
+            formula: formula || undefined,
+            isReadOnly: meta?.readOnly ?? !!formula,
+          });
+        }
       }
     }
 
-    return {
-      templateId: this.templateInfo.templateId || this.formId || 'NEW_TEMPLATE',
-      templateName: this.templateInfo.templateName || 'Biểu mẫu mới',
-      version: this.templateInfo.version,
-      entValues: this.entValues.map(v => v.trim()).filter(Boolean),
-      sceValues: this.sceValues.map(v => v.trim()).filter(Boolean),
-      yeaValues: this.yeaValues.map(v => v.trim()).filter(Boolean),
-      gridData: data, nestedHeaders, columns, rows,
-      mergeCells: mergedCells.length > 0 ? mergedCells : this.mergedCells,
-      fixedColumnsStart: this.fixedCols, fixedRowsTop: this.fixedRows, cellMeta,
+    // --- 5. Assemble the final structure ---
+    const layoutJSON: FormLayoutConfig = {
+      columns,
+      headerRows,
+      mergeCells: mergeCells.length > 0 ? mergeCells : undefined,
+      fixedRowsTop: headerRowCount > 0 ? headerRowCount : undefined,
+      fixedColumnsLeft: this.fixedCols > 0 ? this.fixedCols : undefined,
     };
+
+    return {
+      formId: this.templateInfo.templateId || this.formId || 'NEW_TEMPLATE',
+      formName: this.templateInfo.templateName || 'Biểu mẫu mới',
+      orgList: this.entValues.map(v => v.trim()).filter(Boolean),
+      isDynamicRow: false,
+      layoutConfig: {
+        type: 'custom',
+        allowDynamicRows: false,
+        freezeColumns: this.fixedCols,
+      },
+      version: {
+        year: parseInt(this.templateInfo.version, 10) || new Date().getFullYear(),
+        layoutJSON,
+      },
+      mappings,
+    };
+  }
+
+  // --- Export helpers ---
+
+  private colIndexToKey(col: number): string {
+    let key = '';
+    let current = col;
+    while (current >= 0) {
+      key = String.fromCharCode((current % 26) + 65) + key;
+      current = Math.floor(current / 26) - 1;
+    }
+    return key;
+  }
+
+  private detectHeaderRowCount(data: any[][], colCount: number): number {
+    // Rows where all non-empty cells are strings (labels) = header rows
+    // Stop at first row that contains a numeric value or formula in a data column
+    let headerRows = 0;
+    for (let r = 0; r < data.length; r++) {
+      let isHeaderRow = true;
+      for (let c = 0; c < colCount; c++) {
+        const val = data[r]?.[c];
+        if (val === null || val === undefined || val === '') continue;
+        if (typeof val === 'number') { isHeaderRow = false; break; }
+        if (typeof val === 'string' && val.startsWith('=')) { isHeaderRow = false; break; }
+      }
+      if (isHeaderRow) {
+        headerRows = r + 1;
+      } else {
+        break;
+      }
+    }
+    return headerRows;
+  }
+
+  private resolveColumnTitle(data: any[][], col: number, headerRowCount: number): string {
+    // Use the first non-empty value in header rows, or fallback
+    for (let r = 0; r < headerRowCount; r++) {
+      const val = data[r]?.[col];
+      if (val !== null && val !== undefined && val !== '') return String(val);
+    }
+    return `Col_${col}`;
+  }
+
+  private inferColumnType(data: any[][], col: number, startRow: number, rowCount: number): 'text' | 'numeric' {
+    // Check data rows to infer type
+    for (let r = startRow; r < Math.min(rowCount, startRow + 20); r++) {
+      const val = data[r]?.[col];
+      if (val === null || val === undefined || val === '') continue;
+      if (typeof val === 'number') return 'numeric';
+      if (typeof val === 'string') {
+        if (val.startsWith('=')) return 'numeric';
+        const stripped = val.replace(/,/g, '');
+        if (!isNaN(parseFloat(stripped)) && isFinite(Number(stripped))) return 'numeric';
+      }
+    }
+    return 'text';
+  }
+
+  private collectMergeCells(): MergeCell[] {
+    const mergePlugin = this.hot!.getPlugin('mergeCells');
+    const result: MergeCell[] = [];
+    if (mergePlugin && (mergePlugin as any).mergedCellsCollection?.mergedCells) {
+      for (const mc of (mergePlugin as any).mergedCellsCollection.mergedCells) {
+        result.push({ row: mc.row, col: mc.col, rowspan: mc.rowspan, colspan: mc.colspan });
+      }
+    }
+    if (result.length === 0 && this.mergedCells.length > 0) {
+      return [...this.mergedCells];
+    }
+    return result;
+  }
+
+  private getRowLabel(data: any[][], row: number, colCount: number): string {
+    // Find the first non-empty text value in this row (typically column A or B = row label)
+    for (let c = 0; c < Math.min(colCount, 3); c++) {
+      const val = data[row]?.[c];
+      if (val !== null && val !== undefined && val !== '' && typeof val === 'string' && !val.startsWith('=')) {
+        return val.trim();
+      }
+    }
+    return '';
+  }
+
+  private sanitizeCode(label: string): string {
+    return label
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // strip diacritics
+      .replace(/[đĐ]/g, 'D')
+      .replace(/\s+/g, '_')
+      .replace(/[^A-Za-z0-9_]/g, '')
+      .toUpperCase()
+      .substring(0, 30);
+  }
+
+  private buildHeaderRows(data: any[][], headerRowCount: number, colCount: number, mergeCells: MergeCell[]): HeaderRow[] {
+    const rows: HeaderRow[] = [];
+
+    // Track which cells are "owned" by a merge (non-top-left cells should be skipped)
+    const mergeOwner = new Map<string, MergeCell>();
+    for (const mc of mergeCells) {
+      for (let r = mc.row; r < mc.row + mc.rowspan; r++) {
+        for (let c = mc.col; c < mc.col + mc.colspan; c++) {
+          mergeOwner.set(`${r},${c}`, mc);
+        }
+      }
+    }
+
+    for (let r = 0; r < headerRowCount; r++) {
+      const cells: HeaderCell[] = [];
+      for (let c = 0; c < colCount; c++) {
+        const key = `${r},${c}`;
+        const mc = mergeOwner.get(key);
+
+        if (mc && (mc.row !== r || mc.col !== c)) {
+          // This cell is part of a merge but not the top-left → skip
+          continue;
+        }
+
+        const label = data[r]?.[c] != null ? String(data[r][c]) : '';
+        const cell: HeaderCell = { label };
+
+        if (mc) {
+          if (mc.rowspan > 1) cell.rowspan = mc.rowspan;
+          if (mc.colspan > 1) cell.colspan = mc.colspan;
+        }
+
+        cells.push(cell);
+      }
+      rows.push({ cells });
+    }
+
+    return rows;
   }
 
   exportJsonToClipboard(): void {
@@ -996,13 +1175,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   quayLai(): void { this.router.navigate(['/app/form-designer/templates']); }
 
   toCellAddress(row: number, col: number): string {
-    let column = '';
-    let current = col;
-    while (current >= 0) {
-      column = String.fromCharCode((current % 26) + 65) + column;
-      current = Math.floor(current / 26) - 1;
-    }
-    return `${column}${row + 1}`;
+    return `${this.colIndexToKey(col)}${row + 1}`;
   }
 
   private normalizeFormula(formula: string): string | undefined {
