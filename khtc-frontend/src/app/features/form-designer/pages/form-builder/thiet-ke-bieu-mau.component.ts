@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Handsontable from 'handsontable';
+import { HyperFormula } from 'hyperformula';
 import { BieuMauService } from '../../services/bieu-mau.service';
 import { FormTemplate } from '../../../../core/models/form-template.model';
 
@@ -181,6 +182,14 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   private initDesigner(): void {
     if (!this.hotDesignerRef?.nativeElement) return;
 
+    const hfInstance = HyperFormula.buildEmpty({
+      licenseKey: 'internal-use-in-handsontable',
+      functionArgSeparator: ';',
+      decimalSeparator: '.',
+      thousandSeparator: ',',
+      smartRounding: true,
+    });
+
     this.hot = new Handsontable(this.hotDesignerRef.nativeElement, {
       data: this.createDefaultGrid(),
       colHeaders: true,
@@ -204,6 +213,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       fixedRowsTop: this.fixedRows,
       className: 'designer-grid',
       colWidths: this.createDefaultColWidths(),
+      formulas: { engine: hfInstance },
 
       // Intercept clicks in formula mode
       beforeOnCellMouseDown: (event: MouseEvent, coords: { row: number; col: number }) => {
@@ -228,7 +238,6 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         this.syncFormulaBar(r, c);
       },
 
-      // When editing starts, hook into the TEXTAREA
       afterBeginEditing: (row: number, col: number) => {
         if (this.suppressEditorOpen) return;
 
@@ -236,49 +245,28 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         this.selectedCell.set({ row, col });
         this.updateCellInfo(row, col);
 
-        // If this cell has a stored formula, put the formula into the editor
-        const meta = this.cellMetadata.get(`${row},${col}`);
-        if (meta?.formula) {
-          const editor = this.hot?.getActiveEditor() as any;
-          if (editor?.TEXTAREA) {
-            editor.TEXTAREA.value = meta.formula;
-            this.formulaBarValue = meta.formula;
-          }
+        // HyperFormula automatically puts the formula into the editor textarea
+        // Just sync the formula bar
+        const sourceValue = this.hot?.getSourceDataAtCell(row, col);
+        if (this.isFormula(sourceValue)) {
+          this.formulaBarValue = String(sourceValue);
         }
 
         this.attachEditorListener();
       },
 
       afterChange: (changes: any, source: string) => {
-        if (source === 'loadData') return;
-        if (!changes) return;
-
-        // If the change came from our own recalculation, don't recurse
-        if (source === 'formula-commit') {
-          return;
-        }
-
-        let hasNewFormula = false;
+        if (source === 'loadData' || source === 'formula-commit' || !changes) return;
 
         for (const [row, prop, , newVal] of changes) {
           const colIdx = typeof prop === 'number' ? prop : parseInt(prop, 10);
           if (isNaN(colIdx)) continue;
 
-          if (typeof newVal === 'string' && newVal.startsWith('=')) {
-            const result = this.evaluateFormula(newVal, row, colIdx);
+          if (this.isFormula(newVal)) {
             this.cellMetadata.set(`${row},${colIdx}`, {
-              role: 'formula', readOnly: false, formula: newVal,
+              role: 'formula', readOnly: false, formula: String(newVal),
             });
-            this.suppressEditorOpen = true;
-            this.hot?.setDataAtCell(row, colIdx, result, 'formula-commit');
-            this.suppressEditorOpen = false;
-            hasNewFormula = true;
           }
-        }
-
-        // Recalculate ALL existing formula cells whenever any cell value changes
-        if (!hasNewFormula) {
-          this.recalculateAllFormulas();
         }
       },
 
@@ -326,167 +314,20 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   // ==========================================
-  // FORMULA EVALUATOR
+  // Formula helpers (HyperFormula handles all evaluation)
   // ==========================================
 
-  private evaluateFormula(formula: string, sourceRow: number, sourceCol: number): any {
-    if (!formula.startsWith('=') || !this.hot) return formula;
-
-    try {
-      const expr = formula.substring(1).trim();
-      return this.evalExpression(expr, sourceRow, sourceCol);
-    } catch (e) {
-      console.warn('[FormulaEval] Error:', e);
-      return '#ERROR!';
-    }
+  private isFormula(value: any): boolean {
+    return typeof value === 'string' && value.startsWith('=');
   }
 
-  private evalExpression(expr: string, srcRow: number, srcCol: number): any {
-    // Try to match a function call: FUNCNAME(args)
-    const funcMatch = expr.match(/^([A-Z]+)\((.+)\)$/i);
-    if (funcMatch) {
-      const funcName = funcMatch[1].toUpperCase();
-      const argsStr = funcMatch[2];
-      return this.evalFunction(funcName, argsStr, srcRow, srcCol);
-    }
-
-    // Try arithmetic: split by + - * /
-    // Handle simple binary operations
-    const arithmeticResult = this.evalArithmetic(expr, srcRow, srcCol);
-    if (arithmeticResult !== null) return arithmeticResult;
-
-    // Single cell reference
-    const cellRef = this.fromCellAddress(expr.trim());
-    if (cellRef) {
-      return this.getCellNumericValue(cellRef.row, cellRef.col);
-    }
-
-    // Literal number
-    const num = parseFloat(expr);
-    if (!isNaN(num)) return num;
-
-    return '#ERROR!';
+  private getSourceFormula(row: number, col: number): string | null {
+    if (!this.hot) return null;
+    const src = this.hot.getSourceDataAtCell(row, col);
+    return this.isFormula(src) ? String(src) : null;
   }
 
-  private evalFunction(funcName: string, argsStr: string, srcRow: number, srcCol: number): any {
-    // Collect all numeric values from arguments (supports ranges, refs, and literals)
-    const values = this.resolveArgValues(argsStr, srcRow, srcCol);
-
-    switch (funcName) {
-      case 'SUM':
-        return values.reduce((a, b) => a + b, 0);
-      case 'AVERAGE': {
-        if (values.length === 0) return 0;
-        return values.reduce((a, b) => a + b, 0) / values.length;
-      }
-      case 'MIN':
-        return values.length > 0 ? Math.min(...values) : 0;
-      case 'MAX':
-        return values.length > 0 ? Math.max(...values) : 0;
-      case 'COUNT':
-        return values.length;
-      case 'ABS':
-        return values.length > 0 ? Math.abs(values[0]) : 0;
-      case 'ROUND': {
-        const args = this.splitArgs(argsStr);
-        const num = this.resolveArgValues(args[0] || '0', srcRow, srcCol)[0] ?? 0;
-        const decimals = this.resolveArgValues(args[1] || '0', srcRow, srcCol)[0] ?? 0;
-        return parseFloat(num.toFixed(decimals));
-      }
-      case 'IF': {
-        const args = this.splitArgs(argsStr);
-        const condition = this.resolveArgValues(args[0] || '0', srcRow, srcCol)[0] ?? 0;
-        if (condition) {
-          return this.resolveArgValues(args[1] || '0', srcRow, srcCol)[0] ?? 0;
-        }
-        return this.resolveArgValues(args[2] || '0', srcRow, srcCol)[0] ?? 0;
-      }
-      case 'COUNTA': {
-        // Count non-empty values
-        const allArgs = this.splitArgs(argsStr);
-        let count = 0;
-        for (const arg of allArgs) {
-          const trimmed = arg.trim();
-          if (trimmed.includes(':')) {
-            const cells = this.resolveRangeCells(trimmed);
-            for (const c of cells) {
-              const v = this.hot?.getDataAtCell(c.row, c.col);
-              if (v !== null && v !== undefined && v !== '') count++;
-            }
-          } else {
-            const ref = this.fromCellAddress(trimmed);
-            if (ref) {
-              const v = this.hot?.getDataAtCell(ref.row, ref.col);
-              if (v !== null && v !== undefined && v !== '') count++;
-            }
-          }
-        }
-        return count;
-      }
-      default:
-        return '#NAME?';
-    }
-  }
-
-  private resolveArgValues(argsStr: string, _srcRow: number, _srcCol: number): number[] {
-    const args = this.splitArgs(argsStr);
-    const values: number[] = [];
-
-    for (const arg of args) {
-      const trimmed = arg.trim();
-
-      // Range reference: A1:B5
-      if (trimmed.includes(':')) {
-        const cells = this.resolveRangeCells(trimmed);
-        for (const c of cells) {
-          const v = this.getCellNumericValue(c.row, c.col);
-          if (typeof v === 'number' && !isNaN(v)) values.push(v);
-        }
-        continue;
-      }
-
-      // Single cell reference
-      const cellRef = this.fromCellAddress(trimmed);
-      if (cellRef) {
-        const v = this.getCellNumericValue(cellRef.row, cellRef.col);
-        if (typeof v === 'number' && !isNaN(v)) values.push(v);
-        continue;
-      }
-
-      // Literal number
-      const num = parseFloat(trimmed);
-      if (!isNaN(num)) {
-        values.push(num);
-      }
-    }
-
-    return values;
-  }
-
-  private splitArgs(argsStr: string): string[] {
-    // Split by ; or , respecting parentheses depth
-    const args: string[] = [];
-    let depth = 0;
-    let current = '';
-
-    for (const ch of argsStr) {
-      if (ch === '(') {
-        depth++;
-        current += ch;
-      } else if (ch === ')') {
-        depth--;
-        current += ch;
-      } else if ((ch === ';' || ch === ',') && depth === 0) {
-        args.push(current.trim());
-        current = '';
-      } else {
-        current += ch;
-      }
-    }
-    if (current.trim()) args.push(current.trim());
-    return args;
-  }
-
+  // Used by visual highlight to resolve a range like "A1:B5" into cell coordinates
   private resolveRangeCells(rangeStr: string): { row: number; col: number }[] {
     const parts = rangeStr.split(':');
     if (parts.length !== 2) return [];
@@ -501,80 +342,6 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       }
     }
     return cells;
-  }
-
-  private getCellNumericValue(row: number, col: number): number {
-    if (!this.hot) return 0;
-    const raw = this.hot.getDataAtCell(row, col);
-    if (raw === null || raw === undefined || raw === '') return 0;
-    const num = typeof raw === 'number' ? raw : parseFloat(String(raw));
-    return isNaN(num) ? 0 : num;
-  }
-
-  private evalArithmetic(expr: string, _srcRow: number, _srcCol: number): number | null {
-    // Simple arithmetic: only handles A1+B1, A1-B1, A1*B1, A1/B1
-    const opMatch = expr.match(/^(.+?)\s*([+\-*/])\s*(.+)$/);
-    if (!opMatch) return null;
-
-    const leftStr = opMatch[1].trim();
-    const op = opMatch[2];
-    const rightStr = opMatch[3].trim();
-
-    const left = this.resolveScalar(leftStr);
-    const right = this.resolveScalar(rightStr);
-
-    if (left === null || right === null) return null;
-
-    switch (op) {
-      case '+': return left + right;
-      case '-': return left - right;
-      case '*': return left * right;
-      case '/': return right !== 0 ? left / right : '#DIV/0!' as any;
-      default: return null;
-    }
-  }
-
-  private resolveScalar(token: string): number | null {
-    const num = parseFloat(token);
-    if (!isNaN(num)) return num;
-
-    const ref = this.fromCellAddress(token);
-    if (ref) return this.getCellNumericValue(ref.row, ref.col);
-
-    return null;
-  }
-
-  // ==========================================
-  // Recalculate all formula cells
-  // ==========================================
-
-  private recalculateAllFormulas(): void {
-    if (!this.hot) return;
-
-    const updates: [number, number, any][] = [];
-
-    this.cellMetadata.forEach((meta, key) => {
-      if (!meta.formula) return;
-
-      const [rowStr, colStr] = key.split(',');
-      const row = parseInt(rowStr, 10);
-      const col = parseInt(colStr, 10);
-      const newResult = this.evaluateFormula(meta.formula, row, col);
-      const currentValue = this.hot!.getDataAtCell(row, col);
-
-      // Only update if result actually changed to avoid infinite loops
-      if (currentValue !== newResult) {
-        updates.push([row, col, newResult]);
-      }
-    });
-
-    if (updates.length > 0) {
-      this.suppressEditorOpen = true;
-      for (const [row, col, value] of updates) {
-        this.hot!.setDataAtCell(row, col, value, 'formula-commit');
-      }
-      this.suppressEditorOpen = false;
-    }
   }
 
   // ==========================================
@@ -726,36 +493,26 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
     const formula = this.getActiveFormulaValue();
 
-    // Close editor without saving (we'll write the result ourselves)
     const editor = this.hot.getActiveEditor() as any;
     if (editor) {
       editor.finishEditing(true, false);
     }
 
-    if (formula.startsWith('=')) {
-      // Evaluate and display result, store formula in metadata
-      const result = this.evaluateFormula(formula, cell.row, cell.col);
+    // HyperFormula handles evaluation: just set the formula string as cell value
+    this.suppressEditorOpen = true;
+    this.hot.setDataAtCell(cell.row, cell.col, formula, 'formula-commit');
+    this.suppressEditorOpen = false;
 
+    if (this.isFormula(formula)) {
       this.cellMetadata.set(`${cell.row},${cell.col}`, {
-        role: 'formula', readOnly: false, formula: formula,
+        role: 'formula', readOnly: false, formula,
       });
-
-      this.suppressEditorOpen = true;
-      this.hot.setDataAtCell(cell.row, cell.col, result, 'formula-commit');
-      this.suppressEditorOpen = false;
-
       this.propCellRole = 'formula';
-      this.formulaBarValue = formula;
-    } else {
-      this.hot.setDataAtCell(cell.row, cell.col, formula, 'formula-commit');
-      this.formulaBarValue = formula;
     }
 
+    this.formulaBarValue = formula;
     this.cleanupFormulaMode();
     this.hot.selectCell(cell.row, cell.col);
-
-    // Recalc other formulas that might depend on this cell
-    this.recalculateAllFormulas();
     this.hot.render();
   }
 
@@ -775,9 +532,9 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       if (editor) editor.finishEditing(true, false);
 
       if (this.editingCell && this.hot) {
-        const meta = this.cellMetadata.get(`${this.editingCell.row},${this.editingCell.col}`);
-        if (meta?.formula) {
-          this.formulaBarValue = meta.formula;
+        const sourceFormula = this.getSourceFormula(this.editingCell.row, this.editingCell.col);
+        if (sourceFormula) {
+          this.formulaBarValue = sourceFormula;
         } else {
           const cellValue = this.hot.getDataAtCell(this.editingCell.row, this.editingCell.col);
           this.formulaBarValue = cellValue != null ? String(cellValue) : '';
@@ -818,14 +575,12 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         const sel = this.selectedCell();
         if (sel && this.hot) {
           const value = this.formulaBarValue;
-          if (value.startsWith('=')) {
-            const result = this.evaluateFormula(value, sel.row, sel.col);
+          // HyperFormula evaluates formulas: just set the value
+          this.hot.setDataAtCell(sel.row, sel.col, value);
+          if (this.isFormula(value)) {
             this.cellMetadata.set(`${sel.row},${sel.col}`, {
               role: 'formula', readOnly: false, formula: value,
             });
-            this.hot.setDataAtCell(sel.row, sel.col, result, 'formula-commit');
-          } else {
-            this.hot.setDataAtCell(sel.row, sel.col, value);
           }
           this.hot.selectCell(sel.row, sel.col);
         }
@@ -843,14 +598,13 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     this.formulaBarFocused.set(true);
     const sel = this.selectedCell();
     if (sel && this.hot) {
-      // Show formula if cell has one, otherwise show display value
-      const meta = this.cellMetadata.get(`${sel.row},${sel.col}`);
-      if (meta?.formula) {
-        this.formulaBarValue = meta.formula;
+      const sourceFormula = this.getSourceFormula(sel.row, sel.col);
+      if (sourceFormula) {
+        this.formulaBarValue = sourceFormula;
         this.isFormulaMode.set(true);
         this.formulaSource = 'bar';
         this.editingCell = { ...sel };
-        this.parseAndHighlightReferences(meta.formula);
+        this.parseAndHighlightReferences(sourceFormula);
       } else {
         const cellValue = this.hot.getDataAtCell(sel.row, sel.col);
         this.formulaBarValue = cellValue != null ? String(cellValue) : '';
@@ -874,12 +628,11 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   private syncFormulaBar(row: number, col: number): void {
     if (this.isFormulaMode()) return;
 
-    const meta = this.cellMetadata.get(`${row},${col}`);
-    if (meta?.formula) {
-      // Cell has a formula → show formula in bar
-      this.formulaBarValue = meta.formula;
+    // With HyperFormula: getSourceDataAtCell returns the formula, getDataAtCell returns the result
+    const sourceValue = this.hot?.getSourceDataAtCell(row, col);
+    if (this.isFormula(sourceValue)) {
+      this.formulaBarValue = String(sourceValue);
     } else {
-      // Normal cell → show display value
       const cellValue = this.hot?.getDataAtCell(row, col);
       this.formulaBarValue = cellValue != null ? String(cellValue) : '';
     }
@@ -1112,17 +865,16 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   private loadCellProps(row: number, col: number): void {
     const meta = this.cellMetadata.get(`${row},${col}`);
-    const cellValue = this.hot?.getDataAtCell(row, col);
-    const formulaFromMeta = meta?.formula || '';
+    const sourceFormula = this.getSourceFormula(row, col);
 
     if (meta) {
       this.propCellRole = meta.role;
       this.propReadOnly = meta.readOnly;
-      this.propFormula = formulaFromMeta;
+      this.propFormula = sourceFormula || meta.formula || '';
     } else {
-      this.propCellRole = 'data';
+      this.propCellRole = sourceFormula ? 'formula' : 'data';
       this.propReadOnly = false;
-      this.propFormula = (typeof cellValue === 'string' && cellValue.startsWith('=')) ? cellValue : '';
+      this.propFormula = sourceFormula || '';
     }
     const colWidth = this.hot?.getColWidth(col);
     this.propColWidth = typeof colWidth === 'number' ? colWidth : 100;
@@ -1147,8 +899,8 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       for (let c = Math.min(c1, c2); c <= Math.max(c1, c2); c++) {
         this.cellMetadata.set(`${r},${c}`, { role: this.propCellRole, readOnly: this.propReadOnly, formula: formulaValue });
         if (formulaValue) {
-          const result = this.evaluateFormula(formulaValue, r, c);
-          this.hot?.setDataAtCell(r, c, result, 'formula-commit');
+          // HyperFormula evaluates: just set the formula string
+          this.hot?.setDataAtCell(r, c, formulaValue, 'formula-commit');
         }
       }
     }
@@ -1185,7 +937,8 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private exportToJson(): ExportedTemplate {
-    const data = this.hot!.getData();
+    // Use getSourceData() to preserve formulas (not calculated results)
+    const data = this.hot!.getSourceData() as any[][];
     const colCount = this.hot!.countCols();
 
     const columns: DesignerColumn[] = [];
@@ -1258,11 +1011,6 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     return value.startsWith('=') ? value : `=${value}`;
   }
 
-  private calculateGridHeight(): number {
-    const canvas = this.hotDesignerRef?.nativeElement?.parentElement;
-    if (!canvas) return 620;
-    return Math.max(420, Math.floor(canvas.getBoundingClientRect().height));
-  }
 
   private refreshGridViewport(): void {
     if (!this.hot) return;
