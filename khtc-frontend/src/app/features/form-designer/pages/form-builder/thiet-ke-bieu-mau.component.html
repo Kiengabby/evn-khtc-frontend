@@ -83,32 +83,57 @@
 
     <!-- Grid area with Excel-style formula bar -->
     <div class="grid-area">
+
       <!-- Excel-style Formula bar -->
-      <div class="excel-formula-bar">
+      <div class="excel-formula-bar" [class.formula-active]="isFormulaMode()">
         <div class="name-box">
           <span class="cell-name">{{ cellInfo() || 'A1' }}</span>
         </div>
-        <div class="fx-button">
-          <i class="pi pi-calculator"></i>
+        <div class="fx-indicator" [class.active]="isFormulaMode()">
+          <span>fx</span>
         </div>
         <div class="formula-input-container">
-          <input type="text" 
-                 class="excel-formula-input" 
-                 [(ngModel)]="formulaValue"
-                 (keydown)="onFormulaKeydown($event)"
-                 (blur)="applyFormulaValue()"
-                 (focus)="onFormulaFocus()"
-                 placeholder="Nhập giá trị hoặc công thức (VD: =SUM(A1:A10))">
+          <input type="text"
+                 class="excel-formula-input"
+                 #formulaBarInput
+                 [(ngModel)]="formulaBarValue"
+                 (input)="onFormulaBarInput($event)"
+                 (keydown)="onFormulaBarKeydown($event)"
+                 (focus)="onFormulaBarFocus()"
+                 (blur)="onFormulaBarBlur()"
+                 [class.editing]="isFormulaMode()"
+                 placeholder="Nhập giá trị hoặc công thức (bắt đầu bằng =)">
         </div>
         <div class="formula-actions">
-          <button class="formula-action-btn cancel" (click)="cancelFormulaEdit()" title="Hủy (Esc)">
-            <i class="pi pi-times"></i>
-          </button>
-          <button class="formula-action-btn confirm" (click)="applyFormulaValue()" title="Xác nhận (Enter)">
-            <i class="pi pi-check"></i>
-          </button>
+          @if (isFormulaMode() || formulaBarFocused()) {
+            <button class="formula-action-btn cancel"
+                    (click)="exitFormulaMode(false)"
+                    title="Hủy (Esc)">
+              <i class="pi pi-times"></i>
+            </button>
+            <button class="formula-action-btn confirm"
+                    (click)="exitFormulaMode(true)"
+                    title="Xác nhận (Enter)">
+              <i class="pi pi-check"></i>
+            </button>
+          }
         </div>
       </div>
+
+      <!-- Formula mode indicator -->
+      @if (isFormulaMode()) {
+        <div class="formula-mode-bar">
+          <i class="pi pi-calculator"></i>
+          <span>Chế độ công thức — Click vào ô trên lưới để chèn tọa độ, kéo thả để chọn vùng</span>
+          <div class="formula-ref-colors">
+            @for (ref of formulaReferences(); track ref.ref) {
+              <span class="ref-tag" [style.border-color]="ref.color" [style.color]="ref.color">
+                {{ ref.ref }}
+              </span>
+            }
+          </div>
+        </div>
+      }
 
       <!-- Grid canvas -->
       <div class="designer-canvas">
@@ -140,22 +165,21 @@
           <div class="prop-section">
             <label>Loại ô</label>
             <select [(ngModel)]="propCellRole" (ngModelChange)="onCellRoleChange()" class="prop-select">
-              <option value="data">📊 Data (nhập liệu số liệu)</option>
-              <option value="header">📋 Header (tiêu đề cột/dòng)</option>
-              <option value="text">📝 Text (văn bản cố định)</option>
-              <option value="formula">🧮 Formula (công thức tính toán)</option>
+              <option value="data">Data (nhập liệu số liệu)</option>
+              <option value="header">Header (tiêu đề cột/dòng)</option>
+              <option value="text">Text (văn bản cố định)</option>
+              <option value="formula">Formula (công thức tính toán)</option>
             </select>
-            
-            <!-- Giải thích loại ô được chọn -->
+
             <div class="cell-type-explanation">
               @if (propCellRole === 'data') {
-                <small>💡 Ô dữ liệu: Cho phép nhập số liệu, giá trị thực tế</small>
+                <small>Ô dữ liệu: Cho phép nhập số liệu, giá trị thực tế</small>
               } @else if (propCellRole === 'header') {
-                <small>💡 Ô tiêu đề: Tên cột, tên dòng, không thay đổi</small>
+                <small>Ô tiêu đề: Tên cột, tên dòng, không thay đổi</small>
               } @else if (propCellRole === 'text') {
-                <small>💡 Ô văn bản: Ghi chú, mô tả, văn bản cố định</small>
+                <small>Ô văn bản: Ghi chú, mô tả, văn bản cố định</small>
               } @else if (propCellRole === 'formula') {
-                <small>💡 Ô công thức: Tự động tính toán từ các ô khác</small>
+                <small>Ô công thức: Tự động tính toán từ các ô khác</small>
               }
             </div>
           </div>
@@ -167,12 +191,11 @@
             </label>
           </div>
 
-          <!-- Formula được nhập ở Formula Bar phía trên, không cần ở đây -->
           @if (propCellRole === 'formula') {
             <div class="prop-section">
               <div class="formula-note">
                 <i class="pi pi-info-circle"></i>
-                <span>Nhập công thức ở thanh Formula Bar phía trên (bắt đầu bằng =)</span>
+                <span>Nhập công thức ở thanh Formula Bar phía trên (bắt đầu bằng =). Click vào ô trên lưới để chèn tọa độ.</span>
               </div>
             </div>
           }
@@ -191,9 +214,6 @@
                 <span class="legend-color text"></span> Text
               </div>
               <div class="legend-item">
-                <span class="legend-color dim"></span> Dimension
-              </div>
-              <div class="legend-item">
                 <span class="legend-color data"></span> Data
               </div>
               <div class="legend-item">
@@ -206,12 +226,27 @@
     }
   </div>
 
+  <!-- ===== FORMULA TOOLTIP (AC5) ===== -->
+  @if (showFormulaTooltip() && matchedHints().length > 0) {
+    <div class="formula-tooltip"
+         [style.top.px]="tooltipPosition().top"
+         [style.left.px]="tooltipPosition().left">
+      <div class="tooltip-header">Gợi ý hàm</div>
+      @for (hint of matchedHints(); track hint.name) {
+        <div class="tooltip-item" (mousedown)="autocompleteHint(hint); $event.preventDefault()">
+          <div class="tooltip-fn-name">{{ hint.name }}</div>
+          <div class="tooltip-fn-syntax">{{ hint.syntax }}</div>
+          <div class="tooltip-fn-desc">{{ hint.description }}</div>
+        </div>
+      }
+    </div>
+  }
+
   <!-- ===== MODERN TEMPLATE INFO DIALOG ===== -->
   @if (showInfoDialog()) {
     <div class="modern-dialog-overlay" (click)="showInfoDialog.set(false)">
       <div class="modern-dialog" (click)="$event.stopPropagation()">
-        
-        <!-- Header với gradient -->
+
         <div class="modern-header">
           <div class="header-content">
             <div class="header-icon">
@@ -227,25 +262,23 @@
           </button>
         </div>
 
-        <!-- Content với tabs -->
         <div class="modern-content">
-          
-          <!-- Basic Info Section -->
+
           <div class="info-section">
             <div class="section-header">
               <i class="pi pi-info-circle"></i>
               <h3>Thông tin cơ bản</h3>
             </div>
-            
+
             <div class="form-grid">
               <div class="form-field">
                 <label class="modern-label">
                   Mã biểu mẫu <span class="required">*</span>
                 </label>
                 <div class="input-wrapper">
-                  <input type="text" 
+                  <input type="text"
                          [(ngModel)]="templateInfo.templateId"
-                         placeholder="VD: BKH_KH_01" 
+                         placeholder="VD: BKH_KH_01"
                          [disabled]="!!formId"
                          class="modern-input">
                   <div class="input-icon">
@@ -259,7 +292,7 @@
                   Tên biểu mẫu <span class="required">*</span>
                 </label>
                 <div class="input-wrapper">
-                  <input type="text" 
+                  <input type="text"
                          [(ngModel)]="templateInfo.templateName"
                          placeholder="VD: BKH.KH.01 — Kế hoạch Điện sản xuất và Mua"
                          class="modern-input">
@@ -271,14 +304,13 @@
             </div>
           </div>
 
-          <!-- Dimensions Section -->
           <div class="info-section">
             <div class="section-header">
               <i class="pi pi-sitemap"></i>
               <h3>Cấu hình Dimensions</h3>
               <div class="section-badge">Quan trọng</div>
             </div>
-            
+
             <div class="dimensions-help">
               <div class="help-card">
                 <i class="pi pi-lightbulb"></i>
@@ -290,7 +322,6 @@
             </div>
 
             <div class="dimensions-modern">
-              <!-- ENT Dimension -->
               <div class="dim-card">
                 <div class="dim-card-header">
                   <div class="dim-badge ent">ENT</div>
@@ -302,9 +333,9 @@
                 <div class="dim-values">
                   @for (value of entValues; track $index) {
                     <div class="modern-value-item">
-                      <input type="text" 
-                             [(ngModel)]="entValues[$index]" 
-                             class="modern-value-input" 
+                      <input type="text"
+                             [(ngModel)]="entValues[$index]"
+                             class="modern-value-input"
                              placeholder="VD: EVN, EVNHCMC...">
                       @if (entValues.length > 1) {
                         <button type="button" class="remove-value-btn" (click)="removeEntValue($index)">
@@ -320,7 +351,6 @@
                 </div>
               </div>
 
-              <!-- SCE Dimension -->
               <div class="dim-card">
                 <div class="dim-card-header">
                   <div class="dim-badge sce">SCE</div>
@@ -332,9 +362,9 @@
                 <div class="dim-values">
                   @for (value of sceValues; track $index) {
                     <div class="modern-value-item">
-                      <input type="text" 
-                             [(ngModel)]="sceValues[$index]" 
-                             class="modern-value-input" 
+                      <input type="text"
+                             [(ngModel)]="sceValues[$index]"
+                             class="modern-value-input"
                              placeholder="VD: KH, TH...">
                       @if (sceValues.length > 1) {
                         <button type="button" class="remove-value-btn" (click)="removeSceValue($index)">
@@ -350,7 +380,6 @@
                 </div>
               </div>
 
-              <!-- YEA Dimension -->
               <div class="dim-card">
                 <div class="dim-card-header">
                   <div class="dim-badge yea">YEA</div>
@@ -362,9 +391,9 @@
                 <div class="dim-values">
                   @for (value of yeaValues; track $index) {
                     <div class="modern-value-item">
-                      <input type="text" 
-                             [(ngModel)]="yeaValues[$index]" 
-                             class="modern-value-input" 
+                      <input type="text"
+                             [(ngModel)]="yeaValues[$index]"
+                             class="modern-value-input"
                              placeholder="VD: 2025, 2026...">
                       @if (yeaValues.length > 1) {
                         <button type="button" class="remove-value-btn" (click)="removeYeaValue($index)">
@@ -383,7 +412,6 @@
           </div>
         </div>
 
-        <!-- Modern Footer -->
         <div class="modern-footer">
           <button class="modern-btn secondary" (click)="showInfoDialog.set(false)">
             <i class="pi pi-times"></i>
