@@ -85,6 +85,7 @@ export interface HeaderRow {
 
 export interface HeaderCell {
     label: string;
+    colKey?: string;   // e.g. 'A','B' — để BE map chính xác cột
     colspan?: number;
     rowspan?: number;
     className?: string;

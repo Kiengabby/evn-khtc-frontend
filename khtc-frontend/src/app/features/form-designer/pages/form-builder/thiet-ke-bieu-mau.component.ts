@@ -36,6 +36,7 @@ interface FormMappingExport {
   colKey: string;
   accountCode: string;
   cellRole: CellRole;
+  cellValue?: string | number | null;
   formula?: string;
   isReadOnly: boolean;
 }
@@ -261,7 +262,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
           if (this.isFormula(newVal)) {
             this.cellMetadata.set(`${row},${colIdx}`, {
-              role: 'formula', readOnly: false, formula: String(newVal),
+              role: 'formula', readOnly: true, formula: String(newVal),
             });
           }
         }
@@ -278,6 +279,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
               rowspan: mergeParent.rowspan, colspan: mergeParent.colspan,
             });
           }
+          this.autoUpdateFixedRows();
         }
       },
 
@@ -286,6 +288,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
           this.mergedCells = this.mergedCells.filter(
             m => !(m.row === cellRange.from.row && m.col === cellRange.from.col)
           );
+          this.autoUpdateFixedRows();
         }
       },
 
@@ -298,10 +301,6 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
           else if (meta.role === 'text') cellProps.className = 'cell-designer-text';
           else if (meta.role === 'data') cellProps.className = 'cell-designer-data';
           else if (meta.role === 'formula') cellProps.className = 'cell-designer-formula';
-        }
-        if (row < this.fixedRows) {
-          cellProps.className = (cellProps.className || '') + ' cell-designer-header';
-          cellProps.readOnly = false;
         }
         return cellProps;
       },
@@ -523,7 +522,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
     if (this.isFormula(formula)) {
       this.cellMetadata.set(`${cell.row},${cell.col}`, {
-        role: 'formula', readOnly: false, formula,
+        role: 'formula', readOnly: true, formula,
       });
       this.propCellRole = 'formula';
     }
@@ -876,8 +875,23 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     this.hot?.render();
   }
 
-  setFixedCols(val: number): void { this.fixedCols = val; this.hot?.updateSettings({ fixedColumnsStart: val }); }
-  setFixedRows(val: number): void { this.fixedRows = val; this.hot?.updateSettings({ fixedRowsTop: val }); this.hot?.render(); }
+  setFixedCols(val: any): void { 
+    this.fixedCols = Number(val) || 0; 
+    this.hot?.updateSettings({ fixedColumnsStart: this.fixedCols }); 
+  }
+  setFixedRows(val: any): void { 
+    this.fixedRows = Number(val) || 0; 
+    this.hot?.updateSettings({ fixedRowsTop: this.fixedRows }); 
+    this.hot?.render(); 
+  }
+
+  autoUpdateFixedRows(): void {
+    if (!this.hot) return;
+    const data = this.hot.getSourceData() as any[][];
+    const colCount = this.hot.countCols();
+    const rows = this.detectHeaderRowCount(data, colCount);
+    this.setFixedRows(rows);
+  }
 
   private updateCellInfo(row: number, col: number): void { this.cellInfo.set(this.toCellAddress(row, col)); }
 
@@ -959,10 +973,13 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     const colCount = this.hot!.countCols();
     const rowCount = sourceData.length;
 
-    // --- 1. Detect header rows (rows where ALL cells are text/header, no real data) ---
-    const headerRowCount = this.detectHeaderRowCount(sourceData, colCount);
+    // --- 1. Collect merge cells first (needed for header detection) ---
+    const mergeCells = this.collectMergeCells();
 
-    // --- 2. Build columns (from header row labels + widths + types) ---
+    // --- 2. Detect header rows based on merge cells ---
+    const headerRowCount = this.detectHeaderRowCount(sourceData, colCount, mergeCells);
+
+    // --- 3. Build columns (from header row labels + widths + types) ---
     const columns: ColumnConfig[] = [];
     for (let c = 0; c < colCount; c++) {
       const rawWidth = this.hot!.getColWidth(c);
@@ -973,45 +990,78 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       columns.push({ key: colKey, title, width, type: colType });
     }
 
-    // --- 3. Build headerRows (label + rowspan/colspan from merge info) ---
-    const mergeCells = this.collectMergeCells();
+    // --- 4. Build headerRows (label + rowspan/colspan from merge info) ---
     const headerRows = this.buildHeaderRows(sourceData, headerRowCount, colCount, mergeCells);
 
-    // --- 4. Build mappings — only cells with formula or explicit role ---
-    // Read formula directly from HyperFormula engine for accuracy
+    // --- 5. Build mappings — ALL body cells (data + header + text + formula) ---
+    // Mỗi ô đều được export: BE biết đầy đủ layout + nội dung + vai trò
     const mappings: FormMappingExport[] = [];
     for (let r = headerRowCount; r < rowCount; r++) {
+      const rowKey = `R${r + 1}`;
+      const rowLabel = this.getRowLabel(sourceData, r, colCount);
+
       for (let c = 0; c < colCount; c++) {
+        const colKey = this.colIndexToKey(c);
         const meta = this.cellMetadata.get(`${r},${c}`);
         const hfFormula = this.getHyperFormulaCellFormula(r, c);
         const formula = hfFormula || meta?.formula || null;
 
-        if (formula || (meta && (meta.role === 'formula' || meta.readOnly))) {
-          const rowKey = `R${r + 1}`;
-          const colKey = this.colIndexToKey(c);
-          const rowLabel = this.getRowLabel(sourceData, r, colCount);
-          const accountCode = rowLabel
-            ? `${this.sanitizeCode(rowLabel)}_${colKey}`
-            : `${rowKey}_${colKey}`;
-
-          mappings.push({
-            rowKey,
-            colKey,
-            accountCode,
-            cellRole: meta?.role || (formula ? 'formula' : 'data'),
-            formula: formula || undefined,
-            isReadOnly: meta?.readOnly ?? !!formula,
-          });
+        // Xác định role: ưu tiên meta > formula > vị trí cột > default 'data'
+        let cellRole: CellRole;
+        if (meta?.role && meta.role !== 'data') {
+          // User đã gán role cụ thể (header/text/formula) → giữ nguyên
+          cellRole = meta.role;
+        } else if (formula) {
+          cellRole = 'formula';
+        } else if (c < this.fixedCols) {
+          // Cột cố định (STT, Chỉ tiêu) → tự động đánh dấu là header
+          cellRole = 'header';
+        } else {
+          // Cột data: kiểm tra nội dung để phân biệt text cố định vs ô nhập liệu
+          const val = sourceData[r]?.[c];
+          if (val !== null && val !== undefined && val !== '' && typeof val === 'string' && isNaN(Number(val))) {
+            // Có text không phải số → 'text' (ô ghi chú, đơn vị tính...)
+            cellRole = meta?.readOnly ? 'text' : 'data';
+          } else {
+            cellRole = 'data';
+          }
         }
+
+        // Lấy giá trị hiển thị của ô (source data giữ nguyên formula string)
+        const rawValue = sourceData[r]?.[c];
+        const cellValue = (rawValue !== null && rawValue !== undefined && rawValue !== '')
+          ? rawValue
+          : undefined;
+
+        // Tạo accountCode: ưu tiên dùng label dòng + colKey, fallback rowKey + colKey
+        const accountCode = rowLabel
+          ? `${this.sanitizeCode(rowLabel)}_${colKey}`
+          : `${rowKey}_${colKey}`;
+
+        // isReadOnly: formula → luôn true, header/text → luôn true, còn lại theo meta
+        const isReadOnly = cellRole === 'formula'
+          || cellRole === 'header'
+          || cellRole === 'text'
+          || (meta?.readOnly ?? false);
+
+        mappings.push({
+          rowKey,
+          colKey,
+          accountCode,
+          cellRole,
+          cellValue: formula ? undefined : cellValue,
+          formula: formula || undefined,
+          isReadOnly,
+        });
       }
     }
 
-    // --- 5. Assemble the final structure ---
+    // --- 6. Assemble the final structure ---
     const layoutJSON: FormLayoutConfig = {
       columns,
       headerRows,
       mergeCells: mergeCells.length > 0 ? mergeCells : undefined,
-      fixedRowsTop: headerRowCount > 0 ? headerRowCount : undefined,
+      fixedRowsTop: this.fixedRows > 0 ? this.fixedRows : (headerRowCount > 0 ? headerRowCount : undefined),
       fixedColumnsLeft: this.fixedCols > 0 ? this.fixedCols : undefined,
     };
 
@@ -1045,30 +1095,33 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     return key;
   }
 
-  private detectHeaderRowCount(data: any[][], colCount: number): number {
-    // Rows where all non-empty cells are strings (labels) = header rows
-    // Stop at first row that contains a numeric value or formula in a data column
-    let headerRows = 0;
-    for (let r = 0; r < data.length; r++) {
-      let isHeaderRow = true;
-      for (let c = 0; c < colCount; c++) {
-        const val = data[r]?.[c];
-        if (val === null || val === undefined || val === '') continue;
-        if (typeof val === 'number') { isHeaderRow = false; break; }
-        if (typeof val === 'string' && val.startsWith('=')) { isHeaderRow = false; break; }
-      }
-      if (isHeaderRow) {
-        headerRows = r + 1;
-      } else {
-        break;
+  private detectHeaderRowCount(_data: any[][], _colCount: number, mergeCells?: MergeCell[]): number {
+    // Primary: use merge cells that span multiple rows — header rows always have merges
+    const merges = mergeCells ?? this.collectMergeCells();
+    let maxMergeEnd = 0;
+    for (const mc of merges) {
+      if (mc.rowspan > 1) {
+        maxMergeEnd = Math.max(maxMergeEnd, mc.row + mc.rowspan);
       }
     }
-    return headerRows;
+    if (maxMergeEnd > 0) return maxMergeEnd;
+
+    // Fallback: if no multi-row merges, check for single-row header merges (colspan only)
+    let maxMergeRow = -1;
+    for (const mc of merges) {
+      if (mc.colspan > 1) {
+        maxMergeRow = Math.max(maxMergeRow, mc.row);
+      }
+    }
+    if (maxMergeRow >= 0) return maxMergeRow + 1;
+
+    // No merges at all → default 1 header row
+    return 1;
   }
 
   private resolveColumnTitle(data: any[][], col: number, headerRowCount: number): string {
-    // Use the first non-empty value in header rows, or fallback
-    for (let r = 0; r < headerRowCount; r++) {
+    // Lấy từ dòng cuối header (bottom-most) — tiêu đề con cụ thể hơn
+    for (let r = headerRowCount - 1; r >= 0; r--) {
       const val = data[r]?.[col];
       if (val !== null && val !== undefined && val !== '') return String(val);
     }
@@ -1076,31 +1129,69 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private inferColumnType(data: any[][], col: number, startRow: number, rowCount: number): 'text' | 'numeric' {
-    // Check data rows to infer type
+    // Cột cố định (STT, Chỉ tiêu) → luôn là text
+    if (col < this.fixedCols) return 'text';
+
+    // Kiểm tra giá trị thực tế trong các dòng data
+    let hasText = false;
+    let hasNumeric = false;
     for (let r = startRow; r < Math.min(rowCount, startRow + 20); r++) {
       const val = data[r]?.[col];
       if (val === null || val === undefined || val === '') continue;
-      if (typeof val === 'number') return 'numeric';
+
+      // Formula → cột chứa kết quả tính toán → numeric
+      if (typeof val === 'string' && val.startsWith('=')) { hasNumeric = true; continue; }
+
+      if (typeof val === 'number') { hasNumeric = true; continue; }
+
       if (typeof val === 'string') {
-        if (val.startsWith('=')) return 'numeric';
         const stripped = val.replace(/,/g, '');
-        if (!isNaN(parseFloat(stripped)) && isFinite(Number(stripped))) return 'numeric';
+        if (!isNaN(parseFloat(stripped)) && isFinite(Number(stripped))) {
+          hasNumeric = true;
+        } else {
+          hasText = true;
+        }
       }
     }
+
+    // Nếu có giá trị text thực sự (không phải số) → cột text
+    if (hasText && !hasNumeric) return 'text';
+    // Có giá trị numeric → cột numeric
+    if (hasNumeric) return 'numeric';
+
+    // Không có data → cột sau fixedCols thường là numeric (ô nhập số liệu)
+    if (this.fixedCols > 0 && col >= this.fixedCols) return 'numeric';
+
     return 'text';
   }
 
   private collectMergeCells(): MergeCell[] {
-    const mergePlugin = this.hot!.getPlugin('mergeCells');
+    const seen = new Set<string>();
     const result: MergeCell[] = [];
-    if (mergePlugin && (mergePlugin as any).mergedCellsCollection?.mergedCells) {
-      for (const mc of (mergePlugin as any).mergedCellsCollection.mergedCells) {
-        result.push({ row: mc.row, col: mc.col, rowspan: mc.rowspan, colspan: mc.colspan });
+
+    const add = (row: number, col: number, rowspan: number, colspan: number) => {
+      const key = `${row},${col}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      result.push({ row, col, rowspan, colspan });
+    };
+
+    // Nguồn 1: MergeCells plugin (mergedCellsCollection.mergedCells)
+    const mergePlugin = this.hot!.getPlugin('mergeCells') as any;
+    const pluginMerges = mergePlugin?.mergedCellsCollection?.mergedCells ?? mergePlugin?.mergedCells ?? [];
+    for (const mc of pluginMerges) {
+      const r = mc.row;
+      const c = mc.col;
+      if (typeof r === 'number' && typeof c === 'number') {
+        add(r, c, mc.rowspan ?? 1, mc.colspan ?? 1);
       }
     }
-    if (result.length === 0 && this.mergedCells.length > 0) {
-      return [...this.mergedCells];
+
+    // Nguồn 2: mergedCells nội bộ (sync từ afterMergeCells / load template)
+    for (const m of this.mergedCells) {
+      add(m.row, m.col, m.rowspan, m.colspan);
     }
+
     return result;
   }
 
@@ -1150,7 +1241,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         }
 
         const label = data[r]?.[c] != null ? String(data[r][c]) : '';
-        const cell: HeaderCell = { label };
+        const cell: HeaderCell = { label, colKey: this.colIndexToKey(c) };
 
         if (mc) {
           if (mc.rowspan > 1) cell.rowspan = mc.rowspan;

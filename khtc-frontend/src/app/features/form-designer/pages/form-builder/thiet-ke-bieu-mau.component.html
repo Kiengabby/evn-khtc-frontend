@@ -151,12 +151,30 @@
     @if (showPropsPanel()) {
       <div class="props-panel">
         <div class="panel-header">
-          <h3>Thuộc tính ô</h3>
+          <h3>Thuộc tính</h3>
           <button class="btn-icon-sm" (click)="showPropsPanel.set(false)">
             <i class="pi pi-times"></i>
           </button>
         </div>
         <div class="panel-body">
+          <div class="prop-section" style="margin-bottom: 2rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 1rem;">
+            <h4 style="margin: 0 0 1rem 0; color: var(--primary-color);">Cấu hình Lưới</h4>
+            
+            <div class="prop-section-inner" style="margin-bottom: 1rem;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.85rem;">Số dòng tiêu đề cố định</label>
+              <input type="number" min="0" max="10" [(ngModel)]="fixedRows" (ngModelChange)="setFixedRows($event)" style="padding: 0.5rem; width: 100%; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box;">
+              <div class="cell-type-explanation" style="margin-top: 0.25rem;">
+                <small style="color: #6c757d;">Mặc định tự động đếm theo số tầng header khi gộp ô.</small>
+              </div>
+            </div>
+
+            <div class="prop-section-inner">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.85rem;">Số cột cố định (bên trái)</label>
+              <input type="number" min="0" max="10" [(ngModel)]="fixedCols" (ngModelChange)="setFixedCols($event)" style="padding: 0.5rem; width: 100%; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box;">
+            </div>
+          </div>
+
+          <h4 style="margin: 0 0 1rem 0; color: var(--primary-color);">Thuộc tính Ô</h4>
           <div class="prop-section">
             <label>Vị trí</label>
             <div class="prop-value">{{ cellInfo() || '—' }}</div>
