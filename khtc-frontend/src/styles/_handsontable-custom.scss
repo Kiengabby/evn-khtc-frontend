@@ -58,7 +58,8 @@
         text-align: right !important;
     }
 
-    tr:hover td {
+    // Per-cell hover only: `tr:hover td` would paint every td in the row when any cell is hovered
+    td:hover {
         background-color: $surface-hover !important;
     }
 }

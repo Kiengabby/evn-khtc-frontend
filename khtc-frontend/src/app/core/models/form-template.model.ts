@@ -47,9 +47,16 @@ export interface FormLayoutConfig {
     mergeCells?: MergeCell[];
     fixedRowsTop?: number;
     fixedColumnsLeft?: number;
+    hiddenColumns?: {
+        columns: number[];
+        indicators: boolean;
+    };
 
     // Header rows
     headerRows: HeaderRow[];
+
+    // Row definitions
+    rows?: LayoutRowDef[];
 
     // Metadata
     formTitle?: string;
@@ -59,12 +66,22 @@ export interface FormLayoutConfig {
 
 /** Column definition for a form */
 export interface ColumnConfig {
-    key: string;           // e.g., 'C_JAN', 'C_Q1'
+    key: string;           // e.g., 'A', 'B'
+    colCode?: string;      // e.g., 'ACTUAL_N2', 'PLAN_N'
     title: string;
     width?: number;
     type?: 'text' | 'numeric' | 'dropdown';
     format?: string;       // Number format
     readOnly?: boolean;
+}
+
+/** Row definition for a form (used in new layoutJSON format) */
+export interface LayoutRowDef {
+    rowKey: string;
+    rowCode: string;
+    title: string;
+    level: number;
+    isReadOnly?: boolean;
 }
 
 /** Column definition from mock JSON */
@@ -102,8 +119,10 @@ export interface MergeCell {
 export interface FormMapping {
     mappingId: number;
     versionId: number;
-    rowKey: string;        // UUID
-    colKey: string;        // e.g., 'C_JAN'
+    rowKey: string;        // UUID hoặc R1, R2...
+    colKey: string;        // e.g., 'A', 'B'
+    rowCode?: string;      // metadata row identifier
+    colCode?: string;      // metadata col identifier
     accountCode: string;
     isReadOnly?: boolean;
     formula?: string;      // HyperFormula formula

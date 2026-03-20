@@ -572,12 +572,12 @@
         background-color: rgba($primary, 0.1) !important;
     }
 
-    // Hover effect trên hàng (trừ dòng TỔNG)
-    .handsontable tbody tr:hover td:not(.cell-tong):not(.cell-nhom) {
+    // Hover chỉ trên từng ô (không dùng tr:hover td — sẽ bôi cả hàng)
+    .handsontable tbody td:not(.cell-tong):not(.cell-nhom):hover {
         background: #F8FAFC !important; // Highlight xám nhẹ
     }
-    
-    .handsontable tbody tr:hover td.cell-editable {
+
+    .handsontable tbody td.cell-editable:hover {
         background: #F0F9FF !important; // Báo hiệu ô có thể nhập = xanh mờ
     }
 

@@ -1,0 +1,207 @@
+{
+  "template": {
+    "formId": "NEW_TEMPLATE",
+    "formName": "Biểu mẫu báo cáo kế hoạch",
+    "version": {
+      "year": 2026,
+      "layoutJSON": {
+        "columns": [
+          {
+            "key": "ID",
+            "colCode": "METADATA_ROW",
+            "title": "RowCode",
+            "width": 0,
+            "type": "text",
+            "readOnly": true
+          },
+          {
+            "key": "A",
+            "colCode": "STT",
+            "title": "STT",
+            "width": 55,
+            "type": "text",
+            "readOnly": true
+          },
+          {
+            "key": "B",
+            "colCode": "CHITIEU_NAME",
+            "title": "Chỉ tiêu",
+            "width": 250,
+            "type": "text",
+            "readOnly": true
+          },
+          {
+            "key": "C",
+            "colCode": "DVT",
+            "title": "Đơn vị tính",
+            "width": 100,
+            "type": "text",
+            "readOnly": true
+          },
+          {
+            "key": "D",
+            "colCode": "ACTUAL_N2",
+            "title": "Thực hiện",
+            "width": 130,
+            "type": "numeric",
+            "readOnly": false
+          },
+          {
+            "key": "E",
+            "colCode": "ACTUAL_N1",
+            "title": "Thực hiện",
+            "width": 130,
+            "type": "numeric",
+            "readOnly": false
+          },
+          {
+            "key": "F",
+            "colCode": "ESTIMATE_N1",
+            "title": "Ước thực hiện",
+            "width": 130,
+            "type": "numeric",
+            "readOnly": false
+          },
+          {
+            "key": "G",
+            "colCode": "PLAN_N",
+            "title": "Kế hoạch",
+            "width": 130,
+            "type": "numeric",
+            "readOnly": false
+          },
+          {
+            "key": "H",
+            "colCode": "PLAN_N1",
+            "title": "Kế hoạch",
+            "width": 130,
+            "type": "numeric",
+            "readOnly": false
+          }
+        ],
+        "headerRows": [
+          {
+            "cells": [
+              { "label": "RowCode", "colKey": "ID", "rowspan": 2 },
+              { "label": "STT", "colKey": "A", "rowspan": 2 },
+              { "label": "Chỉ tiêu", "colKey": "B", "rowspan": 2 },
+              { "label": "ĐVT", "colKey": "C", "rowspan": 2 },
+              { "label": "Năm N-2 (2024)", "colKey": "D" },
+              { "label": "Năm N-1 (2025)", "colKey": "E", "colspan": 2 },
+              { "label": "Năm N (2026)", "colKey": "G" },
+              { "label": "Năm N+1 (2027)", "colKey": "H" }
+            ]
+          },
+          {
+            "cells": [
+              { "label": "Thực hiện", "colKey": "D" },
+              { "label": "Thực hiện", "colKey": "E" },
+              { "label": "Ước TH", "colKey": "F" },
+              { "label": "Kế hoạch", "colKey": "G" },
+              { "label": "Kế hoạch", "colKey": "H" }
+            ]
+          }
+        ],
+        "rows": [
+          {
+            "rowKey": "R3",
+            "rowCode": "TONG_CONG_F",
+            "title": "TỔNG CỘNG",
+            "level": 0,
+            "isReadOnly": true
+          },
+          {
+            "rowKey": "R4",
+            "rowCode": "DIEN_SAN_XUAT_F",
+            "title": "I. Điện sản xuất",
+            "level": 0,
+            "isReadOnly": true
+          },
+          {
+            "rowKey": "R5",
+            "rowCode": "CHITIEU_01",
+            "title": "Thuỷ điện",
+            "level": 1
+          },
+          {
+            "rowKey": "R6",
+            "rowCode": "CHITIEU_02",
+            "title": "Nhiệt điện than",
+            "level": 1
+          },
+          {
+            "rowKey": "R7",
+            "rowCode": "CHITIEU_03",
+            "title": "Nhiệt điện khí",
+            "level": 1
+          },
+          {
+            "rowKey": "R8",
+            "rowCode": "CHITIEU_04",
+            "title": "Năng lượng tái tạo",
+            "level": 1
+          },
+          {
+            "rowKey": "R9",
+            "rowCode": "DIEN_MUA_F",
+            "title": "II. Điện mua",
+            "level": 0,
+            "isReadOnly": true
+          },
+          {
+            "rowKey": "R10",
+            "rowCode": "CHITIEU_05",
+            "title": "Mua trong nước",
+            "level": 1
+          },
+          {
+            "rowKey": "R11",
+            "rowCode": "CHITIEU_06",
+            "title": "Mua nước ngoài",
+            "level": 1
+          }
+        ],
+        "fixedRowsTop": 2,
+        "freezeColumns": 4,
+        "mappings": [
+          {
+            "rowKey": "R3",
+            "colKey": "D",
+            "rowCode": "TONG_CONG_F",
+            "colCode": "ACTUAL_N2",
+            "cellRole": "formula",
+            "formula": "=SUM(D3:D4)",
+            "isReadOnly": true
+          }
+        ]
+      }
+    }
+  },
+  "dbData": [
+    { "rowCode": "CHITIEU_01", "colCode": "ACTUAL_N2", "value": 78500 },
+    { "rowCode": "CHITIEU_01", "colCode": "ACTUAL_N1", "value": 82300 },
+    { "rowCode": "CHITIEU_01", "colCode": "ESTIMATE_N1", "value": 85000 },
+    { "rowCode": "CHITIEU_01", "colCode": "PLAN_N", "value": 90000 },
+    { "rowCode": "CHITIEU_01", "colCode": "PLAN_N1", "value": 95000 },
+
+    { "rowCode": "CHITIEU_02", "colCode": "ACTUAL_N2", "value": 65200 },
+    { "rowCode": "CHITIEU_02", "colCode": "ACTUAL_N1", "value": 67800 },
+    { "rowCode": "CHITIEU_02", "colCode": "ESTIMATE_N1", "value": 69000 },
+    { "rowCode": "CHITIEU_02", "colCode": "PLAN_N", "value": 72000 },
+    { "rowCode": "CHITIEU_02", "colCode": "PLAN_N1", "value": 75000 },
+
+    { "rowCode": "CHITIEU_03", "colCode": "ACTUAL_N2", "value": 45300 },
+    { "rowCode": "CHITIEU_03", "colCode": "ACTUAL_N1", "value": 48100 },
+    { "rowCode": "CHITIEU_03", "colCode": "PLAN_N", "value": 52000 },
+
+    { "rowCode": "CHITIEU_04", "colCode": "ACTUAL_N2", "value": 12800 },
+    { "rowCode": "CHITIEU_04", "colCode": "PLAN_N", "value": 18000 },
+
+    { "rowCode": "CHITIEU_05", "colCode": "ACTUAL_N2", "value": 35600 },
+    { "rowCode": "CHITIEU_05", "colCode": "ACTUAL_N1", "value": 37200 },
+    { "rowCode": "CHITIEU_05", "colCode": "PLAN_N", "value": 40000 },
+
+    { "rowCode": "CHITIEU_06", "colCode": "ACTUAL_N2", "value": 5800 },
+    { "rowCode": "CHITIEU_06", "colCode": "PLAN_N", "value": 6500 }
+  ]
+}

@@ -5,6 +5,9 @@ import { delay } from 'rxjs/operators';
 import {
   TemplateJson, DimMetadata, PovSelection, FactDataPoint,
 } from './template-parser.service';
+import {
+  LoadGridResponse, SaveGridPayload,
+} from '../../../core/models/layout-template.model';
 
 export interface PlanningFormResponse {
   template: TemplateJson;
@@ -48,11 +51,15 @@ export class PlanningApiService {
    *  Khi BE sẵn sàng:
    *    1. Set useMock = false
    *    2. Set apiBaseUrl = URL thật (VD: 'https://api.evn.com.vn/v1/planning')
-   *    3. Đảm bảo BE trả đúng interface PlanningFormResponse
+   *    3. Đảm bảo BE trả đúng interface PlanningFormResponse / LoadGridResponse
    * ================================================================
    */
   private readonly useMock = true;
   private readonly apiBaseUrl = '/api/planning';
+
+  // ==========================================================
+  // V1 — Dimension-based format (OLD — giữ nguyên)
+  // ==========================================================
 
   /** Tải toàn bộ dữ liệu cần thiết để render 1 biểu mẫu */
   loadForm(templateId: string): Observable<PlanningFormResponse> {
@@ -97,6 +104,7 @@ export class PlanningApiService {
     if (this.useMock) {
       return of([
         { templateId: 'BKH_KH_01', templateName: 'BKH.KH.01 — Kế hoạch Điện sản xuất và Mua' },
+        { templateId: 'NEW_TEMPLATE', templateName: 'Biểu mẫu mới — Layout colCode/rowCode' },
       ]).pipe(delay(100));
     }
     return this.http.get<TemplateListItem[]>(`${this.apiBaseUrl}/templates`);
@@ -115,5 +123,53 @@ export class PlanningApiService {
         'assets/mock-data/planning-fact-data.json',
       ),
     }).pipe(delay(400));
+  }
+
+  // ==========================================================
+  // V2 — colCode/rowCode-based format (NEW)
+  // ==========================================================
+
+  /**
+   * Tải biểu mẫu theo format mới (layoutJSON + dbData).
+   *
+   * Response chứa:
+   *   - template: LayoutTemplate (layout + metadata)
+   *   - dbData: GridCellData[] (dữ liệu từ DB)
+   *
+   * Khi BE sẵn sàng: thay mock bằng HTTP GET thật.
+   */
+  loadFormV2(formId: string): Observable<LoadGridResponse> {
+    if (this.useMock) {
+      return this.http
+        .get<LoadGridResponse>('assets/mock-data/new-template-demo.json')
+        .pipe(delay(400));
+    }
+    return this.http.get<LoadGridResponse>(
+      `${this.apiBaseUrl}/v2/forms/${formId}`,
+    );
+  }
+
+  /**
+   * Lưu dữ liệu theo format mới (rowCode/colCode/value).
+   *
+   * Payload:
+   *   { formId, version_year, orgId, data: GridCellData[] }
+   *
+   * Khi BE sẵn sàng: thay mock bằng HTTP POST thật.
+   */
+  saveFormV2(payload: SaveGridPayload): Observable<SaveResult> {
+    if (this.useMock) {
+      console.log(
+        '[MockAPI V2] Saving', payload.data.length,
+        'cells for form', payload.formId, ':',
+        payload,
+      );
+      return of({
+        success: true,
+        savedCount: payload.data.length,
+        message: `Đã lưu ${payload.data.length} ô dữ liệu (V2)`,
+      }).pipe(delay(600));
+    }
+    return this.http.post<SaveResult>(`${this.apiBaseUrl}/v2/save`, payload);
   }
 }

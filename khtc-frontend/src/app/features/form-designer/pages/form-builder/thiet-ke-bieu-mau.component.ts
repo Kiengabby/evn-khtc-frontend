@@ -34,6 +34,8 @@ interface ExportedTemplate {
 interface FormMappingExport {
   rowKey: string;
   colKey: string;
+  rowCode?: string;
+  colCode?: string;
   accountCode: string;
   cellRole: CellRole;
   cellValue?: string | number | null;
@@ -970,38 +972,97 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   private exportToJson(): ExportedTemplate {
     const sourceData = this.hot!.getSourceData() as any[][];
+    // Add +1 config if we are going to inject METADATA_ROW at index 0.
+    // Handsontable colCount is the visible columns, so our raw data has `colCount` columns.
     const colCount = this.hot!.countCols();
     const rowCount = sourceData.length;
 
     // --- 1. Collect merge cells first (needed for header detection) ---
-    const mergeCells = this.collectMergeCells();
+    const rawMergeCells = this.collectMergeCells();
 
     // --- 2. Detect header rows based on merge cells ---
-    const headerRowCount = this.detectHeaderRowCount(sourceData, colCount, mergeCells);
+    const headerRowCount = this.detectHeaderRowCount(sourceData, colCount, rawMergeCells);
 
     // --- 3. Build columns (from header row labels + widths + types) ---
+    // We will inject the hidden METADATA_ROW at index 0!
     const columns: ColumnConfig[] = [];
+    
+    // Inject METADATA_ROW
+    columns.push({
+      key: 'ID',
+      colCode: 'METADATA_ROW',
+      title: 'RowCode',
+      width: 0,
+      type: 'text',
+      readOnly: true,
+    });
+
     for (let c = 0; c < colCount; c++) {
       const rawWidth = this.hot!.getColWidth(c);
       const width = typeof rawWidth === 'number' ? rawWidth : 100;
       const colKey = this.colIndexToKey(c);
+      
       const title = this.resolveColumnTitle(sourceData, c, headerRowCount);
-      const colType = this.inferColumnType(sourceData, c, headerRowCount, rowCount);
-      columns.push({ key: colKey, title, width, type: colType });
+      const fullTitle = this.getFullColumnTitle(sourceData, c, headerRowCount, rawMergeCells);
+      
+      let colType = this.inferColumnType(sourceData, c, headerRowCount, rowCount);
+      
+      const colCode = this.generateColCode(fullTitle, c);
+
+      // Explicitly adjust type/readOnly based on known columns
+      let isReadOnly = false;
+      if (c < this.fixedCols || colCode === 'STT' || colCode === 'CHITIEU_NAME' || colCode === 'UNIT') {
+        isReadOnly = true;
+      }
+      if (colCode === 'NOTE') {
+        colType = 'text';
+      }
+
+      columns.push({ 
+        key: colKey, 
+        colCode, 
+        title, 
+        width, 
+        type: colType,
+        readOnly: isReadOnly,
+      });
     }
 
     // --- 4. Build headerRows (label + rowspan/colspan from merge info) ---
-    const headerRows = this.buildHeaderRows(sourceData, headerRowCount, colCount, mergeCells);
+    // shiftedMergeCells accounts for the METADATA_ROW at index 0.
+    const shiftedMergeCells = rawMergeCells.map(mc => ({
+      ...mc,
+      col: mc.col + 1
+    }));
+    
+    // QA Requirement: Metadata ID column needs to be explicitly defined in mergeCells if used for rendering
+    if (headerRowCount > 1) {
+      shiftedMergeCells.unshift({ row: 0, col: 0, rowspan: headerRowCount, colspan: 1 });
+    }
+    
+    const { headerRows, autoMerges } = this.buildHeaderRows(sourceData, headerRowCount, colCount, shiftedMergeCells);
+    
+    // Add any dynamically inferred merge cells (like Ghi chú spanning 2 rows because it's empty below)
+    if (autoMerges && autoMerges.length > 0) {
+      shiftedMergeCells.push(...autoMerges);
+    }
 
-    // --- 5. Build mappings — ALL body cells (data + header + text + formula) ---
-    // Mỗi ô đều được export: BE biết đầy đủ layout + nội dung + vai trò
+    // --- 5. Build LayoutRows (the list of grid rows) ---
+    const rows = this.buildLayoutRows(sourceData, headerRowCount, rowCount, colCount);
+
+    // --- 6. Build mappings — ALL body cells (data + header + text + formula) ---
     const mappings: FormMappingExport[] = [];
     for (let r = headerRowCount; r < rowCount; r++) {
       const rowKey = `R${r + 1}`;
       const rowLabel = this.getRowLabel(sourceData, r, colCount);
+      const rowDef = rows[r - headerRowCount]; // The row definition for this line
+      const rowCode = rowDef?.rowCode || `ROW_${r}`;
 
       for (let c = 0; c < colCount; c++) {
+        // Remember to map the key to the original visible layout (C -> D etc.)
         const colKey = this.colIndexToKey(c);
+        const colCode = columns[c + 1].colCode; // +1 because columns[0] is METADATA_ROW!
+        
         const meta = this.cellMetadata.get(`${r},${c}`);
         const hfFormula = this.getHyperFormulaCellFormula(r, c);
         const formula = hfFormula || meta?.formula || null;
@@ -1009,60 +1070,63 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         // Xác định role: ưu tiên meta > formula > vị trí cột > default 'data'
         let cellRole: CellRole;
         if (meta?.role && meta.role !== 'data') {
-          // User đã gán role cụ thể (header/text/formula) → giữ nguyên
           cellRole = meta.role;
         } else if (formula) {
           cellRole = 'formula';
         } else if (c < this.fixedCols) {
-          // Cột cố định (STT, Chỉ tiêu) → tự động đánh dấu là header
           cellRole = 'header';
         } else {
-          // Cột data: kiểm tra nội dung để phân biệt text cố định vs ô nhập liệu
           const val = sourceData[r]?.[c];
           if (val !== null && val !== undefined && val !== '' && typeof val === 'string' && isNaN(Number(val))) {
-            // Có text không phải số → 'text' (ô ghi chú, đơn vị tính...)
             cellRole = meta?.readOnly ? 'text' : 'data';
           } else {
             cellRole = 'data';
           }
         }
 
-        // Lấy giá trị hiển thị của ô (source data giữ nguyên formula string)
+        // isReadOnly must be forced true for formulas, header, text, or if Column says it's readOnly
+        const isColumnReadOnly = columns[c + 1].readOnly;
+        const isReadOnly = cellRole === 'formula'
+          || cellRole === 'header'
+          || cellRole === 'text'
+          || isColumnReadOnly
+          || (meta?.readOnly ?? false);
+
+        // Value
         const rawValue = sourceData[r]?.[c];
         const cellValue = (rawValue !== null && rawValue !== undefined && rawValue !== '')
           ? rawValue
           : undefined;
 
-        // Tạo accountCode: ưu tiên dùng label dòng + colKey, fallback rowKey + colKey
         const accountCode = rowLabel
           ? `${this.sanitizeCode(rowLabel)}_${colKey}`
           : `${rowKey}_${colKey}`;
 
-        // isReadOnly: formula → luôn true, header/text → luôn true, còn lại theo meta
-        const isReadOnly = cellRole === 'formula'
-          || cellRole === 'header'
-          || cellRole === 'text'
-          || (meta?.readOnly ?? false);
+        const exportedFormula = formula ? formula.replace(/;/g, ',') : undefined;
 
         mappings.push({
           rowKey,
           colKey,
+          rowCode,
+          colCode,
           accountCode,
           cellRole,
           cellValue: formula ? undefined : cellValue,
-          formula: formula || undefined,
+          formula: exportedFormula,
           isReadOnly,
         });
       }
     }
 
-    // --- 6. Assemble the final structure ---
-    const layoutJSON: FormLayoutConfig = {
+    // --- 7. Assemble the final structure ---
+    const layoutJSON: any = {
       columns,
       headerRows,
-      mergeCells: mergeCells.length > 0 ? mergeCells : undefined,
+      rows,
+      mergeCells: shiftedMergeCells.length > 0 ? shiftedMergeCells : undefined,
       fixedRowsTop: this.fixedRows > 0 ? this.fixedRows : (headerRowCount > 0 ? headerRowCount : undefined),
-      fixedColumnsLeft: this.fixedCols > 0 ? this.fixedCols : undefined,
+      // Increase freezeColumns by 1 to hide the new METADATA_ROW correctly while freezing the others
+      fixedColumnsLeft: (this.fixedCols > 0 ? this.fixedCols : 0) + 1,
     };
 
     return {
@@ -1073,8 +1137,12 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       layoutConfig: {
         type: 'custom',
         allowDynamicRows: false,
-        freezeColumns: this.fixedCols,
-      },
+        freezeColumns: (this.fixedCols > 0 ? this.fixedCols : 0) + 1,
+        hiddenColumns: {
+          columns: [0], // Hide METADATA_ROW
+          indicators: false
+        }
+      } as any,
       version: {
         year: parseInt(this.templateInfo.version, 10) || new Date().getFullYear(),
         layoutJSON,
@@ -1084,6 +1152,101 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   // --- Export helpers ---
+
+  private getFullColumnTitle(data: any[][], col: number, headerRowCount: number, mergeCells: MergeCell[]): string {
+    let full = '';
+    for (let r = 0; r < headerRowCount; r++) {
+      let val = data[r]?.[col];
+      
+      // If empty, check if covered by a parent merged cell to inherit its text
+      if (!val) {
+        for (const mc of mergeCells) {
+          if (r >= mc.row && r < mc.row + mc.rowspan && col >= mc.col && col < mc.col + mc.colspan) {
+            val = data[mc.row]?.[mc.col];
+            break;
+          }
+        }
+      }
+      
+      if (val) full += ' ' + String(val);
+    }
+    return full.trim();
+  }
+
+  private generateColCode(fullTitle: string, index: number): string {
+    const t = fullTitle.trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd');
+    
+    // Default known columns
+    if (index === 0 && (t.includes('stt') || t === '')) return 'STT';
+    if (index === 1 && (t.includes('chi tieu'))) return 'CHITIEU_NAME';
+    if (t.includes('don vi') || t.includes('dvt')) return 'UNIT';
+    if (t.includes('ghi chu') || t.includes('note')) return 'NOTE';
+    
+    // Auto infer based on common terms
+    let prefix = 'COL';
+    if (t.includes('thuc hien')) prefix = 'ACTUAL';
+    if (t.includes('ke hoach') || t.includes('kh')) prefix = 'PLAN';
+    if (t.includes('uoc')) prefix = 'ESTIMATE';
+    
+    let suffix = '';
+    if (t.match(/n-2|n - 2/)) suffix = '_N2';
+    else if (t.match(/n-1|n - 1/)) suffix = '_N1';
+    else if (t.match(/\bn\b/) || t.includes('nam n')) suffix = '_N';
+    
+    if (prefix !== 'COL' || suffix !== '') {
+      return suffix ? `${prefix}${suffix}` : `${prefix}_${index}`;
+    }
+    
+    return `COL_${index + 1}`;
+  }
+
+  private buildLayoutRows(data: any[][], startRow: number, rowCount: number, colCount: number): any[] {
+    const rows = [];
+    let chitieuCounter = 1;
+
+    for (let r = startRow; r < rowCount; r++) {
+      const rowKey = `R${r + 1}`;
+      
+      // Determine level by counting spaces/tabs at the beginning of the CHITIEU_NAME column (assumed index 1, or 0)
+      const chitieuCol = colCount > 1 ? 1 : 0;
+      const rawTitle = data[r]?.[chitieuCol] ?? '';
+      const textTitle = String(rawTitle);
+      const title = textTitle.trim();
+      
+      const leadingSpacesMatch = textTitle.match(/^(\s+)/);
+      const level = leadingSpacesMatch ? Math.floor(leadingSpacesMatch[1].length / 2) : 0;
+      
+      // Determine rowCode
+      let rowCode = '';
+      if (title.toUpperCase().startsWith('TỔNG') || title.toUpperCase().startsWith('TONG')) {
+        rowCode = `TONG_CONG_${chitieuCounter++}`;
+      } else if (title) {
+        // Just pad it to look nice like CHITIEU_01
+        rowCode = `CHITIEU_${String(chitieuCounter++).padStart(2, '0')}`;
+      } else {
+        rowCode = `ROW_${r}`;
+      }
+
+      // Check if it's mostly empty or only has headers (read only)
+      let isReadOnly = false;
+      const sttVal = data[r]?.[0];
+      // Often, rows with Roman numerals or just text at col 0/1 are headers
+      if (typeof sttVal === 'string' && sttVal.match(/^[IVX]+\.$|^[A-Z]\.$/)) {
+        isReadOnly = true;
+      }
+
+      rows.push({
+        rowKey,
+        rowCode,
+        title,
+        level,
+        isReadOnly
+      });
+    }
+
+    return rows;
+  }
 
   private colIndexToKey(col: number): string {
     let key = '';
@@ -1216,12 +1379,13 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       .substring(0, 30);
   }
 
-  private buildHeaderRows(data: any[][], headerRowCount: number, colCount: number, mergeCells: MergeCell[]): HeaderRow[] {
+  private buildHeaderRows(data: any[][], headerRowCount: number, colCount: number, shiftedMergeCells: MergeCell[]): { headerRows: HeaderRow[], autoMerges: MergeCell[] } {
     const rows: HeaderRow[] = [];
+    const autoMerges: MergeCell[] = [];
 
     // Track which cells are "owned" by a merge (non-top-left cells should be skipped)
     const mergeOwner = new Map<string, MergeCell>();
-    for (const mc of mergeCells) {
+    for (const mc of shiftedMergeCells) {
       for (let r = mc.row; r < mc.row + mc.rowspan; r++) {
         for (let c = mc.col; c < mc.col + mc.colspan; c++) {
           mergeOwner.set(`${r},${c}`, mc);
@@ -1231,29 +1395,53 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
     for (let r = 0; r < headerRowCount; r++) {
       const cells: HeaderCell[] = [];
+
+      // We inject an empty header cell for METADATA_ROW at index 0.
+      // QA Requirement: Only inject at row 0 with rowspan, stop repeating in row 1+
+      if (r === 0) {
+        cells.push({ label: '', colKey: 'ID', rowspan: headerRowCount > 1 ? headerRowCount : 1 });
+      }
+
       for (let c = 0; c < colCount; c++) {
-        const key = `${r},${c}`;
+        // Shift column reference to match shiftedMergeCells
+        const shiftedCol = c + 1;
+        const key = `${r},${shiftedCol}`;
         const mc = mergeOwner.get(key);
 
-        if (mc && (mc.row !== r || mc.col !== c)) {
+        if (mc && (mc.row !== r || mc.col !== shiftedCol)) {
           // This cell is part of a merge but not the top-left → skip
           continue;
         }
 
         const label = data[r]?.[c] != null ? String(data[r][c]) : '';
+        // Use colIndexToKey(c) because we want actual 'A', 'B', etc. for normal columns
         const cell: HeaderCell = { label, colKey: this.colIndexToKey(c) };
 
-        if (mc) {
-          if (mc.rowspan > 1) cell.rowspan = mc.rowspan;
-          if (mc.colspan > 1) cell.colspan = mc.colspan;
+        let rowspan = mc ? mc.rowspan : 1;
+        let colspan = mc ? mc.colspan : 1;
+
+        if (!mc && headerRowCount > 1 && r === 0) {
+          // If a top header label is present but the one below it is empty, make it rowspan dynamically
+          const labelBelow = data[r+1]?.[c];
+          if (label && (!labelBelow || String(labelBelow).trim() === '') && !mergeOwner.has(`${r+1},${shiftedCol}`)) {
+            rowspan = headerRowCount;
+            autoMerges.push({ row: r, col: shiftedCol, rowspan, colspan });
+            // Mark ownership so we don't render it in the next row
+            for(let scanR = r+1; scanR < headerRowCount; scanR++) {
+               mergeOwner.set(`${scanR},${shiftedCol}`, { row: r, col: shiftedCol, rowspan, colspan });
+            }
+          }
         }
+
+        if (rowspan > 1) cell.rowspan = rowspan;
+        if (colspan > 1) cell.colspan = colspan;
 
         cells.push(cell);
       }
       rows.push({ cells });
     }
 
-    return rows;
+    return { headerRows: rows, autoMerges };
   }
 
   exportJsonToClipboard(): void {
