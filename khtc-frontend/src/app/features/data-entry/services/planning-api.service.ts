@@ -20,6 +20,12 @@ export interface TemplateListItem {
   templateName: string;
 }
 
+/** Kịch bản nhập liệu (VD: Kế hoạch / Thực hiện — mã SCE) — gửi kèm khi lưu / tải dữ liệu */
+export interface PlanningScenarioItem {
+  scenarioId: string;
+  scenarioName: string;
+}
+
 export interface CellChangePayload {
   rowDimensions: Record<string, string>;
   colDimensions: Record<string, string>;
@@ -31,6 +37,8 @@ export interface SaveChangesRequest {
   templateId: string;
   pov: PovSelection;
   nam: number;
+  /** Mã kịch bản SCE (VD: KH = Kế hoạch, TH = Thực hiện) */
+  scenarioId?: string;
   changes: CellChangePayload[];
 }
 
@@ -71,25 +79,28 @@ export class PlanningApiService {
     );
   }
 
-  /** Tải fact data riêng (khi đổi POV mà không cần load lại template) */
+  /** Tải fact data riêng (khi đổi POV / kịch bản mà không cần load lại template) */
   loadFactData(
-    templateId: string, pov: PovSelection, nam: number,
+    templateId: string,
+    pov: PovSelection,
+    nam: number,
+    scenarioId?: string,
   ): Observable<FactDataPoint[]> {
     if (this.useMock) {
       return this.http
-        .get<FactDataPoint[]>('assets/mock-data/planning-fact-data.json')
+        .get<FactDataPoint[]>(this.mockFactDataUrl(templateId))
         .pipe(delay(200));
     }
     return this.http.post<FactDataPoint[]>(
       `${this.apiBaseUrl}/fact-data`,
-      { templateId, pov, nam },
+      { templateId, pov, nam, scenarioId },
     );
   }
 
   /** Lưu các ô thay đổi về BE */
   saveChanges(request: SaveChangesRequest): Observable<SaveResult> {
     if (this.useMock) {
-      console.log('[MockAPI] Saving', request.changes.length, 'changes:', request);
+      console.log('[MockAPI] Saving', request.changes.length, 'changes (scenario:', request.scenarioId, '):', request);
       return of({
         success: true,
         savedCount: request.changes.length,
@@ -104,10 +115,25 @@ export class PlanningApiService {
     if (this.useMock) {
       return of([
         { templateId: 'BKH_KH_01', templateName: 'BKH.KH.01 — Kế hoạch Điện sản xuất và Mua' },
+        {
+          templateId: 'BCTH_SXKD_DIEN',
+          templateName: 'BÁO CÁO THỰC HIỆN KẾ HOẠCH SẢN XUẤT KINH DOANH – ĐIỆN',
+        },
         { templateId: 'NEW_TEMPLATE', templateName: 'Biểu mẫu mới — Layout colCode/rowCode' },
       ]).pipe(delay(100));
     }
     return this.http.get<TemplateListItem[]>(`${this.apiBaseUrl}/templates`);
+  }
+
+  /** Danh sách kịch bản (mock / GET thật khi BE sẵn sàng) */
+  getScenarioList(): Observable<PlanningScenarioItem[]> {
+    if (this.useMock) {
+      return of([
+        { scenarioId: 'KH', scenarioName: 'Kế hoạch' },
+        { scenarioId: 'TH', scenarioName: 'Thực hiện' },
+      ]).pipe(delay(80));
+    }
+    return this.http.get<PlanningScenarioItem[]>(`${this.apiBaseUrl}/scenarios`);
   }
 
   private mockLoadForm(templateId: string): Observable<PlanningFormResponse> {
@@ -119,10 +145,16 @@ export class PlanningApiService {
       dimMeta: this.http.get<DimMetadata>(
         'assets/mock-data/dimension-metadata.json',
       ),
-      factData: this.http.get<FactDataPoint[]>(
-        'assets/mock-data/planning-fact-data.json',
-      ),
+      factData: this.http.get<FactDataPoint[]>(this.mockFactDataUrl(templateId)),
     }).pipe(delay(400));
+  }
+
+  /** File fact mock theo biểu mẫu (MET vs YEA+SCE khác nhau) */
+  private mockFactDataUrl(templateId: string): string {
+    if (templateId === 'BCTH_SXKD_DIEN') {
+      return 'assets/mock-data/bcth-sxkd-dien-fact-data.json';
+    }
+    return 'assets/mock-data/planning-fact-data.json';
   }
 
   // ==========================================================

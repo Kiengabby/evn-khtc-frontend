@@ -29,6 +29,14 @@
               }
             </select>
           </div>
+          <div class="filter-item filter-scenario">
+            <label><i class="pi pi-compass"></i> Kịch bản</label>
+            <select [(ngModel)]="kichBan" (change)="onKichBanChange()">
+              @for (kb of danhSachKichBan(); track kb.scenarioId) {
+                <option [value]="kb.scenarioId">{{ kb.scenarioName }}</option>
+              }
+            </select>
+          </div>
           <!-- Năm -->
           <div class="filter-item filter-narrow">
             <label>Năm</label>
@@ -51,10 +59,38 @@
           }
         </div>
         <div class="filter-actions">
+          <button type="button" class="btn-json-test" (click)="togglePanelJsonTest()"
+                  [class.active]="panelJsonTestMo()">
+            <i class="pi pi-code"></i> Test JSON
+          </button>
           <button class="btn-reload" (click)="onPovChange()"><i class="pi pi-refresh"></i> Tải lại</button>
           <button class="btn-excel" (click)="xuatExcel()"><i class="pi pi-file-excel"></i> Xuất Excel</button>
         </div>
       </div>
+
+      @if (panelJsonTestMo()) {
+        <div class="json-test-panel">
+          <p class="json-test-hint">
+            Dán JSON đầy đủ <code>&#123; template, dimMeta, factData &#125;</code> hoặc chỉ <code>template</code>
+            (sẽ dùng <code>assets/mock-data/dimension-metadata.json</code>, fact rỗng). Sau khi nạp, mở DevTools → Console để xem log.
+          </p>
+          <textarea class="json-test-textarea" [(ngModel)]="noiDungJsonTest" rows="12"
+                    placeholder='Ví dụ: { "template": { ... }, "dimMeta": { ... }, "factData": [ ... ] }'></textarea>
+          <div class="json-test-actions">
+            <input #fileJsonTest type="file" accept=".json,application/json" class="json-test-file"
+                   (change)="onChonFileJson($event)" />
+            <button type="button" class="btn-json-secondary" (click)="fileJsonTest.click()">
+              <i class="pi pi-upload"></i> Chọn file .json
+            </button>
+            <button type="button" class="btn-json-primary" (click)="apDungJsonTest()">
+              <i class="pi pi-check"></i> Áp dụng / Load mẫu
+            </button>
+            <button type="button" class="btn-json-secondary" (click)="logVaCopyJsonMauHienTai()">
+              <i class="pi pi-copy"></i> Log + copy mẫu hiện tại
+            </button>
+          </div>
+        </div>
+      }
 
       <!-- === REPORT BANNER === -->
       @if (template()) {

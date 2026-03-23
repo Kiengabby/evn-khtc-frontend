@@ -5,6 +5,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import Handsontable from 'handsontable';
 import { HyperFormula } from 'hyperformula';
 import {
@@ -12,7 +13,7 @@ import {
   ParsedGridConfig, PovSelection, FactDataPoint,
 } from '../../services/template-parser.service';
 import {
-  PlanningApiService, TemplateListItem, CellChangePayload,
+  PlanningApiService, TemplateListItem, PlanningScenarioItem, CellChangePayload,
 } from '../../services/planning-api.service';
 
 interface PovDropdown {
@@ -42,6 +43,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private api    = inject(PlanningApiService);
   private parser = inject(TemplateParserService);
+  private http   = inject(HttpClient);
 
   // === Template & Data ===
   template   = signal<TemplateJson | null>(null);
@@ -52,7 +54,10 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   // === Filters ===
   bieuMau = 'BKH_KH_01';
   nam     = 2026;
+  /** Kịch bản (SCE: Kế hoạch KH / Thực hiện TH) — gửi kèm khi lưu; không trộn vào POV grid để khớp fact (SCE theo cột) */
+  kichBan = 'KH';
   danhSachBieuMau = signal<TemplateListItem[]>([]);
+  danhSachKichBan = signal<PlanningScenarioItem[]>([]);
   povDropdowns    = signal<PovDropdown[]>([]);
 
   // === Grid state ===
@@ -68,6 +73,10 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   zoomLevel       = 100;
   private trackedChanges: TrackedChange[] = [];
 
+  /** Panel test: nạp mẫu từ JSON (dán hoặc file) — chỉ dùng khi kiểm thử */
+  panelJsonTestMo = signal(false);
+  noiDungJsonTest = '';
+
   // ===================================
   // Lifecycle
   // ===================================
@@ -75,6 +84,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   ngOnInit(): void {
     document.addEventListener('keydown', this.xuLyPhimTat);
     this.taiDanhSachBieuMau();
+    this.taiDanhSachKichBan();
   }
 
   ngAfterViewInit(): void {
@@ -94,6 +104,15 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   private taiDanhSachBieuMau(): void {
     this.api.getTemplateList().subscribe(list => {
       this.danhSachBieuMau.set(list);
+    });
+  }
+
+  private taiDanhSachKichBan(): void {
+    this.api.getScenarioList().subscribe(list => {
+      this.danhSachKichBan.set(list);
+      if (list.length && !list.some(k => k.scenarioId === this.kichBan)) {
+        this.kichBan = list[0].scenarioId;
+      }
     });
   }
 
@@ -191,6 +210,141 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     this.taiForm();
   }
 
+  togglePanelJsonTest(): void {
+    this.panelJsonTestMo.update(v => !v);
+  }
+
+  /**
+   * Nạp mẫu từ JSON trong textarea.
+   * Hỗ trợ:
+   *   - `{ "template": {...}, "dimMeta": {...}, "factData": [...] }` (giống PlanningFormResponse)
+   *   - Hoặc chỉ object template gốc (sẽ tải `dimension-metadata.json`, factData = [])
+   */
+  apDungJsonTest(): void {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(this.noiDungJsonTest.trim() || '{}');
+    } catch {
+      this.hienThiThongBao('JSON không hợp lệ (syntax).', 'error');
+      return;
+    }
+
+    const root = parsed as Record<string, unknown>;
+    const tpl = (root['template'] ?? root) as TemplateJson;
+    if (!tpl?.POV?.Dimension || !tpl?.GRID?.COLS || !tpl?.GRID?.ROWS) {
+      this.hienThiThongBao(
+        'Thiếu cấu trúc mẫu: cần POV.Dimension, GRID.COLS, GRID.ROWS.',
+        'error',
+      );
+      return;
+    }
+
+    const dimFromJson = root['dimMeta'] as DimMetadata | undefined;
+    const factsRaw = root['factData'];
+    const facts: FactDataPoint[] = Array.isArray(factsRaw)
+      ? (factsRaw as FactDataPoint[])
+      : [];
+
+    const hoanTat = (meta: DimMetadata): void => {
+      this.xoaThayDoi();
+      this.template.set(tpl);
+      this.dimMeta.set(meta);
+      this.factData.set(facts);
+      this.bieuMau = tpl.templateId ?? 'JSON_TEST';
+      this.xayDungPovDropdowns(tpl, meta);
+      this.parseVaRender();
+      console.log('[KHTC JSON test] Đã nạp mẫu', {
+        templateId: tpl.templateId,
+        templateName: tpl.templateName,
+        dimKeys: Object.keys(meta),
+        factCount: facts.length,
+        payload: { template: tpl, dimMeta: meta, factData: facts },
+      });
+      this.hienThiThongBao('Đã nạp mẫu từ JSON (xem console).', 'success');
+    };
+
+    if (dimFromJson && typeof dimFromJson === 'object') {
+      hoanTat(dimFromJson);
+      return;
+    }
+
+    this.dangTai.set(true);
+    this.http.get<DimMetadata>('assets/mock-data/dimension-metadata.json').subscribe({
+      next: (meta) => {
+        hoanTat(meta);
+        this.dangTai.set(false);
+      },
+      error: (err) => {
+        this.dangTai.set(false);
+        this.hienThiThongBao(
+          'Không tải được dimension-metadata.json: ' + (err?.message ?? err),
+          'error',
+        );
+      },
+    });
+  }
+
+  onChonFileJson(evt: Event): void {
+    const input = evt.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.noiDungJsonTest = String(reader.result ?? '');
+      input.value = '';
+    };
+    reader.onerror = () => {
+      this.hienThiThongBao('Đọc file thất bại.', 'error');
+      input.value = '';
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  /** In ra console + copy clipboard bundle hiện tại để chỉnh và nạp lại */
+  logVaCopyJsonMauHienTai(): void {
+    const tpl = this.template();
+    const meta = this.dimMeta();
+    if (!tpl || !meta) {
+      this.hienThiThongBao('Chưa có mẫu trên grid để xuất.', 'error');
+      return;
+    }
+    const bundle = {
+      template: tpl,
+      dimMeta: meta,
+      factData: this.factData(),
+    };
+    const text = JSON.stringify(bundle, null, 2);
+    console.log('[KHTC JSON test] Mẫu hiện tại (copy để sửa / nạp lại):\n', text);
+    void navigator.clipboard.writeText(text).then(
+      () => this.hienThiThongBao('Đã log console + copy clipboard.', 'success'),
+      () => this.hienThiThongBao('Đã log console (clipboard không khả dụng).', 'success'),
+    );
+  }
+
+  onKichBanChange(): void {
+    const tpl = this.template();
+    const meta = this.dimMeta();
+    if (!tpl || !meta) return;
+
+    this.dangTai.set(true);
+    this.api
+      .loadFactData(this.bieuMau, this.layPovHienTai(), this.nam, this.kichBan)
+      .subscribe({
+        next: (facts) => {
+          this.factData.set(facts);
+          this.parseVaRender();
+          this.dangTai.set(false);
+        },
+        error: (err) => {
+          this.hienThiThongBao(
+            'Lỗi tải dữ liệu theo kịch bản: ' + (err?.message ?? err),
+            'error',
+          );
+          this.dangTai.set(false);
+        },
+      });
+  }
+
   // ===================================
   // 6. Save
   // ===================================
@@ -203,6 +357,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
       templateId: this.bieuMau,
       pov: this.layPovHienTai(),
       nam: this.nam,
+      scenarioId: this.kichBan,
       changes: this.trackedChanges.map<CellChangePayload>(tc => ({
         rowDimensions: tc.rowDimensions,
         colDimensions: tc.colDimensions,

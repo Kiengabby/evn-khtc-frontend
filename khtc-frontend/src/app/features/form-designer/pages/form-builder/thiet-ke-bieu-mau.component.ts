@@ -166,6 +166,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     try {
       const kq = await this.bieuMauService.layTheoId(this.formId);
       if (kq.trangThai && kq.duLieu) {
+        console.log('[FormDesigner] 📥 JSON nhận từ BE (load mẫu cho người dùng):', JSON.stringify(kq.duLieu, null, 2));
         this.bieuMau.set(kq.duLieu);
         this.templateInfo.templateId = kq.duLieu.formId;
         this.templateInfo.templateName = kq.duLieu.formName;
@@ -966,7 +967,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     if (!this.hot) return;
     this.dangLuu.set(true);
     const exported = this.exportToJson();
-    console.log('[FormDesigner] Exported:', JSON.stringify(exported, null, 2));
+    console.log('[FormDesigner] 📤 JSON gửi lên BE (lưu giá trị thay đổi vào DB):', JSON.stringify(exported, null, 2));
     setTimeout(() => { this.dangLuu.set(false); this.notify('Đã lưu biểu mẫu thành công!', 'success'); }, 800);
   }
 

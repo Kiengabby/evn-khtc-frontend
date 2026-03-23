@@ -1,0 +1,178 @@
+{
+  "templateId": "BCTH_SXKD_DIEN",
+  "templateName": "BÁO CÁO THỰC HIỆN KẾ HOẠCH SẢN XUẤT KINH DOANH – ĐIỆN",
+  "version": "2026",
+  "description": "Theo dõi kế hoạch năm, thực hiện kỳ/quý, lũy kế và so sánh — đơn vị Triệu kWh",
+
+  "POV": {
+    "Dimension": ["ENT", "VER"],
+    "Promt": ["Đơn vị", "Phiên bản"]
+  },
+
+  "GRID": {
+    "COLS": [
+      {
+        "Key": "A",
+        "Type": "Text",
+        "Promt": "TT",
+        "ListValues": [
+          "1",
+          "1.1",
+          "1.2",
+          "1.3",
+          "1.4",
+          "1.5",
+          "1.6",
+          "1.7",
+          "1.8",
+          "1.8.2001",
+          "1.8.2002",
+          "1.8.2003",
+          "2",
+          "3"
+        ]
+      },
+      {
+        "Key": "B",
+        "Type": "Dim",
+        "Promt": "Chỉ tiêu"
+      },
+      {
+        "Key": "C",
+        "Type": "Text",
+        "Promt": "ĐVT",
+        "ListValues": [
+          "Triệu kWh",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "-",
+          "Triệu kWh",
+          "Triệu kWh"
+        ]
+      },
+      {
+        "Key": "D",
+        "Type": "Data",
+        "Promt": "",
+        "Dimension": [
+          {
+            "Key": "MET",
+            "ListType": "Mem",
+            "ListValue": [
+              {
+                "Key": "MET_KHN",
+                "Display": { "Type": "Text", "Value": "Kế hoạch năm" }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Key": "E",
+        "Type": "Data",
+        "Promt": "",
+        "Dimension": [
+          {
+            "Key": "MET",
+            "ListType": "Mem",
+            "ListValue": [
+              {
+                "Key": "MET_THKY",
+                "Display": { "Type": "Text", "Value": "Thực hiện kỳ này" }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Key": "F",
+        "Type": "Data",
+        "Promt": "",
+        "Dimension": [
+          {
+            "Key": "MET",
+            "ListType": "Mem",
+            "ListValue": [
+              {
+                "Key": "MET_THQUY",
+                "Display": { "Type": "Text", "Value": "Thực hiện quý này" }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Key": "G",
+        "Type": "Data",
+        "Promt": "",
+        "Dimension": [
+          {
+            "Key": "MET",
+            "ListType": "Mem",
+            "ListValue": [
+              {
+                "Key": "MET_LUUKY",
+                "Display": { "Type": "Text", "Value": "Lũy kế từ đầu năm" }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Key": "H",
+        "Type": "Data",
+        "Promt": "",
+        "Dimension": [
+          {
+            "Key": "MET",
+            "ListType": "Mem",
+            "ListValue": [
+              {
+                "Key": "MET_SS",
+                "Display": { "Type": "Text", "Value": "So sánh với năm kế hoạch" }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+
+    "ROWS": [
+      {
+        "Key": "R1",
+        "Type": "Data",
+        "Promt": "",
+        "Dimension": [
+          {
+            "Key": "ACC",
+            "ListType": "Mem",
+            "ListValue": [
+              { "Key": "SX_TONG", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "SX_THUY", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "SX_THAN", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "SX_DAU", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "SX_TBKKHI", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "SX_TBKDAU", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "SX_DIEZEL", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "SX_DUOIH", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "SX_NL_KHAC", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "SX_GIO", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "SX_MT", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "SX_NL_KHAC_CT", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "MUA_TT", "Display": { "Type": "Dim", "Value": "Name" } },
+              { "Key": "MUA_NLM", "Display": { "Type": "Dim", "Value": "Name" } }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

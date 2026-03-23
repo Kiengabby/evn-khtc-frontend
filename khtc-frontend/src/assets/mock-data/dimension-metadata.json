@@ -5,13 +5,6 @@
     "UTH": { "Name": "Ước TH" },
     "NA":  { "Name": "" }
   },
-  "ACC": {
-    "SLD": { "Name": "Sản lượng điện SX và mua" },
-    "DT":  { "Name": "Doanh thu bán điện" },
-    "CP":  { "Name": "Chi phí mua điện" },
-    "GT":  { "Name": "Giá thành bán điện" },
-    "TH":  { "Name": "Tổng hợp chỉ tiêu" }
-  },
   "YEA": {
     "Y_2":  { "Name": "Năm N-2" },
     "Y_1":  { "Name": "Năm N-1" },
@@ -29,5 +22,35 @@
     "V1":    { "Name": "Lần 1" },
     "V2":    { "Name": "Lần 2" },
     "FINAL": { "Name": "Chính thức" }
+  },
+
+  "MET": {
+    "MET_KHN":   { "Name": "Kế hoạch năm" },
+    "MET_THKY":  { "Name": "Thực hiện kỳ này" },
+    "MET_THQUY": { "Name": "Thực hiện quý này" },
+    "MET_LUUKY": { "Name": "Lũy kế từ đầu năm" },
+    "MET_SS":    { "Name": "So sánh với năm kế hoạch" }
+  },
+
+  "ACC": {
+    "SLD": { "Name": "Sản lượng điện SX và mua" },
+    "DT":  { "Name": "Doanh thu bán điện" },
+    "CP":  { "Name": "Chi phí mua điện" },
+    "GT":  { "Name": "Giá thành bán điện" },
+    "TH":  { "Name": "Tổng hợp chỉ tiêu" },
+    "SX_TONG": { "Name": "Sản lượng điện sản xuất" },
+    "SX_THUY":     { "Name": "Thủy điện" },
+    "SX_THAN":     { "Name": "Nhiệt điện than" },
+    "SX_DAU":      { "Name": "Nhiệt điện dầu" },
+    "SX_TBKKHI":   { "Name": "TBK chạy khí" },
+    "SX_TBKDAU":   { "Name": "TBK chạy dầu" },
+    "SX_DIEZEL":   { "Name": "Diezel" },
+    "SX_DUOIH":    { "Name": "Đuôi hơi" },
+    "SX_NL_KHAC":  { "Name": "Năng lượng khác" },
+    "SX_GIO":      { "Name": "Năng lượng gió" },
+    "SX_MT":       { "Name": "Năng lượng mặt trời" },
+    "SX_NL_KHAC_CT": { "Name": "Năng lượng khác (chi tiết)" },
+    "MUA_TT":      { "Name": "Sản lượng mua điện các đơn vị phát điện trên thị trường" },
+    "MUA_NLM":     { "Name": "Sản lượng mua điện từ các nguồn năng lượng mới" }
   }
 }
