@@ -57,6 +57,24 @@
       </div>
 
       <div class="toolbar-section">
+        <span class="group-label">Chỉ tiêu</span>
+        <div class="toolbar-actions">
+          <button class="toolbar-btn indicator-btn" (click)="openRowIndicatorDialog()" title="Chọn danh sách chỉ tiêu dòng">
+            <i class="pi pi-list"></i> Chỉ tiêu dòng
+            @if (selectedRowIndicators.length > 0) {
+              <span class="indicator-count">{{ selectedRowIndicators.length }}</span>
+            }
+          </button>
+          <button class="toolbar-btn indicator-btn" (click)="openColIndicatorDialog()" title="Chọn danh sách chỉ tiêu cột">
+            <i class="pi pi-table"></i> Chỉ tiêu cột
+            @if (selectedColIndicators.length > 0) {
+              <span class="indicator-count">{{ selectedColIndicators.length }}</span>
+            }
+          </button>
+        </div>
+      </div>
+
+      <div class="toolbar-section">
         <span class="group-label">Gộp ô</span>
         <div class="toolbar-actions">
           <button class="toolbar-btn" (click)="mergeCellsAction()" title="Gộp ô đã chọn">
@@ -150,95 +168,186 @@
     <!-- Properties panel -->
     @if (showPropsPanel()) {
       <div class="props-panel">
-        <div class="panel-header">
-          <h3>Thuộc tính</h3>
-          <button class="btn-icon-sm" (click)="showPropsPanel.set(false)">
+
+        <!-- Panel Header -->
+        <div class="pp-header">
+          <div class="pp-header-left">
+            <div class="pp-header-icon">
+              <i class="pi pi-sliders-h"></i>
+            </div>
+            <div>
+              <div class="pp-header-title">Thuộc tính</div>
+              <div class="pp-header-sub">{{ cellInfo() || 'Chưa chọn ô' }}</div>
+            </div>
+          </div>
+          <button class="pp-close-btn" (click)="showPropsPanel.set(false)" title="Đóng">
             <i class="pi pi-times"></i>
           </button>
         </div>
-        <div class="panel-body">
-          <div class="prop-section" style="margin-bottom: 2rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 1rem;">
-            <h4 style="margin: 0 0 1rem 0; color: var(--primary-color);">Cấu hình Lưới</h4>
-            
-            <div class="prop-section-inner" style="margin-bottom: 1rem;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.85rem;">Số dòng tiêu đề cố định</label>
-              <input type="number" min="0" max="10" [(ngModel)]="fixedRows" (ngModelChange)="setFixedRows($event)" style="padding: 0.5rem; width: 100%; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box;">
-              <div class="cell-type-explanation" style="margin-top: 0.25rem;">
-                <small style="color: #6c757d;">Mặc định tự động đếm theo số tầng header khi gộp ô.</small>
-              </div>
-            </div>
 
-            <div class="prop-section-inner">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.85rem;">Số cột cố định (bên trái)</label>
-              <input type="number" min="0" max="10" [(ngModel)]="fixedCols" (ngModelChange)="setFixedCols($event)" style="padding: 0.5rem; width: 100%; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box;">
+        <div class="pp-body">
+
+          <!-- Section: Grid Config -->
+          <div class="pp-card">
+            <div class="pp-card-title">
+              <i class="pi pi-th-large"></i>
+              Cấu hình lưới
+            </div>
+            <div class="pp-field">
+              <label class="pp-label">Số dòng tiêu đề cố định</label>
+              <input type="number" min="0" max="10"
+                     [(ngModel)]="fixedRows"
+                     (ngModelChange)="setFixedRows($event)"
+                     class="pp-input">
+              <span class="pp-hint">Mặc định tự động đếm theo số tầng header khi gộp ô.</span>
+            </div>
+            <div class="pp-field">
+              <label class="pp-label">Số cột cố định (bên trái)</label>
+              <input type="number" min="0" max="10"
+                     [(ngModel)]="fixedCols"
+                     (ngModelChange)="setFixedCols($event)"
+                     class="pp-input">
             </div>
           </div>
 
-          <h4 style="margin: 0 0 1rem 0; color: var(--primary-color);">Thuộc tính Ô</h4>
-          <div class="prop-section">
-            <label>Vị trí</label>
-            <div class="prop-value">{{ cellInfo() || '—' }}</div>
-          </div>
+          <!-- Section: Cell Properties -->
+          <div class="pp-card">
+            <div class="pp-card-title">
+              <i class="pi pi-table"></i>
+              Thuộc tính ô
+            </div>
 
-          <div class="prop-section">
-            <label>Loại ô</label>
-            <select [(ngModel)]="propCellRole" (ngModelChange)="onCellRoleChange()" class="prop-select">
-              <option value="data">Data (nhập liệu số liệu)</option>
-              <option value="header">Header (tiêu đề cột/dòng)</option>
-              <option value="text">Text (văn bản cố định)</option>
-              <option value="formula">Formula (công thức tính toán)</option>
-            </select>
+            <!-- Cell position badge -->
+            <div class="pp-cell-badge">
+              <i class="pi pi-map-marker"></i>
+              <span class="pp-cell-addr">{{ cellInfo() || '—' }}</span>
+            </div>
 
-            <div class="cell-type-explanation">
+            <!-- Cell type selector — visual cards -->
+            <div class="pp-label" style="margin-bottom: 8px;">Loại ô</div>
+            <div class="pp-type-grid">
+              <button class="pp-type-card" [class.active]="propCellRole === 'data'"
+                      (click)="propCellRole = 'data'; onCellRoleChange()">
+                <i class="pi pi-pencil"></i>
+                <span>Data</span>
+              </button>
+              <button class="pp-type-card" [class.active]="propCellRole === 'header'"
+                      (click)="propCellRole = 'header'; onCellRoleChange()">
+                <i class="pi pi-bookmark"></i>
+                <span>Header</span>
+              </button>
+              <button class="pp-type-card" [class.active]="propCellRole === 'text'"
+                      (click)="propCellRole = 'text'; onCellRoleChange()">
+                <i class="pi pi-align-left"></i>
+                <span>Text</span>
+              </button>
+              <button class="pp-type-card" [class.active]="propCellRole === 'formula'"
+                      (click)="propCellRole = 'formula'; onCellRoleChange()">
+                <i class="pi pi-calculator"></i>
+                <span>Formula</span>
+              </button>
+            </div>
+
+            <!-- Explanation for selected type -->
+            <div class="pp-type-desc"
+                 [class.data]="propCellRole === 'data'"
+                 [class.header]="propCellRole === 'header'"
+                 [class.text]="propCellRole === 'text'"
+                 [class.formula]="propCellRole === 'formula'">
               @if (propCellRole === 'data') {
-                <small>Ô dữ liệu: Cho phép nhập số liệu, giá trị thực tế</small>
+                <i class="pi pi-info-circle"></i> Cho phép nhập số liệu, giá trị thực tế
               } @else if (propCellRole === 'header') {
-                <small>Ô tiêu đề: Tên cột, tên dòng, không thay đổi</small>
+                <i class="pi pi-info-circle"></i> Tên cột / tên dòng, không thay đổi khi nhập liệu
               } @else if (propCellRole === 'text') {
-                <small>Ô văn bản: Ghi chú, mô tả, văn bản cố định</small>
+                <i class="pi pi-info-circle"></i> Ghi chú, mô tả, văn bản cố định
               } @else if (propCellRole === 'formula') {
-                <small>Ô công thức: Tự động tính toán từ các ô khác</small>
+                <i class="pi pi-info-circle"></i> Tự động tính toán từ các ô khác — nhập = ở Formula Bar
               }
             </div>
-          </div>
 
-          <div class="prop-section">
-            <label>
-              <input type="checkbox" [(ngModel)]="propReadOnly" (ngModelChange)="onReadOnlyChange()">
-              Chỉ đọc (không cho phép sửa)
+            <!-- Read-only toggle -->
+            <label class="pp-toggle-row">
+              <span class="pp-toggle-wrap">
+                <input type="checkbox" class="pp-toggle-input"
+                       [(ngModel)]="propReadOnly"
+                       (ngModelChange)="onReadOnlyChange()">
+                <span class="pp-toggle-slider"></span>
+              </span>
+              <span class="pp-toggle-label">Chỉ đọc (không cho phép sửa)</span>
             </label>
+
+            @if (propCellRole === 'formula') {
+              <div class="pp-formula-hint">
+                <i class="pi pi-lightbulb"></i>
+                <span>Nhập công thức trên thanh Formula Bar (bắt đầu bằng <strong>=</strong>). Click vào ô để chèn tọa độ.</span>
+              </div>
+            }
           </div>
 
-          @if (propCellRole === 'formula') {
-            <div class="prop-section">
-              <div class="formula-note">
+          <!-- Apply button -->
+          <button class="pp-apply-btn" (click)="applyCellProps()">
+            <i class="pi pi-check"></i>
+            Áp dụng thay đổi
+          </button>
+
+          <!-- Legend -->
+          <div class="pp-legend">
+            <div class="pp-legend-title">Chú thích màu</div>
+            <div class="pp-legend-grid">
+              <div class="pp-legend-item">
+                <span class="pp-dot header"></span>Header
+              </div>
+              <div class="pp-legend-item">
+                <span class="pp-dot text"></span>Text
+              </div>
+              <div class="pp-legend-item">
+                <span class="pp-dot data"></span>Data
+              </div>
+              <div class="pp-legend-item">
+                <span class="pp-dot formula"></span>Formula
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Indicator Code Info (Read-only) -->
+          @if (selectedCell()) {
+            <div class="pp-card">
+              <div class="pp-card-title">
+                <i class="pi pi-id-card"></i>
+                Mã chỉ tiêu
+              </div>
+
+              <!-- Column indicator -->
+              <div class="pp-indicator-info-row">
+                <span class="pp-indicator-label">Cột:</span>
+                @if (getAssignedColCode()) {
+                  <span class="pp-indicator-badge-inline assigned">
+                    <strong>{{ getAssignedColCode() }}</strong> — {{ getAssignedColName() }}
+                  </span>
+                } @else {
+                  <span class="pp-indicator-badge-inline unassigned">Chưa gán</span>
+                }
+              </div>
+
+              <!-- Row indicator -->
+              <div class="pp-indicator-info-row">
+                <span class="pp-indicator-label">Dòng:</span>
+                @if (getAssignedRowCode()) {
+                  <span class="pp-indicator-badge-inline assigned">
+                    <strong>{{ getAssignedRowCode() }}</strong> — {{ getAssignedRowName() }}
+                  </span>
+                } @else {
+                  <span class="pp-indicator-badge-inline unassigned">Chưa gán</span>
+                }
+              </div>
+
+              <div class="pp-indicator-hint">
                 <i class="pi pi-info-circle"></i>
-                <span>Nhập công thức ở thanh Formula Bar phía trên (bắt đầu bằng =). Click vào ô trên lưới để chèn tọa độ.</span>
+                Sử dụng nút <strong>Chỉ tiêu dòng / cột</strong> trên thanh công cụ để chọn danh mục.
               </div>
             </div>
           }
 
-          <button class="btn-primary full-width" (click)="applyCellProps()">
-            <i class="pi pi-check"></i> Áp dụng
-          </button>
-
-          <div class="prop-section legend">
-            <label>Chú thích màu</label>
-            <div class="legend-items">
-              <div class="legend-item">
-                <span class="legend-color header"></span> Header
-              </div>
-              <div class="legend-item">
-                <span class="legend-color text"></span> Text
-              </div>
-              <div class="legend-item">
-                <span class="legend-color data"></span> Data
-              </div>
-              <div class="legend-item">
-                <span class="legend-color formula"></span> Formula
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     }
@@ -443,8 +552,200 @@
       </div>
     </div>
   }
+  <!-- ===== ROW INDICATOR SELECTION DIALOG ===== -->
+  @if (showRowIndicatorDialog()) {
+    <div class="indicator-dialog-overlay" (click)="showRowIndicatorDialog.set(false)">
+      <div class="indicator-dialog" (click)="$event.stopPropagation()">
 
-  <!-- ===== TOAST ===== -->
+        <div class="ind-dialog-header">
+          <div class="ind-header-left">
+            <div class="ind-header-icon"><i class="pi pi-list"></i></div>
+            <div>
+              <div class="ind-header-title">Chọn chỉ tiêu dòng</div>
+              <div class="ind-header-sub">Chọn các chỉ tiêu sẽ hiển thị trên lưới</div>
+            </div>
+          </div>
+          <button class="ind-close-btn" (click)="showRowIndicatorDialog.set(false)">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+
+        <div class="ind-dialog-body">
+          <!-- Left: Selection list -->
+          <div class="ind-select-panel">
+            <div class="ind-search-bar">
+              <i class="pi pi-search"></i>
+              <input type="text" [(ngModel)]="indicatorSearchTerm" placeholder="Tìm kiếm chỉ tiêu...">
+            </div>
+
+            <div class="ind-actions-bar">
+              <button class="ind-action-btn" (click)="selectAllRowIndicators()">
+                <i class="pi pi-check-square"></i> Chọn tất cả
+              </button>
+              <button class="ind-action-btn" (click)="deselectAllRowIndicators()">
+                <i class="pi pi-stop"></i> Bỏ chọn
+              </button>
+              <span class="ind-count-badge">{{ getTempRowSelectionCount() }} đã chọn</span>
+            </div>
+
+            <div class="ind-list">
+              @for (group of filteredDialogRowIndicators(); track group.group) {
+                <div class="ind-group">
+                  <div class="ind-group-title">{{ group.group }}</div>
+                  @for (item of group.items; track item.code) {
+                    <label class="ind-item" [class.selected]="isTempRowSelected(item.code)"
+                           [style.padding-left.px]="16 + (item.level || 0) * 20"
+                           (click)="toggleTempRowIndicator(item)">
+                      <span class="ind-checkbox" [class.checked]="isTempRowSelected(item.code)">
+                        @if (isTempRowSelected(item.code)) { <i class="pi pi-check"></i> }
+                      </span>
+                      <span class="ind-item-name">
+                        @if ((item.level || 0) >= 2) { - }
+                        {{ item.name }}
+                      </span>
+                      <span class="ind-item-code">{{ item.code }}</span>
+                    </label>
+                  }
+                </div>
+              }
+              @if (filteredDialogRowIndicators().length === 0) {
+                <div class="ind-empty">
+                  <i class="pi pi-search"></i>
+                  <span>Không tìm thấy chỉ tiêu phù hợp</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Right: Preview -->
+          <div class="ind-preview-panel">
+            <div class="ind-preview-title">
+              <i class="pi pi-eye"></i> Xem trước ({{ getTempRowSelectionCount() }} dòng)
+            </div>
+            <div class="ind-preview-list">
+              @for (item of getTempRowSelectedItems(); track item.code; let i = $index) {
+                <div class="ind-preview-item" [style.padding-left.px]="12 + (item.level || 0) * 16">
+                  <span class="ind-preview-stt">{{ (item.level || 0) === 0 ? (i + 1) : '' }}</span>
+                  <span class="ind-preview-name">
+                    @if ((item.level || 0) >= 2) { - }
+                    {{ item.name }}
+                  </span>
+                </div>
+              }
+              @if (getTempRowSelectionCount() === 0) {
+                <div class="ind-preview-empty">Chưa chọn chỉ tiêu nào</div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="ind-dialog-footer">
+          <button class="modern-btn secondary" (click)="showRowIndicatorDialog.set(false)">
+            <i class="pi pi-times"></i> Hủy
+          </button>
+          <button class="modern-btn primary" (click)="applyRowIndicators()" [disabled]="getTempRowSelectionCount() === 0">
+            <i class="pi pi-check"></i> Áp dụng ({{ getTempRowSelectionCount() }})
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== COLUMN INDICATOR SELECTION DIALOG ===== -->
+  @if (showColIndicatorDialog()) {
+    <div class="indicator-dialog-overlay" (click)="showColIndicatorDialog.set(false)">
+      <div class="indicator-dialog" (click)="$event.stopPropagation()">
+
+        <div class="ind-dialog-header">
+          <div class="ind-header-left">
+            <div class="ind-header-icon col"><i class="pi pi-table"></i></div>
+            <div>
+              <div class="ind-header-title">Chọn chỉ tiêu cột</div>
+              <div class="ind-header-sub">Chọn các cột sẽ hiển thị trên lưới (STT, Chỉ tiêu, ĐVT là cố định)</div>
+            </div>
+          </div>
+          <button class="ind-close-btn" (click)="showColIndicatorDialog.set(false)">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+
+        <div class="ind-dialog-body">
+          <!-- Left: Selection list -->
+          <div class="ind-select-panel">
+            <div class="ind-search-bar">
+              <i class="pi pi-search"></i>
+              <input type="text" [(ngModel)]="indicatorSearchTerm" placeholder="Tìm kiếm chỉ tiêu cột...">
+            </div>
+
+            <div class="ind-actions-bar">
+              <button class="ind-action-btn" (click)="selectAllColIndicators()">
+                <i class="pi pi-check-square"></i> Chọn tất cả
+              </button>
+              <button class="ind-action-btn" (click)="deselectAllColIndicators()">
+                <i class="pi pi-stop"></i> Bỏ chọn
+              </button>
+              <span class="ind-count-badge">{{ getTempColSelectionCount() }} đã chọn</span>
+            </div>
+
+            <div class="ind-list">
+              @for (group of filteredDialogColIndicators(); track group.group) {
+                <div class="ind-group">
+                  <div class="ind-group-title">{{ group.group }}</div>
+                  @for (item of group.items; track item.code) {
+                    <label class="ind-item" [class.selected]="isTempColSelected(item.code)"
+                           (click)="toggleTempColIndicator(item)">
+                      <span class="ind-checkbox" [class.checked]="isTempColSelected(item.code)">
+                        @if (isTempColSelected(item.code)) { <i class="pi pi-check"></i> }
+                      </span>
+                      <span class="ind-item-name">{{ item.name }}</span>
+                      <span class="ind-item-code">{{ item.code }}</span>
+                    </label>
+                  }
+                </div>
+              }
+              @if (filteredDialogColIndicators().length === 0) {
+                <div class="ind-empty">
+                  <i class="pi pi-search"></i>
+                  <span>Không tìm thấy chỉ tiêu phù hợp</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Right: Preview -->
+          <div class="ind-preview-panel">
+            <div class="ind-preview-title">
+              <i class="pi pi-eye"></i> Xem trước cột đã chọn
+            </div>
+            @if (getTempColSelectionCount() > 0) {
+              <div class="ind-preview-note">
+                <i class="pi pi-info-circle"></i>
+                3 cột cố định (STT, Chỉ tiêu, ĐVT) + {{ getTempColSelectionCount() }} cột dữ liệu
+              </div>
+              <div class="ind-preview-list horizontal">
+                @for (item of getTempColSelectedItems(); track item.code) {
+                  <div class="ind-preview-col">{{ item.name }}</div>
+                }
+              </div>
+            } @else {
+              <div class="ind-preview-empty">Chưa chọn chỉ tiêu cột nào</div>
+            }
+          </div>
+        </div>
+
+        <div class="ind-dialog-footer">
+          <button class="modern-btn secondary" (click)="showColIndicatorDialog.set(false)">
+            <i class="pi pi-times"></i> Hủy
+          </button>
+          <button class="modern-btn primary" (click)="applyColIndicators()" [disabled]="getTempColSelectionCount() === 0">
+            <i class="pi pi-check"></i> Áp dụng ({{ getTempColSelectionCount() }})
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+
   @if (thongBao()) {
     <div class="toast" [class]="'toast-' + thongBao()!.loai">
       <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"

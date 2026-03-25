@@ -17,28 +17,58 @@ import {
 // === Types ===
 type CellRole = 'text' | 'data' | 'formula' | 'header';
 
-/** JSON chuẩn gửi xuống Backend — khớp SYS_FORM_TEMPLATE + SYS_FORM_VERSION + SYS_FORM_MAPPING */
+interface IndicatorItem {
+  code: string;
+  name: string;
+  type?: string; // 'system' for fixed columns
+  level?: number; // 0=parent, 1=child, 2=sub-child
+}
+
+interface IndicatorGroup {
+  group: string;
+  items: IndicatorItem[];
+}
+
+/**
+ * JSON chuẩn gửi xuống Backend.
+ * Khớp với: SYS_FORM_TEMPLATE + SYS_FORM_VERSION.
+ * mappings nằm bên trong version.layoutJSON.mappings (khớp LayoutJSON interface).
+ */
 interface ExportedTemplate {
   formId: string;
   formName: string;
   orgList: string[];
   isDynamicRow: boolean;
-  layoutConfig: { type: string; allowDynamicRows: boolean; freezeColumns: number };
+  layoutConfig: {
+    type: string;
+    allowDynamicRows: boolean;
+    freezeColumns: number;
+    hiddenColumns?: { columns: number[]; indicators: boolean };
+  };
   version: {
     year: number;
-    layoutJSON: FormLayoutConfig;
+    layoutJSON: ExportedLayoutJSON;
   };
-  mappings: FormMappingExport[];
 }
 
+/** Khớp LayoutJSON (layout-template.model.ts) */
+interface ExportedLayoutJSON {
+  columns: ColumnConfig[];
+  headerRows: HeaderRow[];
+  rows: any[];
+  mergeCells?: MergeCell[];
+  fixedRowsTop: number;
+  freezeColumns: number;
+  mappings?: FormMappingExport[];
+}
+
+/** Khớp LayoutCellMapping (layout-template.model.ts) — dùng rowCode×colCode làm key duy nhất */
 interface FormMappingExport {
   rowKey: string;
   colKey: string;
-  rowCode?: string;
-  colCode?: string;
-  accountCode: string;
+  rowCode: string;
+  colCode: string;
   cellRole: CellRole;
-  cellValue?: string | number | null;
   formula?: string;
   isReadOnly: boolean;
 }
@@ -135,6 +165,23 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   sceValues: string[] = ['KH', 'TH'];
   yeaValues: string[] = ['2025', '2026'];
 
+  // === Indicator Code (Mã chỉ tiêu) ===
+  colIndicators = signal<IndicatorGroup[]>([]);
+  rowIndicators = signal<IndicatorGroup[]>([]);
+  columnCodeMap = new Map<number, string>();   // colIndex → assigned code
+  rowCodeMap = new Map<number, string>();       // rowIndex → assigned code
+  columnCodeNameMap = new Map<number, string>(); // colIndex → indicator name
+  rowCodeNameMap = new Map<number, string>();     // rowIndex → indicator name
+
+  // === Indicator Selection Dialog ===
+  showRowIndicatorDialog = signal(false);
+  showColIndicatorDialog = signal(false);
+  selectedRowIndicators: IndicatorItem[] = [];
+  selectedColIndicators: IndicatorItem[] = [];
+  tempRowSelection = new Set<string>();  // codes selected in dialog
+  tempColSelection = new Set<string>();
+  indicatorSearchTerm = '';
+
   // === Lifecycle ===
 
   async ngOnInit(): Promise<void> {
@@ -144,6 +191,8 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     } else {
       this.showInfoDialog.set(true);
     }
+    // Load indicator codes from API
+    this.loadIndicatorCodes();
   }
 
   ngAfterViewInit(): void {
@@ -298,13 +347,20 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       cells: (row: number, col: number) => {
         const meta = this.cellMetadata.get(`${row},${col}`);
         const cellProps: any = {};
+        let baseClass = '';
         if (meta) {
           cellProps.readOnly = meta.readOnly;
-          if (meta.role === 'header') cellProps.className = 'cell-designer-header';
-          else if (meta.role === 'text') cellProps.className = 'cell-designer-text';
-          else if (meta.role === 'data') cellProps.className = 'cell-designer-data';
-          else if (meta.role === 'formula') cellProps.className = 'cell-designer-formula';
+          if (meta.role === 'header') baseClass = 'cell-designer-header';
+          else if (meta.role === 'text') baseClass = 'cell-designer-text';
+          else if (meta.role === 'data') baseClass = 'cell-designer-data';
+          else if (meta.role === 'formula') baseClass = 'cell-designer-formula';
         }
+        // Add centering classes if this cell is a merge parent
+        const isMergeParent = this.mergedCells.some(m => m.row === row && m.col === col);
+        if (isMergeParent) {
+          baseClass = (baseClass ? baseClass + ' ' : '') + 'htCenter htMiddle merged-cell-parent';
+        }
+        if (baseClass) cellProps.className = baseClass;
         return cellProps;
       },
     });
@@ -1008,7 +1064,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       
       let colType = this.inferColumnType(sourceData, c, headerRowCount, rowCount);
       
-      const colCode = this.generateColCode(fullTitle, c);
+      const colCode = this.columnCodeMap.get(c) || this.generateColCode(fullTitle, c);
 
       // Explicitly adjust type/readOnly based on known columns
       let isReadOnly = false;
@@ -1051,19 +1107,19 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     // --- 5. Build LayoutRows (the list of grid rows) ---
     const rows = this.buildLayoutRows(sourceData, headerRowCount, rowCount, colCount);
 
-    // --- 6. Build mappings — ALL body cells (data + header + text + formula) ---
+    // --- 6. Build mappings — khớp LayoutCellMapping (layout-template.model.ts) ---
+    // Mỗi mapping = 1 ô body: rowCode×colCode là key duy nhất cho BE lưu xuống DB.
+    // Không chứa accountCode hay cellValue — BE tự derive từ rowCode+colCode.
     const mappings: FormMappingExport[] = [];
     for (let r = headerRowCount; r < rowCount; r++) {
       const rowKey = `R${r + 1}`;
-      const rowLabel = this.getRowLabel(sourceData, r, colCount);
-      const rowDef = rows[r - headerRowCount]; // The row definition for this line
+      const rowDef = rows[r - headerRowCount];
       const rowCode = rowDef?.rowCode || `ROW_${r}`;
 
       for (let c = 0; c < colCount; c++) {
-        // Remember to map the key to the original visible layout (C -> D etc.)
         const colKey = this.colIndexToKey(c);
-        const colCode = columns[c + 1].colCode; // +1 because columns[0] is METADATA_ROW!
-        
+        const colCode = columns[c + 1].colCode || `COL_${c + 1}`; // +1 vì columns[0] = METADATA_ROW
+
         const meta = this.cellMetadata.get(`${r},${c}`);
         const hfFormula = this.getHyperFormulaCellFormula(r, c);
         const formula = hfFormula || meta?.formula || null;
@@ -1077,57 +1133,44 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         } else if (c < this.fixedCols) {
           cellRole = 'header';
         } else {
-          const val = sourceData[r]?.[c];
-          if (val !== null && val !== undefined && val !== '' && typeof val === 'string' && isNaN(Number(val))) {
-            cellRole = meta?.readOnly ? 'text' : 'data';
-          } else {
-            cellRole = 'data';
-          }
+          cellRole = 'data';
         }
 
-        // isReadOnly must be forced true for formulas, header, text, or if Column says it's readOnly
+        // isReadOnly: forced true cho formula/header/text, hoặc column readOnly, hoặc user set
         const isColumnReadOnly = columns[c + 1].readOnly;
         const isReadOnly = cellRole === 'formula'
           || cellRole === 'header'
           || cellRole === 'text'
-          || isColumnReadOnly
+          || (isColumnReadOnly ?? false)
           || (meta?.readOnly ?? false);
-
-        // Value
-        const rawValue = sourceData[r]?.[c];
-        const cellValue = (rawValue !== null && rawValue !== undefined && rawValue !== '')
-          ? rawValue
-          : undefined;
-
-        const accountCode = rowLabel
-          ? `${this.sanitizeCode(rowLabel)}_${colKey}`
-          : `${rowKey}_${colKey}`;
 
         const exportedFormula = formula ? formula.replace(/;/g, ',') : undefined;
 
-        mappings.push({
+        const entry: FormMappingExport = {
           rowKey,
           colKey,
           rowCode,
           colCode,
-          accountCode,
           cellRole,
-          cellValue: formula ? undefined : cellValue,
-          formula: exportedFormula,
           isReadOnly,
-        });
+        };
+        if (exportedFormula) entry.formula = exportedFormula;
+        mappings.push(entry);
       }
     }
 
-    // --- 7. Assemble the final structure ---
-    const layoutJSON: any = {
+    // --- 7. Assemble — layoutJSON khớp LayoutJSON interface (layout-template.model.ts) ---
+    const freezeColumns = (this.fixedCols > 0 ? this.fixedCols : 0) + 1;
+    const fixedRowsTop = this.fixedRows > 0 ? this.fixedRows : (headerRowCount > 0 ? headerRowCount : 1);
+
+    const layoutJSON: ExportedLayoutJSON = {
       columns,
       headerRows,
       rows,
       mergeCells: shiftedMergeCells.length > 0 ? shiftedMergeCells : undefined,
-      fixedRowsTop: this.fixedRows > 0 ? this.fixedRows : (headerRowCount > 0 ? headerRowCount : undefined),
-      // Increase freezeColumns by 1 to hide the new METADATA_ROW correctly while freezing the others
-      fixedColumnsLeft: (this.fixedCols > 0 ? this.fixedCols : 0) + 1,
+      fixedRowsTop,
+      freezeColumns,
+      mappings,  // ← nằm BÊN TRONG layoutJSON, không phải top-level
     };
 
     return {
@@ -1138,17 +1181,16 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       layoutConfig: {
         type: 'custom',
         allowDynamicRows: false,
-        freezeColumns: (this.fixedCols > 0 ? this.fixedCols : 0) + 1,
+        freezeColumns,
         hiddenColumns: {
-          columns: [0], // Hide METADATA_ROW
-          indicators: false
-        }
-      } as any,
+          columns: [0], // Ẩn cột METADATA_ROW
+          indicators: false,
+        },
+      },
       version: {
         year: parseInt(this.templateInfo.version, 10) || new Date().getFullYear(),
         layoutJSON,
       },
-      mappings,
     };
   }
 
@@ -1178,17 +1220,21 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     const t = fullTitle.trim().toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd');
     
-    // Default known columns
-    if (index === 0 && (t.includes('stt') || t === '')) return 'STT';
-    if (index === 1 && (t.includes('chi tieu'))) return 'CHITIEU_NAME';
+    // ---- Nhận diện cột đặc biệt ----
+    // STT: khớp "stt", "so thu tu", "số thứ tự", hoặc cột đầu rỗng
+    if (index === 0 && (t.includes('stt') || t === '' || /so\s+thu\s+tu/.test(t) || /thu\s+tu/.test(t))) return 'STT';
+    // Chỉ tiêu / tên chỉ tiêu
+    if (index === 1 && (t.includes('chi tieu') || t.includes('ten chi tieu') || t.includes('noi dung'))) return 'CHITIEU_NAME';
+    // Đơn vị tính
     if (t.includes('don vi') || t.includes('dvt')) return 'UNIT';
+    // Ghi chú
     if (t.includes('ghi chu') || t.includes('note')) return 'NOTE';
     
-    // Auto infer based on common terms
+    // ---- Auto infer dựa trên từ khóa phổ biến ----
     let prefix = 'COL';
     if (t.includes('thuc hien')) prefix = 'ACTUAL';
-    if (t.includes('ke hoach') || t.includes('kh')) prefix = 'PLAN';
-    if (t.includes('uoc')) prefix = 'ESTIMATE';
+    else if (t.includes('ke hoach') || t.includes('kh')) prefix = 'PLAN';
+    else if (t.includes('uoc') || t.includes('uoc thuc hien')) prefix = 'ESTIMATE';
     
     let suffix = '';
     if (t.match(/n-2|n - 2/)) suffix = '_N2';
@@ -1218,12 +1264,15 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       const leadingSpacesMatch = textTitle.match(/^(\s+)/);
       const level = leadingSpacesMatch ? Math.floor(leadingSpacesMatch[1].length / 2) : 0;
       
-      // Determine rowCode
+      // Determine rowCode — prioritize user-assigned code from rowCodeMap
       let rowCode = '';
-      if (title.toUpperCase().startsWith('TỔNG') || title.toUpperCase().startsWith('TONG')) {
+      const assignedRowCode = this.rowCodeMap.get(r);
+      if (assignedRowCode) {
+        rowCode = assignedRowCode;
+        chitieuCounter++;
+      } else if (title.toUpperCase().startsWith('TỔNG') || title.toUpperCase().startsWith('TONG')) {
         rowCode = `TONG_CONG_${chitieuCounter++}`;
       } else if (title) {
-        // Just pad it to look nice like CHITIEU_01
         rowCode = `CHITIEU_${String(chitieuCounter++).padStart(2, '0')}`;
       } else {
         rowCode = `ROW_${r}`;
@@ -1249,7 +1298,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     return rows;
   }
 
-  private colIndexToKey(col: number): string {
+  colIndexToKey(col: number): string {
     let key = '';
     let current = col;
     while (current >= 0) {
@@ -1482,4 +1531,345 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   removeSceValue(i: number): void { if (this.sceValues.length > 1) this.sceValues.splice(i, 1); }
   addYeaValue(): void { this.yeaValues.push(''); }
   removeYeaValue(i: number): void { if (this.yeaValues.length > 1) this.yeaValues.splice(i, 1); }
+
+  // ==========================================
+  // Indicator Code (Mã chỉ tiêu) Management
+  // ==========================================
+
+  private async loadIndicatorCodes(): Promise<void> {
+    try {
+      const res = await this.bieuMauService.layDanhMucMaChiTieu();
+      if (res.trangThai && res.duLieu) {
+        this.colIndicators.set(res.duLieu.columnIndicators || []);
+        this.rowIndicators.set(res.duLieu.rowIndicators || []);
+      }
+    } catch {
+      console.warn('[FormDesigner] Không load được danh mục mã chỉ tiêu');
+    }
+  }
+
+  // --- Cell info helpers (for properties panel) ---
+  getAssignedColCode(): string | null {
+    const sel = this.selectedCell();
+    if (!sel) return null;
+    return this.columnCodeMap.get(sel.col) || null;
+  }
+
+  getAssignedColName(): string | null {
+    const sel = this.selectedCell();
+    if (!sel) return null;
+    return this.columnCodeNameMap.get(sel.col) || null;
+  }
+
+  getAssignedRowCode(): string | null {
+    const sel = this.selectedCell();
+    if (!sel) return null;
+    return this.rowCodeMap.get(sel.row) || null;
+  }
+
+  getAssignedRowName(): string | null {
+    const sel = this.selectedCell();
+    if (!sel) return null;
+    return this.rowCodeNameMap.get(sel.row) || null;
+  }
+
+  getCurrentRowTitle(): string {
+    const sel = this.selectedCell();
+    if (!sel || !this.hot) return '';
+    const colCount = this.hot.countCols();
+    const titleCol = colCount > 1 ? 1 : 0;
+    const val = this.hot.getDataAtCell(sel.row, titleCol);
+    return val ? String(val).trim() : `Dòng ${sel.row + 1}`;
+  }
+
+  // ==========================================
+  // Indicator Selection Dialog — ROW
+  // ==========================================
+
+  openRowIndicatorDialog(): void {
+    this.tempRowSelection.clear();
+    for (const item of this.selectedRowIndicators) {
+      this.tempRowSelection.add(item.code);
+    }
+    this.indicatorSearchTerm = '';
+    this.showRowIndicatorDialog.set(true);
+  }
+
+  toggleTempRowIndicator(item: IndicatorItem): void {
+    if (this.tempRowSelection.has(item.code)) {
+      this.tempRowSelection.delete(item.code);
+    } else {
+      this.tempRowSelection.add(item.code);
+    }
+  }
+
+  isTempRowSelected(code: string): boolean {
+    return this.tempRowSelection.has(code);
+  }
+
+  selectAllRowIndicators(): void {
+    for (const group of this.rowIndicators()) {
+      for (const item of group.items) {
+        this.tempRowSelection.add(item.code);
+      }
+    }
+  }
+
+  deselectAllRowIndicators(): void {
+    this.tempRowSelection.clear();
+  }
+
+  getTempRowSelectionCount(): number {
+    return this.tempRowSelection.size;
+  }
+
+  applyRowIndicators(): void {
+    if (!this.hot) return;
+
+    // Collect selected items in order from the groups
+    const selected: IndicatorItem[] = [];
+    for (const group of this.rowIndicators()) {
+      for (const item of group.items) {
+        if (this.tempRowSelection.has(item.code)) {
+          selected.push(item);
+        }
+      }
+    }
+    this.selectedRowIndicators = selected;
+
+    // Determine how many header rows exist
+    const headerRowCount = this.fixedRows || 1;
+    const colCount = this.hot.countCols();
+    const currentRowCount = this.hot.countRows();
+    const requiredBodyRows = selected.length;
+    const requiredTotalRows = headerRowCount + requiredBodyRows;
+
+    // Adjust row count
+    if (requiredTotalRows > currentRowCount) {
+      this.hot.alter('insert_row_below', currentRowCount - 1, requiredTotalRows - currentRowCount);
+    } else if (requiredTotalRows < currentRowCount) {
+      // Remove excess rows from the bottom
+      this.hot.alter('remove_row', requiredTotalRows, currentRowCount - requiredTotalRows);
+    }
+    this.gridRows = requiredTotalRows;
+
+    // Clear old code maps for body rows
+    this.rowCodeMap.clear();
+    this.rowCodeNameMap.clear();
+
+    // Populate rows
+    const changes: [number, number, any][] = [];
+    for (let i = 0; i < selected.length; i++) {
+      const rowIdx = headerRowCount + i;
+      const item = selected[i];
+
+      // Col 0 = STT
+      const sttLabel = this.buildSttLabel(item, i);
+      changes.push([rowIdx, 0, sttLabel]);
+
+      // Col 1 = Tên chỉ tiêu (with indent based on level)
+      const indent = item.level ? '  '.repeat(item.level) : '';
+      const prefix = (item.level || 0) >= 2 ? '- ' : '';
+      changes.push([rowIdx, 1, indent + prefix + item.name]);
+
+      // Clear data columns
+      for (let c = 2; c < colCount; c++) {
+        changes.push([rowIdx, c, null]);
+      }
+
+      // Store code mapping
+      this.rowCodeMap.set(rowIdx, item.code);
+      this.rowCodeNameMap.set(rowIdx, item.name);
+
+      // Mark STT + Chỉ tiêu columns as read-only header-style
+      this.cellMetadata.set(`${rowIdx},0`, { role: 'text', readOnly: true });
+      this.cellMetadata.set(`${rowIdx},1`, { role: 'text', readOnly: true });
+    }
+
+    this.hot.setDataAtCell(changes, 'loadData');
+    this.hot.render();
+
+    this.showRowIndicatorDialog.set(false);
+    this.notify(`Đã áp dụng ${selected.length} chỉ tiêu dòng lên lưới`, 'success');
+  }
+
+  private buildSttLabel(item: IndicatorItem, index: number): string {
+    const level = item.level || 0;
+    if (level === 0) return String(index + 1);
+    return '';
+  }
+
+  // ==========================================
+  // Indicator Selection Dialog — COLUMN
+  // ==========================================
+
+  openColIndicatorDialog(): void {
+    this.tempColSelection.clear();
+    for (const item of this.selectedColIndicators) {
+      this.tempColSelection.add(item.code);
+    }
+    this.indicatorSearchTerm = '';
+    this.showColIndicatorDialog.set(true);
+  }
+
+  toggleTempColIndicator(item: IndicatorItem): void {
+    if (item.type === 'system') return; // system columns can't be toggled
+    if (this.tempColSelection.has(item.code)) {
+      this.tempColSelection.delete(item.code);
+    } else {
+      this.tempColSelection.add(item.code);
+    }
+  }
+
+  isTempColSelected(code: string): boolean {
+    return this.tempColSelection.has(code);
+  }
+
+  selectAllColIndicators(): void {
+    for (const group of this.colIndicators()) {
+      for (const item of group.items) {
+        if (item.type !== 'system') {
+          this.tempColSelection.add(item.code);
+        }
+      }
+    }
+  }
+
+  deselectAllColIndicators(): void {
+    this.tempColSelection.clear();
+  }
+
+  getTempColSelectionCount(): number {
+    return this.tempColSelection.size;
+  }
+
+  applyColIndicators(): void {
+    if (!this.hot) return;
+
+    // Collect selected items in order from groups (skip system columns)
+    const selected: IndicatorItem[] = [];
+    for (const group of this.colIndicators()) {
+      for (const item of group.items) {
+        if (item.type === 'system') continue;
+        if (this.tempColSelection.has(item.code)) {
+          selected.push(item);
+        }
+      }
+    }
+    this.selectedColIndicators = selected;
+
+    // Fixed columns: STT(0), Chỉ tiêu(1), ĐVT(2) = 3 fixed cols
+    const fixedColCount = 3;
+    const requiredCols = fixedColCount + selected.length;
+    const currentCols = this.hot.countCols();
+
+    // Adjust column count
+    if (requiredCols > currentCols) {
+      this.hot.alter('insert_col_end', currentCols - 1, requiredCols - currentCols);
+    } else if (requiredCols < currentCols) {
+      this.hot.alter('remove_col', requiredCols, currentCols - requiredCols);
+    }
+    this.gridCols = requiredCols;
+
+    // Clear old code maps for data columns
+    this.columnCodeMap.clear();
+    this.columnCodeNameMap.clear();
+
+    // Set header row values
+    const headerRow = 0;
+    const changes: [number, number, any][] = [];
+
+    // Ensure fixed columns have labels
+    changes.push([headerRow, 0, 'STT']);
+    changes.push([headerRow, 1, 'Chỉ tiêu']);
+    changes.push([headerRow, 2, 'Đơn vị tính']);
+
+    // Set fixed col code maps
+    this.columnCodeMap.set(0, 'STT');
+    this.columnCodeNameMap.set(0, 'Số thứ tự');
+    this.columnCodeMap.set(1, 'CHITIEU_NAME');
+    this.columnCodeNameMap.set(1, 'Tên chỉ tiêu');
+    this.columnCodeMap.set(2, 'UNIT');
+    this.columnCodeNameMap.set(2, 'Đơn vị tính');
+
+    // Populate selected column headers
+    for (let i = 0; i < selected.length; i++) {
+      const colIdx = fixedColCount + i;
+      const item = selected[i];
+
+      changes.push([headerRow, colIdx, item.name]);
+
+      // Store code mapping
+      this.columnCodeMap.set(colIdx, item.code);
+      this.columnCodeNameMap.set(colIdx, item.name);
+
+      // Mark header cell
+      this.cellMetadata.set(`${headerRow},${colIdx}`, { role: 'header', readOnly: true });
+    }
+
+    // Set column widths
+    const newWidths: number[] = [50, 250, 100]; // STT, Chỉ tiêu, ĐVT
+    for (let i = 0; i < selected.length; i++) {
+      newWidths.push(120);
+    }
+    this.hot.updateSettings({ colWidths: newWidths });
+
+    this.hot.setDataAtCell(changes, 'loadData');
+    this.hot.render();
+
+    this.showColIndicatorDialog.set(false);
+    this.notify(`Đã áp dụng ${selected.length} chỉ tiêu cột lên lưới`, 'success');
+  }
+
+  // --- Filtered indicators for dialog search ---
+  filteredDialogRowIndicators(): IndicatorGroup[] {
+    const term = this.indicatorSearchTerm.toLowerCase().trim();
+    if (!term) return this.rowIndicators();
+    return this.rowIndicators()
+      .map(g => ({
+        ...g,
+        items: g.items.filter(i =>
+          i.code.toLowerCase().includes(term) ||
+          i.name.toLowerCase().includes(term)
+        )
+      }))
+      .filter(g => g.items.length > 0);
+  }
+
+  filteredDialogColIndicators(): IndicatorGroup[] {
+    const term = this.indicatorSearchTerm.toLowerCase().trim();
+    return this.colIndicators()
+      .map(g => ({
+        ...g,
+        items: g.items.filter(i => {
+          if (i.type === 'system') return false;
+          if (!term) return true;
+          return i.code.toLowerCase().includes(term) ||
+                 i.name.toLowerCase().includes(term);
+        })
+      }))
+      .filter(g => g.items.length > 0);
+  }
+
+  // --- Get preview list for dialog ---
+  getTempRowSelectedItems(): IndicatorItem[] {
+    const items: IndicatorItem[] = [];
+    for (const group of this.rowIndicators()) {
+      for (const item of group.items) {
+        if (this.tempRowSelection.has(item.code)) items.push(item);
+      }
+    }
+    return items;
+  }
+
+  getTempColSelectedItems(): IndicatorItem[] {
+    const items: IndicatorItem[] = [];
+    for (const group of this.colIndicators()) {
+      for (const item of group.items) {
+        if (item.type !== 'system' && this.tempColSelection.has(item.code)) items.push(item);
+      }
+    }
+    return items;
+  }
+
 }

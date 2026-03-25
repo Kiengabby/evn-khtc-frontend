@@ -1,0 +1,175 @@
+{
+  "columnIndicators": [
+    {
+      "group": "Cột cố định",
+      "items": [
+        { "code": "STT", "name": "Số thứ tự", "type": "system" },
+        { "code": "CHITIEU_NAME", "name": "Tên chỉ tiêu", "type": "system" },
+        { "code": "UNIT", "name": "Đơn vị tính", "type": "system" }
+      ]
+    },
+    {
+      "group": "Tổng hợp",
+      "items": [
+        { "code": "TONG_CONG", "name": "Tổng cộng" }
+      ]
+    },
+    {
+      "group": "Kỳ báo cáo — Tháng",
+      "items": [
+        { "code": "THANG_1", "name": "Tháng 1" },
+        { "code": "THANG_2", "name": "Tháng 2" },
+        { "code": "THANG_3", "name": "Tháng 3" },
+        { "code": "THANG_4", "name": "Tháng 4" },
+        { "code": "THANG_5", "name": "Tháng 5" },
+        { "code": "THANG_6", "name": "Tháng 6" },
+        { "code": "THANG_7", "name": "Tháng 7" },
+        { "code": "THANG_8", "name": "Tháng 8" },
+        { "code": "THANG_9", "name": "Tháng 9" },
+        { "code": "THANG_10", "name": "Tháng 10" },
+        { "code": "THANG_11", "name": "Tháng 11" },
+        { "code": "THANG_12", "name": "Tháng 12" }
+      ]
+    },
+    {
+      "group": "Kỳ báo cáo — Quý",
+      "items": [
+        { "code": "QUY_1", "name": "Quý I" },
+        { "code": "QUY_2", "name": "Quý II" },
+        { "code": "QUY_3", "name": "Quý III" },
+        { "code": "QUY_4", "name": "Quý IV" }
+      ]
+    },
+    {
+      "group": "Kỳ báo cáo — Năm",
+      "items": [
+        { "code": "ACTUAL_N2", "name": "Thực hiện N-2" },
+        { "code": "ACTUAL_N1", "name": "Thực hiện N-1" },
+        { "code": "ESTIMATE_N1", "name": "Ước thực hiện N-1" },
+        { "code": "PLAN_N", "name": "Kế hoạch năm N" },
+        { "code": "PLAN_N1", "name": "Kế hoạch năm N+1" },
+        { "code": "PLAN_N2", "name": "Kế hoạch năm N+2" }
+      ]
+    },
+    {
+      "group": "So sánh & Tỷ lệ",
+      "items": [
+        { "code": "RATE_PERCENT", "name": "Tỷ lệ (%)" },
+        { "code": "DIFF_ABS", "name": "Chênh lệch tuyệt đối" },
+        { "code": "DIFF_PERCENT", "name": "Chênh lệch (%)" },
+        { "code": "INDEX_GROW", "name": "Chỉ số tăng trưởng" }
+      ]
+    },
+    {
+      "group": "Khác",
+      "items": [
+        { "code": "NOTE", "name": "Ghi chú" },
+        { "code": "FORMULA_COL", "name": "Cột công thức" },
+        { "code": "CUSTOM_1", "name": "Cột tùy chỉnh 1" },
+        { "code": "CUSTOM_2", "name": "Cột tùy chỉnh 2" },
+        { "code": "CUSTOM_3", "name": "Cột tùy chỉnh 3" }
+      ]
+    }
+  ],
+  "rowIndicators": [
+    {
+      "group": "Sản lượng & Giá thành",
+      "items": [
+        { "code": "SL_GIA_THANH", "name": "Sản lượng tính giá thành", "level": 0 }
+      ]
+    },
+    {
+      "group": "Chi phí sản xuất kinh doanh",
+      "items": [
+        { "code": "CP_THEO_YT", "name": "Chi phí theo yếu tố", "level": 0 },
+        { "code": "CP_NHIEN_LIEU", "name": "Nhiên liệu", "level": 1 },
+        { "code": "CP_VAT_LIEU", "name": "Vật liệu", "level": 1 },
+        { "code": "CP_VL_SX_DIEN", "name": "Vật liệu SX Điện", "level": 2 },
+        { "code": "CP_VL_PP_DIEN", "name": "Vật liệu phân phối điện", "level": 2 },
+        { "code": "CP_NHAN_CONG", "name": "Chi phí nhân công", "level": 1 },
+        { "code": "CP_LUONG", "name": "Lương", "level": 2 },
+        { "code": "CP_BHXH", "name": "BHXH, BHYT, KPCĐ, BHTN", "level": 2 },
+        { "code": "CP_KHAU_HAO", "name": "Khấu hao", "level": 1 },
+        { "code": "CP_DV_MUA_NGOAI", "name": "Các khoản dịch vụ mua ngoài", "level": 1 },
+        { "code": "CP_DIEN_MUA", "name": "Chi phí điện mua", "level": 2 },
+        { "code": "CP_DIEN_MUA_BUON", "name": "Chi phí mua buôn điện của EVN (áp dụng cho các CT PP)", "level": 3 },
+        { "code": "CP_DIEN_MUA_TTDIEN", "name": "Chi phí điện mua các đơn vị phát điện trên thị trường", "level": 3 },
+        { "code": "CP_DIEN_MUA_NLMOI", "name": "Chi phí điện mua từ các nguồn năng lượng mới", "level": 3 },
+        { "code": "CP_DIEN_NOI_BO", "name": "Điện mua nội bộ", "level": 2 },
+        { "code": "CP_DV_KHAC", "name": "Chi phí dịch vụ mua ngoài khác", "level": 2 },
+        { "code": "CP_SUA_CHUA_LON", "name": "Chi phí sửa chữa lớn", "level": 1 },
+        { "code": "CP_PHAT_TRIEN_KH", "name": "Chi phí phát triển khách hàng", "level": 1 },
+        { "code": "CP_TIEN_KHAC", "name": "Chi phí bằng tiền khác", "level": 1 },
+        { "code": "CP_THUE_TN", "name": "Thuế tài nguyên", "level": 2 },
+        { "code": "CP_DV_MOITRUONG", "name": "Dịch vụ môi trường rừng", "level": 2 },
+        { "code": "CP_QUYEN_NUOC", "name": "Cấp quyền khai thác TN nước", "level": 2 },
+        { "code": "CP_THUE_DAT", "name": "Thuế đất", "level": 2 },
+        { "code": "CP_AN_CA", "name": "Ăn ca", "level": 2 }
+      ]
+    },
+    {
+      "group": "Doanh thu",
+      "items": [
+        { "code": "DT_TONG", "name": "Tổng doanh thu", "level": 0 },
+        { "code": "DT_DIEN_SX", "name": "Doanh thu điện sản xuất", "level": 1 },
+        { "code": "DT_DIEN_MUA", "name": "Doanh thu điện mua ngoài", "level": 1 },
+        { "code": "DT_DIEN_TP", "name": "Doanh thu điện thương phẩm", "level": 1 },
+        { "code": "DT_NUOC", "name": "Doanh thu nước", "level": 1 },
+        { "code": "DT_DICH_VU", "name": "Doanh thu dịch vụ", "level": 1 },
+        { "code": "DT_KHAC", "name": "Doanh thu khác", "level": 1 }
+      ]
+    },
+    {
+      "group": "Lợi nhuận",
+      "items": [
+        { "code": "LN_GOP", "name": "Lợi nhuận gộp", "level": 0 },
+        { "code": "LN_HDKD", "name": "Lợi nhuận từ HĐKD", "level": 1 },
+        { "code": "LN_TRUOC_THUE", "name": "Lợi nhuận trước thuế", "level": 1 },
+        { "code": "LN_SAU_THUE", "name": "Lợi nhuận sau thuế", "level": 1 }
+      ]
+    },
+    {
+      "group": "Sản lượng điện",
+      "items": [
+        { "code": "SL_DIEN_SX", "name": "Sản lượng điện sản xuất", "level": 0 },
+        { "code": "SL_DIEN_MUA", "name": "Sản lượng điện mua", "level": 1 },
+        { "code": "SL_DIEN_NHAN", "name": "Sản lượng điện nhận", "level": 1 },
+        { "code": "SL_DIEN_TP", "name": "Sản lượng điện thương phẩm", "level": 1 },
+        { "code": "SL_TON_THAT", "name": "Tổn thất điện năng", "level": 1 },
+        { "code": "SL_TT_PERCENT", "name": "Tỷ lệ tổn thất (%)", "level": 1 },
+        { "code": "SL_CONG_SUAT", "name": "Công suất cực đại", "level": 1 }
+      ]
+    },
+    {
+      "group": "Đầu tư xây dựng",
+      "items": [
+        { "code": "DT_XDCB", "name": "Vốn đầu tư XDCB", "level": 0 },
+        { "code": "DT_SCL", "name": "Vốn sửa chữa lớn", "level": 1 },
+        { "code": "DT_THIET_BI", "name": "Đầu tư mua sắm thiết bị", "level": 1 },
+        { "code": "DT_CONG_TRINH", "name": "Đầu tư công trình", "level": 1 }
+      ]
+    },
+    {
+      "group": "Nhân sự & Lương",
+      "items": [
+        { "code": "NS_TONG", "name": "Tổng số lao động", "level": 0 },
+        { "code": "NS_DINH_BIEN", "name": "Lao động định biên", "level": 1 },
+        { "code": "NS_LUONG_BQ", "name": "Tiền lương bình quân", "level": 1 },
+        { "code": "NS_QUY_LUONG", "name": "Quỹ tiền lương", "level": 1 },
+        { "code": "NS_NANG_SUAT", "name": "Năng suất lao động", "level": 1 }
+      ]
+    },
+    {
+      "group": "Chỉ tiêu tổng hợp",
+      "items": [
+        { "code": "TONG_CONG", "name": "Tổng cộng", "level": 0 },
+        { "code": "TONG_NHOM_1", "name": "Cộng nhóm I", "level": 0 },
+        { "code": "TONG_NHOM_2", "name": "Cộng nhóm II", "level": 0 },
+        { "code": "TONG_NHOM_3", "name": "Cộng nhóm III", "level": 0 },
+        { "code": "ROW_CUSTOM_1", "name": "Dòng tùy chỉnh 1", "level": 0 },
+        { "code": "ROW_CUSTOM_2", "name": "Dòng tùy chỉnh 2", "level": 0 },
+        { "code": "ROW_CUSTOM_3", "name": "Dòng tùy chỉnh 3", "level": 0 }
+      ]
+    }
+  ]
+}
