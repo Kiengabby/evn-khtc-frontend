@@ -37,4 +37,8 @@ export class BieuMauService {
     layCauHinhCot(formId: string): Promise<KetQuaApi<ColumnDefinition[]>> {
         return this.api.layCauHinhCot(formId);
     }
+
+    layDanhMucMaChiTieu(): Promise<KetQuaApi<any>> {
+        return this.api.layDanhMucMaChiTieu();
+    }
 }

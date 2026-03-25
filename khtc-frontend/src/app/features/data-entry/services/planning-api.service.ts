@@ -114,12 +114,14 @@ export class PlanningApiService {
   getTemplateList(): Observable<TemplateListItem[]> {
     if (this.useMock) {
       return of([
-        { templateId: 'BKH_KH_01', templateName: 'BKH.KH.01 — Kế hoạch Điện sản xuất và Mua' },
-        {
-          templateId: 'BCTH_SXKD_DIEN',
-          templateName: 'BÁO CÁO THỰC HIỆN KẾ HOẠCH SẢN XUẤT KINH DOANH – ĐIỆN',
-        },
-        { templateId: 'NEW_TEMPLATE', templateName: 'Biểu mẫu mới — Layout colCode/rowCode' },
+        // ── Biểu mẫu trọng yếu (từ document PM) ──
+        { templateId: 'KHTC_SXKD_03',  templateName: 'KhTC/SXKD/03 — Kế hoạch sản xuất kinh doanh điện' },
+        { templateId: 'TH_SXKD_03',    templateName: 'TH.KhTC/SXKD/03 — Báo cáo thực hiện kế hoạch SXKD' },
+        { templateId: 'UTH_SXKD_03',   templateName: 'ƯTH.KhTC/SXKD/03 — Ước thực hiện và dự báo SXKD' },
+        // ── Biểu mẫu cũ (giữ để tương thích) ──
+        { templateId: 'BKH_KH_01',      templateName: 'BKH.KH.01 — Kế hoạch Điện sản xuất và Mua' },
+        { templateId: 'BCTH_SXKD_DIEN', templateName: 'Báo cáo thực hiện KH SXKD Điện (cũ)' },
+        { templateId: 'NEW_TEMPLATE',   templateName: 'Biểu mẫu mới — Layout colCode/rowCode' },
       ]).pipe(delay(100));
     }
     return this.http.get<TemplateListItem[]>(`${this.apiBaseUrl}/templates`);
@@ -149,12 +151,15 @@ export class PlanningApiService {
     }).pipe(delay(400));
   }
 
-  /** File fact mock theo biểu mẫu (MET vs YEA+SCE khác nhau) */
+  /** File fact mock theo biểu mẫu */
   private mockFactDataUrl(templateId: string): string {
-    if (templateId === 'BCTH_SXKD_DIEN') {
-      return 'assets/mock-data/bcth-sxkd-dien-fact-data.json';
-    }
-    return 'assets/mock-data/planning-fact-data.json';
+    const map: Record<string, string> = {
+      'KHTC_SXKD_03':  'assets/mock-data/khtc-sxkd-03-fact-data.json',
+      'TH_SXKD_03':    'assets/mock-data/th-sxkd-03-fact-data.json',
+      'UTH_SXKD_03':   'assets/mock-data/uth-sxkd-03-fact-data.json',
+      'BCTH_SXKD_DIEN':'assets/mock-data/bcth-sxkd-dien-fact-data.json',
+    };
+    return map[templateId] ?? 'assets/mock-data/planning-fact-data.json';
   }
 
   // ==========================================================

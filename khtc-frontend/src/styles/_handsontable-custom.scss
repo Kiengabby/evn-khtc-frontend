@@ -62,4 +62,11 @@
     td:hover {
         background-color: $surface-hover !important;
     }
+
+    // Merged cell parent: center text both horizontally and vertically
+    td.merged-cell-parent,
+    td.htCenter.htMiddle {
+        text-align: center !important;
+        vertical-align: middle !important;
+    }
 }

@@ -1,0 +1,269 @@
+﻿[33mΓ¥»[39m Building...
+[32mΓ£ö[39m Building...
+Application bundle generation failed. [4.549 seconds]
+
+[1m[33m[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/form-designer/pages/form-builder/thiet-ke-bieu-mau.component.scss:734:26:
+[37m      734 Γöé   &.data    { background: [32m[37mlighten($primary, 25%); }
+          Γò╡                           [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/form-designer/pages/form-builder/thiet-ke-bieu-mau.component.scss:734:26:
+[37m      734 Γöé   &.data    { background: [32m[37mlighten($primary, 25%); }
+          Γò╡                           [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  lighten() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: 53.5714285714%)
+  color.adjust($color, $lightness: 25%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-nguoi-dung.component.scss:60:26:
+[37m      60 Γöé     box-shadow: 0 0 0 3px [32m[37mtransparentize($primary, 0.9);
+         Γò╡                           [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-nguoi-dung.component.scss:60:26:
+[37m      60 Γöé     box-shadow: 0 0 0 3px [32m[37mtransparentize($primary, 0.9);
+         Γò╡                           [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  transparentize() is deprecated. Suggestions:
+  
+  color.scale($color, $alpha: -90%)
+  color.adjust($color, $alpha: -0.9)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-nguoi-dung.component.scss:105:16:
+[37m      105 Γöé     background: [32m[37mdarken($primary, 8%);
+          Γò╡                 [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-nguoi-dung.component.scss:105:16:
+[37m      105 Γöé     background: [32m[37mdarken($primary, 8%);
+          Γò╡                 [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -18.1333333333%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-nguoi-dung.component.scss:124:16:
+[37m      124 Γöé     background: [32m[37mdarken($primary, 8%);
+          Γò╡                 [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-nguoi-dung.component.scss:124:16:
+[37m      124 Γöé     background: [32m[37mdarken($primary, 8%);
+          Γò╡                 [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -18.1333333333%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-nguoi-dung.component.scss:405:28:
+[37m      405 Γöé       box-shadow: 0 0 0 3px [32m[37mtransparentize($primary, 0.9);
+          Γò╡                             [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-nguoi-dung.component.scss:405:28:
+[37m      405 Γöé       box-shadow: 0 0 0 3px [32m[37mtransparentize($primary, 0.9);
+          Γò╡                             [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  transparentize() is deprecated. Suggestions:
+  
+  color.scale($color, $alpha: -90%)
+  color.adjust($color, $alpha: -0.9)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-vai-tro.component.scss:60:26:
+[37m      60 Γöé     box-shadow: 0 0 0 3px [32m[37mtransparentize($primary, 0.9);
+         Γò╡                           [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-vai-tro.component.scss:60:26:
+[37m      60 Γöé     box-shadow: 0 0 0 3px [32m[37mtransparentize($primary, 0.9);
+         Γò╡                           [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  transparentize() is deprecated. Suggestions:
+  
+  color.scale($color, $alpha: -90%)
+  color.adjust($color, $alpha: -0.9)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-vai-tro.component.scss:150:16:
+[37m      150 Γöé     background: [32m[37mdarken($primary, 8%);
+          Γò╡                 [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-vai-tro.component.scss:150:16:
+[37m      150 Γöé     background: [32m[37mdarken($primary, 8%);
+          Γò╡                 [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -18.1333333333%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-vai-tro.component.scss:169:16:
+[37m      169 Γöé     background: [32m[37mdarken($primary, 8%);
+          Γò╡                 [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-vai-tro.component.scss:169:16:
+[37m      169 Γöé     background: [32m[37mdarken($primary, 8%);
+          Γò╡                 [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -18.1333333333%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-vai-tro.component.scss:415:28:
+[37m      415 Γöé       box-shadow: 0 0 0 3px [32m[37mtransparentize($primary, 0.9);
+          Γò╡                             [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+System.Management.Automation.RemoteException
+    src/app/features/system-admin/pages/quan-ly-vai-tro.component.scss:415:28:
+[37m      415 Γöé       box-shadow: 0 0 0 3px [32m[37mtransparentize($primary, 0.9);
+          Γò╡                             [32m^[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+  transparentize() is deprecated. Suggestions:
+  
+  color.scale($color, $alpha: -90%)
+  color.adjust($color, $alpha: -0.9)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+System.Management.Automation.RemoteException
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG1: Property 'colIndexToKey' is private and only accessible within class 'ThietKeBieuMauComponent'.[0m [1m[35m[plugin angular-compiler][0m
+System.Management.Automation.RemoteException
+    src/app/features/form-designer/pages/form-builder/thiet-ke-bieu-mau.component.html:305:37:
+[37m      305 Γöé ...    <span>Cß╗Öt <strong>{[32m{ colIndexToK[37mey(selectedCell()!.col) ...
+          Γò╡                           [32m~~~~~~~~~~~~~[0m
+System.Management.Automation.RemoteException
+  Error occurs in the template of component ThietKeBieuMauComponent.
+System.Management.Automation.RemoteException
+    src/app/features/form-designer/pages/form-builder/thiet-ke-bieu-mau.component.ts:86:15:
+[37m      86 Γöé   templateUrl: [32m'./thiet-ke-bieu-mau.component.html'[37m,
+         Γò╡                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+System.Management.Automation.RemoteException
+[39m[22m

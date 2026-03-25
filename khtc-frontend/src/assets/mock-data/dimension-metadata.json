@@ -6,9 +6,9 @@
     "NA":  { "Name": "" }
   },
   "YEA": {
-    "Y_2":  { "Name": "Năm N-2" },
-    "Y_1":  { "Name": "Năm N-1" },
-    "YN":   { "Name": "Năm N" }
+    "Y_2": { "Name": "Năm N-2" },
+    "Y_1": { "Name": "Năm N-1" },
+    "YN":  { "Name": "Năm N" }
   },
   "ENT": {
     "EVN":      { "Name": "Tập đoàn Điện lực Việt Nam" },
@@ -23,34 +23,60 @@
     "V2":    { "Name": "Lần 2" },
     "FINAL": { "Name": "Chính thức" }
   },
-
   "MET": {
-    "MET_KHN":   { "Name": "Kế hoạch năm" },
-    "MET_THKY":  { "Name": "Thực hiện kỳ này" },
-    "MET_THQUY": { "Name": "Thực hiện quý này" },
-    "MET_LUUKY": { "Name": "Lũy kế từ đầu năm" },
-    "MET_SS":    { "Name": "So sánh với năm kế hoạch" }
+    "MET_KHN":     { "Name": "Kế hoạch năm" },
+    "MET_THKY":    { "Name": "Thực hiện kỳ này" },
+    "MET_THQUY":   { "Name": "Thực hiện quý này" },
+    "MET_LUUKY":   { "Name": "Lũy kế từ đầu năm" },
+    "MET_SS":      { "Name": "So sánh với KH (%)" },
+    "MET_UTH_KY":  { "Name": "Ước TH kỳ báo cáo" },
+    "MET_UTH_NAM": { "Name": "Ước TH cả năm" },
+    "MET_PCT_KH":  { "Name": "% so với KH năm" }
   },
-
   "ACC": {
-    "SLD": { "Name": "Sản lượng điện SX và mua" },
-    "DT":  { "Name": "Doanh thu bán điện" },
-    "CP":  { "Name": "Chi phí mua điện" },
-    "GT":  { "Name": "Giá thành bán điện" },
-    "TH":  { "Name": "Tổng hợp chỉ tiêu" },
-    "SX_TONG": { "Name": "Sản lượng điện sản xuất" },
-    "SX_THUY":     { "Name": "Thủy điện" },
-    "SX_THAN":     { "Name": "Nhiệt điện than" },
-    "SX_DAU":      { "Name": "Nhiệt điện dầu" },
-    "SX_TBKKHI":   { "Name": "TBK chạy khí" },
-    "SX_TBKDAU":   { "Name": "TBK chạy dầu" },
-    "SX_DIEZEL":   { "Name": "Diezel" },
-    "SX_DUOIH":    { "Name": "Đuôi hơi" },
-    "SX_NL_KHAC":  { "Name": "Năng lượng khác" },
-    "SX_GIO":      { "Name": "Năng lượng gió" },
-    "SX_MT":       { "Name": "Năng lượng mặt trời" },
-    "SX_NL_KHAC_CT": { "Name": "Năng lượng khác (chi tiết)" },
-    "MUA_TT":      { "Name": "Sản lượng mua điện các đơn vị phát điện trên thị trường" },
-    "MUA_NLM":     { "Name": "Sản lượng mua điện từ các nguồn năng lượng mới" }
+    "SLD":     { "Name": "Sản lượng điện SX và mua" },
+    "DT":      { "Name": "Doanh thu bán điện" },
+    "CP":      { "Name": "Chi phí mua điện" },
+    "GT":      { "Name": "Giá thành bán điện" },
+    "TH":      { "Name": "Tổng hợp chỉ tiêu" },
+
+    "SX_TONG":      { "Name": "  Sản lượng điện sản xuất" },
+    "SX_THUY":      { "Name": "    Thủy điện" },
+    "SX_THAN":      { "Name": "    Nhiệt điện than" },
+    "SX_DAU":       { "Name": "    Nhiệt điện dầu" },
+    "SX_TBKKHI":    { "Name": "    TBK chạy khí" },
+    "SX_TBKDAU":    { "Name": "    TBK chạy dầu" },
+    "SX_DIEZEL":    { "Name": "    Diezel" },
+    "SX_DUOIH":     { "Name": "    Đuôi hơi" },
+    "SX_GIO":       { "Name": "    Năng lượng gió" },
+    "SX_MT":        { "Name": "    Năng lượng mặt trời" },
+    "SX_NL_KHAC":   { "Name": "    Năng lượng khác" },
+    "SX_NL_KHAC_CT":{ "Name": "    Năng lượng khác (chi tiết)" },
+
+    "MUA_TONG":  { "Name": "  Sản lượng điện mua" },
+    "MUA_TT":    { "Name": "    Mua trên thị trường điện" },
+    "MUA_NLM":   { "Name": "    Mua từ nguồn năng lượng mới" },
+    "MUA_EVN":   { "Name": "    Mua buôn từ EVN" },
+
+    "TON_THAT":   { "Name": "Tỷ lệ tổn thất điện năng" },
+    "SL_TP":      { "Name": "Sản lượng điện thương phẩm" },
+    "GIA_BAN_BQ": { "Name": "Giá bán điện bình quân" },
+    "DT_DIEN":    { "Name": "Doanh thu bán điện" },
+    "DT_TC_KHAC": { "Name": "Doanh thu khác và HĐTC" },
+
+    "CP_MUA_DIEN": { "Name": "Chi phí mua điện" },
+    "NL_THAN_CP":  { "Name": "    Nhiên liệu than" },
+    "NL_DAU_CP":   { "Name": "    Nhiên liệu dầu FO/DO" },
+    "NL_KHI_CP":   { "Name": "    Nhiên liệu khí" },
+    "VL_PHU":      { "Name": "  Vật liệu phụ" },
+    "TL_BHXH":     { "Name": "  Tiền lương và BHXH" },
+    "KHAU_HAO":    { "Name": "  Khấu hao TSCĐ" },
+    "DVMN":        { "Name": "  Dịch vụ mua ngoài" },
+    "SCL":         { "Name": "  Sửa chữa lớn TSCĐ" },
+    "THUE_PHI":    { "Name": "  Thuế và phí" },
+    "CP_KHAC_SX":  { "Name": "  Chi phí sản xuất khác" },
+
+    "GT_DIEN_BQ":  { "Name": "Giá thành sản xuất điện bình quân" },
+    "LN_DIEN":     { "Name": "Lợi nhuận SXKD điện" }
   }
 }

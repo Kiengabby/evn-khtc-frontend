@@ -688,6 +688,30 @@ export class MockApiService {
     }
 
     // ============================================
+    // DANH MỤC MÃ CHỈ TIÊU (INDICATOR CODES)
+    // ============================================
+
+    private danhMucMaChiTieuCache: any = null;
+
+    async layDanhMucMaChiTieu(): Promise<KetQuaApi<any>> {
+        await this.giaLapDelay();
+        if (!this.danhMucMaChiTieuCache) {
+            try {
+                const res = await fetch('assets/mock-data/danh-muc-ma-chi-tieu.json');
+                this.danhMucMaChiTieuCache = await res.json();
+            } catch {
+                this.danhMucMaChiTieuCache = { columnIndicators: [], rowIndicators: [] };
+            }
+        }
+        return {
+            trangThai: true,
+            maLoi: null,
+            thongBao: 'Lấy danh mục mã chỉ tiêu thành công',
+            duLieu: this.danhMucMaChiTieuCache,
+        };
+    }
+
+    // ============================================
     // DASHBOARD — Thống kê tổng hợp
     // ============================================
 
