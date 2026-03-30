@@ -41,4 +41,12 @@ export class BieuMauService {
     layDanhMucMaChiTieu(): Promise<KetQuaApi<any>> {
         return this.api.layDanhMucMaChiTieu();
     }
+
+    luuTemplate(data: any): Promise<KetQuaApi<any>> {
+        return this.api.luuTemplateLayout(data);
+    }
+
+    layTemplateLayout(formId: string): Promise<KetQuaApi<any>> {
+        return this.api.layTemplateLayout(formId);
+    }
 }

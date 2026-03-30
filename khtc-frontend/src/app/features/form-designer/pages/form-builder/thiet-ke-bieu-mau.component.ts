@@ -29,6 +29,11 @@ interface IndicatorGroup {
   items: IndicatorItem[];
 }
 
+interface PreviewGroup {
+  parent: IndicatorItem;
+  children: IndicatorItem[];
+}
+
 /**
  * JSON chuẩn gửi xuống Backend.
  * Khớp với: SYS_FORM_TEMPLATE + SYS_FORM_VERSION.
@@ -178,9 +183,13 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   showColIndicatorDialog = signal(false);
   selectedRowIndicators: IndicatorItem[] = [];
   selectedColIndicators: IndicatorItem[] = [];
-  tempRowSelection = new Set<string>();  // codes selected in dialog
+  tempRowSelection = new Set<string>();  // codes selected in dialog (for fast lookup)
+  tempRowOrderedList: IndicatorItem[] = []; // ordered list for preview (user can reorder)
   tempColSelection = new Set<string>();
   indicatorSearchTerm = '';
+
+  dragGroupIndex: number | null = null;
+  dragOverGroupIndex: number | null = null;
 
   // === Lifecycle ===
 
@@ -213,9 +222,27 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   private async loadTemplate(): Promise<void> {
     this.dangTai.set(true);
     try {
+      // Try loading the full layout JSON first (saved by Form Designer)
+      const layoutRes = await this.bieuMauService.layTemplateLayout(this.formId);
+      if (layoutRes.trangThai && layoutRes.duLieu) {
+        console.log('[FormDesigner] 📥 Load layout từ store:', layoutRes.duLieu.formId);
+        this.templateInfo.templateId = layoutRes.duLieu.formId;
+        this.templateInfo.templateName = layoutRes.duLieu.formName;
+        if (layoutRes.duLieu.version?.year) {
+          this.templateInfo.version = String(layoutRes.duLieu.version.year);
+        }
+        if (layoutRes.duLieu.orgList) {
+          this.entValues = [...layoutRes.duLieu.orgList];
+        }
+        // Rebuild grid after Handsontable is initialized
+        setTimeout(() => this.rebuildFromExportedTemplate(layoutRes.duLieu), 200);
+        this.dangTai.set(false);
+        return;
+      }
+
+      // Fallback: load basic form info
       const kq = await this.bieuMauService.layTheoId(this.formId);
       if (kq.trangThai && kq.duLieu) {
-        console.log('[FormDesigner] 📥 JSON nhận từ BE (load mẫu cho người dùng):', JSON.stringify(kq.duLieu, null, 2));
         this.bieuMau.set(kq.duLieu);
         this.templateInfo.templateId = kq.duLieu.formId;
         this.templateInfo.templateName = kq.duLieu.formName;
@@ -342,6 +369,20 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
           );
           this.autoUpdateFixedRows();
         }
+      },
+
+      // === Row/Col re-indexing hooks (fix metadata drift on insert/delete) ===
+      afterCreateRow: (index: number, amount: number) => {
+        this.reindexRowInsert(index, amount);
+      },
+      afterRemoveRow: (index: number, amount: number) => {
+        this.reindexRowRemove(index, amount);
+      },
+      afterCreateCol: (index: number, amount: number) => {
+        this.reindexColInsert(index, amount);
+      },
+      afterRemoveCol: (index: number, amount: number) => {
+        this.reindexColRemove(index, amount);
       },
 
       cells: (row: number, col: number) => {
@@ -1019,12 +1060,22 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   // === Save / Export ===
 
-  saveTemplate(): void {
+  async saveTemplate(): Promise<void> {
     if (!this.hot) return;
     this.dangLuu.set(true);
     const exported = this.exportToJson();
-    console.log('[FormDesigner] 📤 JSON gửi lên BE (lưu giá trị thay đổi vào DB):', JSON.stringify(exported, null, 2));
-    setTimeout(() => { this.dangLuu.set(false); this.notify('Đã lưu biểu mẫu thành công!', 'success'); }, 800);
+    console.log('[FormDesigner] 📤 JSON gửi lên BE:', JSON.stringify(exported, null, 2));
+    try {
+      const res = await this.bieuMauService.luuTemplate(exported);
+      if (res.trangThai) {
+        this.notify(res.thongBao || 'Đã lưu biểu mẫu thành công!', 'success');
+      } else {
+        this.notify(res.thongBao || 'Lưu biểu mẫu thất bại', 'error');
+      }
+    } catch (err) {
+      this.notify('Lỗi khi lưu biểu mẫu', 'error');
+    }
+    this.dangLuu.set(false);
   }
 
   private exportToJson(): ExportedTemplate {
@@ -1220,32 +1271,47 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     const t = fullTitle.trim().toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd');
     
+    let baseCode = '';
+    
     // ---- Nhận diện cột đặc biệt ----
-    // STT: khớp "stt", "so thu tu", "số thứ tự", hoặc cột đầu rỗng
-    if (index === 0 && (t.includes('stt') || t === '' || /so\s+thu\s+tu/.test(t) || /thu\s+tu/.test(t))) return 'STT';
-    // Chỉ tiêu / tên chỉ tiêu
-    if (index === 1 && (t.includes('chi tieu') || t.includes('ten chi tieu') || t.includes('noi dung'))) return 'CHITIEU_NAME';
-    // Đơn vị tính
-    if (t.includes('don vi') || t.includes('dvt')) return 'UNIT';
-    // Ghi chú
-    if (t.includes('ghi chu') || t.includes('note')) return 'NOTE';
-    
-    // ---- Auto infer dựa trên từ khóa phổ biến ----
-    let prefix = 'COL';
-    if (t.includes('thuc hien')) prefix = 'ACTUAL';
-    else if (t.includes('ke hoach') || t.includes('kh')) prefix = 'PLAN';
-    else if (t.includes('uoc') || t.includes('uoc thuc hien')) prefix = 'ESTIMATE';
-    
-    let suffix = '';
-    if (t.match(/n-2|n - 2/)) suffix = '_N2';
-    else if (t.match(/n-1|n - 1/)) suffix = '_N1';
-    else if (t.match(/\bn\b/) || t.includes('nam n')) suffix = '_N';
-    
-    if (prefix !== 'COL' || suffix !== '') {
-      return suffix ? `${prefix}${suffix}` : `${prefix}_${index}`;
+    if (index === 0 && (t.includes('stt') || t === '' || /so\s+thu\s+tu/.test(t) || /thu\s+tu/.test(t))) baseCode = 'STT';
+    else if (index === 1 && (t.includes('chi tieu') || t.includes('ten chi tieu') || t.includes('noi dung'))) baseCode = 'CHITIEU_NAME';
+    else if (t.includes('don vi') || t.includes('dvt')) baseCode = 'UNIT';
+    else if (t.includes('ghi chu') || t.includes('note')) baseCode = 'NOTE';
+    else {
+      // ---- Auto infer dựa trên từ khóa phổ biến ----
+      let prefix = 'COL';
+      if (t.includes('thuc hien')) prefix = 'ACTUAL';
+      else if (t.includes('ke hoach') || t.includes('kh')) prefix = 'PLAN';
+      else if (t.includes('uoc') || t.includes('uoc thuc hien')) prefix = 'ESTIMATE';
+      
+      let suffix = '';
+      if (t.match(/n-2|n - 2/)) suffix = '_N2';
+      else if (t.match(/n-1|n - 1/)) suffix = '_N1';
+      else if (t.match(/\bn\b/) || t.includes('nam n')) suffix = '_N';
+      
+      if (prefix !== 'COL' || suffix !== '') {
+        baseCode = suffix ? `${prefix}${suffix}` : `${prefix}_${index}`;
+      } else {
+        baseCode = `COL_${index + 1}`;
+      }
     }
     
-    return `COL_${index + 1}`;
+    // ---- Ensure uniqueness: append _2, _3, ... if code already used by another column ----
+    return this.ensureUniqueColCode(baseCode, index);
+  }
+
+  /** Ensure a colCode is unique across all columns (skip the column at `selfIndex`) */
+  private ensureUniqueColCode(baseCode: string, selfIndex: number): string {
+    const usedCodes = new Set<string>();
+    for (const [colIdx, code] of this.columnCodeMap.entries()) {
+      if (colIdx !== selfIndex) usedCodes.add(code);
+    }
+    if (!usedCodes.has(baseCode)) return baseCode;
+    
+    let counter = 2;
+    while (usedCodes.has(`${baseCode}_${counter}`)) counter++;
+    return `${baseCode}_${counter}`;
   }
 
   private buildLayoutRows(data: any[][], startRow: number, rowCount: number, colCount: number): any[] {
@@ -1500,6 +1566,174 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     });
   }
 
+  // ==========================================
+  // Rebuild grid from saved ExportedTemplate JSON
+  // ==========================================
+
+  private rebuildFromExportedTemplate(exported: ExportedTemplate): void {
+    if (!this.hot || !exported.version?.layoutJSON) return;
+    const layout = exported.version.layoutJSON;
+
+    // --- 1. Determine grid dimensions (skip METADATA_ROW column at index 0) ---
+    const visibleCols = layout.columns.filter(c => c.colCode !== 'METADATA_ROW');
+    const headerRowCount = layout.fixedRowsTop || layout.headerRows?.length || 1;
+    const bodyRows = layout.rows || [];
+    const totalRows = headerRowCount + bodyRows.length;
+    const totalCols = visibleCols.length;
+
+    // --- 2. Build data matrix ---
+    const data: any[][] = [];
+
+    // 2a. Header rows from headerRows definition
+    for (let hr = 0; hr < headerRowCount; hr++) {
+      const row: any[] = new Array(totalCols).fill('');
+      const headerRow = layout.headerRows?.[hr];
+      if (headerRow) {
+        for (const cell of headerRow.cells) {
+          if (!cell.colKey || cell.colKey === 'ID') continue;
+          // Find the visible column index for this colKey
+          const colIdx = visibleCols.findIndex(vc => vc.key === cell.colKey);
+          if (colIdx >= 0) {
+            row[colIdx] = cell.label;
+          }
+        }
+      }
+      data.push(row);
+    }
+
+    // 2b. Body rows from rows definition
+    for (const rowDef of bodyRows) {
+      const row: any[] = new Array(totalCols).fill(null);
+
+      // Find STT column
+      const sttIdx = visibleCols.findIndex(vc => vc.colCode === 'STT');
+      if (sttIdx >= 0) {
+        // Generate STT based on level
+        if (rowDef.level === 0) {
+          row[sttIdx] = '';
+        }
+      }
+
+      // Find CHITIEU_NAME column
+      const chitieuIdx = visibleCols.findIndex(vc => vc.colCode === 'CHITIEU_NAME');
+      if (chitieuIdx >= 0) {
+        const indent = rowDef.level > 0 ? '  '.repeat(rowDef.level) : '';
+        const prefix = rowDef.level >= 2 ? '- ' : '';
+        row[chitieuIdx] = indent + prefix + rowDef.title;
+      }
+
+      data.push(row);
+    }
+
+    // Ensure minimum rows for usability
+    while (data.length < 5) {
+      data.push(new Array(totalCols).fill(null));
+    }
+
+    // --- 3. Build column widths ---
+    const colWidths = visibleCols.map(vc => vc.width || 120);
+
+    // --- 4. Build merge cells (shift col by -1 to skip METADATA_ROW) ---
+    const mergeCells: { row: number; col: number; rowspan: number; colspan: number }[] = [];
+    if (layout.mergeCells) {
+      for (const mc of layout.mergeCells) {
+        // Shift col index: exported has METADATA_ROW at col=0, so visible col = mc.col - 1
+        const visCol = mc.col - 1;
+        if (visCol >= 0 && visCol < totalCols) {
+          mergeCells.push({ row: mc.row, col: visCol, rowspan: mc.rowspan, colspan: mc.colspan });
+        }
+      }
+    }
+
+    // --- 5. Update grid ---
+    this.gridRows = data.length;
+    this.gridCols = totalCols;
+    this.fixedRows = headerRowCount;
+    this.fixedCols = Math.max(0, (layout.freezeColumns || 1) - 1); // -1 for METADATA_ROW
+
+    this.hot.updateSettings({
+      data,
+      colWidths,
+      fixedColumnsStart: this.fixedCols,
+      fixedRowsTop: this.fixedRows,
+      mergeCells: mergeCells.length > 0 ? mergeCells : false,
+    });
+
+    // --- 6. Rebuild internal metadata ---
+    this.cellMetadata.clear();
+    this.mergedCells = [...mergeCells];
+    this.rowCodeMap.clear();
+    this.rowCodeNameMap.clear();
+    this.columnCodeMap.clear();
+    this.columnCodeNameMap.clear();
+
+    // 6a. Column code maps
+    for (let c = 0; c < visibleCols.length; c++) {
+      const vc = visibleCols[c];
+      if (vc.colCode) {
+        this.columnCodeMap.set(c, vc.colCode);
+        this.columnCodeNameMap.set(c, vc.title);
+      }
+
+      // Mark header cells
+      for (let hr = 0; hr < headerRowCount; hr++) {
+        this.cellMetadata.set(`${hr},${c}`, { role: 'header', readOnly: true });
+      }
+    }
+
+    // 6b. Row code maps + cell roles from mappings
+    for (let i = 0; i < bodyRows.length; i++) {
+      const rowIdx = headerRowCount + i;
+      const rowDef = bodyRows[i];
+      this.rowCodeMap.set(rowIdx, rowDef.rowCode);
+      this.rowCodeNameMap.set(rowIdx, rowDef.title);
+
+      // Mark STT and CHITIEU columns as text/readOnly
+      const sttIdx = visibleCols.findIndex(vc => vc.colCode === 'STT');
+      if (sttIdx >= 0) {
+        this.cellMetadata.set(`${rowIdx},${sttIdx}`, { role: 'text', readOnly: true });
+      }
+      const chitieuIdx = visibleCols.findIndex(vc => vc.colCode === 'CHITIEU_NAME');
+      if (chitieuIdx >= 0) {
+        this.cellMetadata.set(`${rowIdx},${chitieuIdx}`, { role: 'text', readOnly: true });
+      }
+    }
+
+    // 6c. Apply mappings for formulas and cell roles
+    if (layout.mappings) {
+      for (const mapping of layout.mappings) {
+        const rowIdx = bodyRows.findIndex(r => r.rowCode === mapping.rowCode);
+        const colIdx = visibleCols.findIndex(c => c.colCode === mapping.colCode);
+        if (rowIdx < 0 || colIdx < 0) continue;
+
+        const gridRow = headerRowCount + rowIdx;
+        const cellRole = mapping.cellRole as CellRole || 'data';
+        this.cellMetadata.set(`${gridRow},${colIdx}`, {
+          role: cellRole,
+          readOnly: mapping.isReadOnly,
+          formula: mapping.formula,
+        });
+
+        // Apply formula value to the grid
+        if (mapping.formula) {
+          // Convert commas back to semicolons for HyperFormula
+          const hfFormula = mapping.formula.replace(/,/g, ';');
+          this.hot.setDataAtCell(gridRow, colIdx, hfFormula, 'loadData');
+        }
+      }
+    }
+
+    // 6d. Rebuild selectedRowIndicators/selectedColIndicators lists from code maps
+    this.selectedRowIndicators = [];
+    this.selectedColIndicators = [];
+
+    this.hot.render();
+    console.log('[FormDesigner] ✅ Grid rebuilt from ExportedTemplate:', {
+      rows: data.length, cols: totalCols, merges: mergeCells.length,
+      headerRows: headerRowCount, bodyRows: bodyRows.length,
+    });
+  }
+
   saveTemplateInfo(): void { this.showInfoDialog.set(false); }
   quayLai(): void { this.router.navigate(['/app/form-designer/templates']); }
 
@@ -1523,6 +1757,129 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   private notify(noiDung: string, loai: 'success' | 'error'): void {
     this.thongBao.set({ noiDung, loai });
     setTimeout(() => this.thongBao.set(null), 3000);
+  }
+
+  // ==========================================
+  // Row/Col Re-indexing Helpers
+  // ==========================================
+  // When Handsontable inserts/removes rows/cols, all Maps using
+  // numeric indices as keys must be shifted to stay correct.
+
+  private reindexRowInsert(index: number, amount: number): void {
+    // 1) Shift rowCodeMap / rowCodeNameMap
+    this.rowCodeMap = this.shiftMapKeys(this.rowCodeMap, index, amount);
+    this.rowCodeNameMap = this.shiftMapKeys(this.rowCodeNameMap, index, amount);
+
+    // 2) Shift cellMetadata (row part of "row,col" keys)
+    this.cellMetadata = this.shiftCellMetadataRows(this.cellMetadata, index, amount);
+
+    // 3) Shift mergedCells
+    for (const mc of this.mergedCells) {
+      if (mc.row >= index) mc.row += amount;
+    }
+  }
+
+  private reindexRowRemove(index: number, amount: number): void {
+    // 1) Remove entries in deleted range, then shift down
+    for (let i = index; i < index + amount; i++) {
+      this.rowCodeMap.delete(i);
+      this.rowCodeNameMap.delete(i);
+    }
+    this.rowCodeMap = this.shiftMapKeys(this.rowCodeMap, index + amount, -amount);
+    this.rowCodeNameMap = this.shiftMapKeys(this.rowCodeNameMap, index + amount, -amount);
+
+    // 2) Shift cellMetadata
+    const newMeta = new Map<string, { role: CellRole; readOnly: boolean; formula?: string }>();
+    for (const [key, val] of this.cellMetadata) {
+      const [r, c] = key.split(',').map(Number);
+      if (r >= index && r < index + amount) continue; // skip deleted
+      const newRow = r >= index + amount ? r - amount : r;
+      newMeta.set(`${newRow},${c}`, val);
+    }
+    this.cellMetadata = newMeta;
+
+    // 3) Shift mergedCells — remove ones inside deleted range, shift others
+    this.mergedCells = this.mergedCells
+      .filter(mc => !(mc.row >= index && mc.row < index + amount))
+      .map(mc => ({
+        ...mc,
+        row: mc.row >= index + amount ? mc.row - amount : mc.row,
+      }));
+  }
+
+  private reindexColInsert(index: number, amount: number): void {
+    this.columnCodeMap = this.shiftMapKeys(this.columnCodeMap, index, amount);
+    this.columnCodeNameMap = this.shiftMapKeys(this.columnCodeNameMap, index, amount);
+    this.cellMetadata = this.shiftCellMetadataCols(this.cellMetadata, index, amount);
+    for (const mc of this.mergedCells) {
+      if (mc.col >= index) mc.col += amount;
+    }
+  }
+
+  private reindexColRemove(index: number, amount: number): void {
+    for (let i = index; i < index + amount; i++) {
+      this.columnCodeMap.delete(i);
+      this.columnCodeNameMap.delete(i);
+    }
+    this.columnCodeMap = this.shiftMapKeys(this.columnCodeMap, index + amount, -amount);
+    this.columnCodeNameMap = this.shiftMapKeys(this.columnCodeNameMap, index + amount, -amount);
+
+    const newMeta = new Map<string, { role: CellRole; readOnly: boolean; formula?: string }>();
+    for (const [key, val] of this.cellMetadata) {
+      const [r, c] = key.split(',').map(Number);
+      if (c >= index && c < index + amount) continue;
+      const newCol = c >= index + amount ? c - amount : c;
+      newMeta.set(`${r},${newCol}`, val);
+    }
+    this.cellMetadata = newMeta;
+
+    this.mergedCells = this.mergedCells
+      .filter(mc => !(mc.col >= index && mc.col < index + amount))
+      .map(mc => ({
+        ...mc,
+        col: mc.col >= index + amount ? mc.col - amount : mc.col,
+      }));
+  }
+
+  /** Generic: shift numeric keys in a Map by `delta` for all keys >= `fromKey` */
+  private shiftMapKeys<T>(map: Map<number, T>, fromKey: number, delta: number): Map<number, T> {
+    const newMap = new Map<number, T>();
+    for (const [key, val] of map) {
+      if (key >= fromKey) {
+        newMap.set(key + delta, val);
+      } else {
+        newMap.set(key, val);
+      }
+    }
+    return newMap;
+  }
+
+  /** Shift row indices inside cellMetadata keys ("row,col") */
+  private shiftCellMetadataRows(
+    meta: Map<string, { role: CellRole; readOnly: boolean; formula?: string }>,
+    fromRow: number, delta: number,
+  ): Map<string, { role: CellRole; readOnly: boolean; formula?: string }> {
+    const newMeta = new Map<string, { role: CellRole; readOnly: boolean; formula?: string }>();
+    for (const [key, val] of meta) {
+      const [r, c] = key.split(',').map(Number);
+      const newRow = r >= fromRow ? r + delta : r;
+      newMeta.set(`${newRow},${c}`, val);
+    }
+    return newMeta;
+  }
+
+  /** Shift col indices inside cellMetadata keys ("row,col") */
+  private shiftCellMetadataCols(
+    meta: Map<string, { role: CellRole; readOnly: boolean; formula?: string }>,
+    fromCol: number, delta: number,
+  ): Map<string, { role: CellRole; readOnly: boolean; formula?: string }> {
+    const newMeta = new Map<string, { role: CellRole; readOnly: boolean; formula?: string }>();
+    for (const [key, val] of meta) {
+      const [r, c] = key.split(',').map(Number);
+      const newCol = c >= fromCol ? c + delta : c;
+      newMeta.set(`${r},${newCol}`, val);
+    }
+    return newMeta;
   }
 
   addEntValue(): void { this.entValues.push(''); }
@@ -1588,19 +1945,146 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   openRowIndicatorDialog(): void {
     this.tempRowSelection.clear();
+    this.tempRowOrderedList = [];
+    // Restore from previously applied selection (preserve user's order)
     for (const item of this.selectedRowIndicators) {
       this.tempRowSelection.add(item.code);
+      this.tempRowOrderedList.push({ ...item });
     }
     this.indicatorSearchTerm = '';
+    this.dragGroupIndex = null;
+    this.dragOverGroupIndex = null;
     this.showRowIndicatorDialog.set(true);
   }
 
   toggleTempRowIndicator(item: IndicatorItem): void {
     if (this.tempRowSelection.has(item.code)) {
+      // Uncheck → remove from selection and ordered list
       this.tempRowSelection.delete(item.code);
+      this.tempRowOrderedList = this.tempRowOrderedList.filter(i => i.code !== item.code);
     } else {
+      // Check → insert at the correct hierarchical position
       this.tempRowSelection.add(item.code);
+      const level = item.level || 0;
+
+      if (level === 0) {
+        // Parent item: add at end
+        this.tempRowOrderedList.push({ ...item });
+        // Also pull any orphaned children that belong under this parent
+        this.regroupOrphanedChildren(item);
+      } else {
+        // Child item: find its parent and insert after parent's children group
+        const parentCode = this.findParentCode(item.code);
+        if (parentCode) {
+          const parentIdx = this.tempRowOrderedList.findIndex(i => i.code === parentCode);
+          if (parentIdx >= 0) {
+            // Find end of parent's children block
+            let insertIdx = parentIdx + 1;
+            const parentLevel = this.tempRowOrderedList[parentIdx].level || 0;
+            while (insertIdx < this.tempRowOrderedList.length &&
+                   (this.tempRowOrderedList[insertIdx].level || 0) > parentLevel) {
+              insertIdx++;
+            }
+            this.tempRowOrderedList.splice(insertIdx, 0, { ...item });
+            return;
+          }
+        }
+        // Parent not in list → add as standalone
+        this.tempRowOrderedList.push({ ...item });
+      }
     }
+  }
+
+  /** Re-group orphaned children into their newly-added parent */
+  private regroupOrphanedChildren(parentItem: IndicatorItem): void {
+    const parentLevel = parentItem.level || 0;
+    const childCodes = this.getChildCodesFromCatalog(parentItem.code, parentLevel);
+
+    // Find any orphaned children in the list that should be under this parent
+    const orphans: IndicatorItem[] = [];
+    this.tempRowOrderedList = this.tempRowOrderedList.filter(i => {
+      if (childCodes.has(i.code) && i.code !== parentItem.code) {
+        orphans.push(i);
+        return false; // remove from current position
+      }
+      return true;
+    });
+
+    if (orphans.length > 0) {
+      // Re-insert orphans right after the parent, in catalog order
+      const parentIdx = this.tempRowOrderedList.findIndex(i => i.code === parentItem.code);
+      if (parentIdx >= 0) {
+        const catalogOrder = this.getCatalogChildOrder(parentItem.code);
+        orphans.sort((a, b) => {
+          const aIdx = catalogOrder.indexOf(a.code);
+          const bIdx = catalogOrder.indexOf(b.code);
+          return aIdx - bIdx;
+        });
+        this.tempRowOrderedList.splice(parentIdx + 1, 0, ...orphans);
+      }
+    }
+  }
+
+  /** Get all descendant codes of a parent from catalog */
+  private getChildCodesFromCatalog(parentCode: string, parentLevel: number): Set<string> {
+    const codes = new Set<string>();
+    for (const group of this.rowIndicators()) {
+      let found = false;
+      for (const item of group.items) {
+        if (item.code === parentCode) { found = true; continue; }
+        if (found) {
+          if ((item.level || 0) > parentLevel) {
+            codes.add(item.code);
+          } else {
+            break; // reached next sibling or parent
+          }
+        }
+      }
+    }
+    return codes;
+  }
+
+  /** Get child codes in catalog order */
+  private getCatalogChildOrder(parentCode: string): string[] {
+    const codes: string[] = [];
+    for (const group of this.rowIndicators()) {
+      let found = false;
+      let parentLevel = 0;
+      for (const item of group.items) {
+        if (item.code === parentCode) {
+          found = true;
+          parentLevel = item.level || 0;
+          continue;
+        }
+        if (found) {
+          if ((item.level || 0) > parentLevel) {
+            codes.push(item.code);
+          } else {
+            break;
+          }
+        }
+      }
+    }
+    return codes;
+  }
+
+  /** Find parent code from catalog hierarchy */
+  findParentCode(childCode: string): string | null {
+    for (const group of this.rowIndicators()) {
+      for (let i = 0; i < group.items.length; i++) {
+        if (group.items[i].code === childCode) {
+          const childLevel = group.items[i].level || 0;
+          if (childLevel === 0) return null;
+          for (let j = i - 1; j >= 0; j--) {
+            if ((group.items[j].level || 0) < childLevel) {
+              return group.items[j].code;
+            }
+          }
+          return null;
+        }
+      }
+    }
+    return null;
   }
 
   isTempRowSelected(code: string): boolean {
@@ -1608,33 +2092,226 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   selectAllRowIndicators(): void {
+    // Add all items in catalog order — maintains correct hierarchy
+    this.tempRowSelection.clear();
+    this.tempRowOrderedList = [];
     for (const group of this.rowIndicators()) {
       for (const item of group.items) {
         this.tempRowSelection.add(item.code);
+        this.tempRowOrderedList.push({ ...item });
       }
     }
   }
 
   deselectAllRowIndicators(): void {
     this.tempRowSelection.clear();
+    this.tempRowOrderedList = [];
   }
 
   getTempRowSelectionCount(): number {
-    return this.tempRowSelection.size;
+    return this.tempRowOrderedList.length;
+  }
+
+  // --- Group-based preview ---
+
+  /** Build preview groups: parent + nested children */
+  getPreviewGroups(): PreviewGroup[] {
+    const groups: PreviewGroup[] = [];
+    const list = this.tempRowOrderedList;
+    let i = 0;
+    while (i < list.length) {
+      const item = list[i];
+      const level = item.level || 0;
+      const group: PreviewGroup = { parent: item, children: [] };
+      i++;
+      // Collect all consecutive items with higher level as children
+      while (i < list.length && (list[i].level || 0) > level) {
+        group.children.push(list[i]);
+        i++;
+      }
+      groups.push(group);
+    }
+    return groups;
+  }
+
+  /** Rebuild flat list from groups (after reorder) */
+  private rebuildFromGroups(groups: PreviewGroup[]): void {
+    this.tempRowOrderedList = groups.flatMap(g => [g.parent, ...g.children]);
+  }
+
+  // --- Group reorder: Move Up / Down ---
+  moveGroupUp(groupIdx: number): void {
+    if (groupIdx <= 0) return;
+    const groups = this.getPreviewGroups();
+    [groups[groupIdx - 1], groups[groupIdx]] = [groups[groupIdx], groups[groupIdx - 1]];
+    this.rebuildFromGroups(groups);
+  }
+
+  moveGroupDown(groupIdx: number): void {
+    const groups = this.getPreviewGroups();
+    if (groupIdx >= groups.length - 1) return;
+    [groups[groupIdx], groups[groupIdx + 1]] = [groups[groupIdx + 1], groups[groupIdx]];
+    this.rebuildFromGroups(groups);
+  }
+
+  /** Remove entire group (parent + all children) */
+  removeGroup(groupIdx: number): void {
+    const groups = this.getPreviewGroups();
+    if (groupIdx < 0 || groupIdx >= groups.length) return;
+    const group = groups[groupIdx];
+    this.tempRowSelection.delete(group.parent.code);
+    for (const child of group.children) {
+      this.tempRowSelection.delete(child.code);
+    }
+    groups.splice(groupIdx, 1);
+    this.rebuildFromGroups(groups);
+  }
+
+  /** Remove single child from a group */
+  removeChildFromGroup(childCode: string): void {
+    this.tempRowSelection.delete(childCode);
+    this.tempRowOrderedList = this.tempRowOrderedList.filter(i => i.code !== childCode);
+  }
+
+  /** Move a child (any level) up among its siblings. Sub-children follow. */
+  moveChildUp(childCode: string): void {
+    const list = this.tempRowOrderedList;
+    const flatIdx = list.findIndex(i => i.code === childCode);
+    if (flatIdx <= 0) return;
+
+    const itemLevel = list[flatIdx].level || 0;
+
+    // Find end of this item's sub-group (itself + deeper children)
+    let groupEnd = flatIdx;
+    while (groupEnd + 1 < list.length && (list[groupEnd + 1].level || 0) > itemLevel) {
+      groupEnd++;
+    }
+
+    // Find previous sibling at same level (walk backwards)
+    let prevStart = -1;
+    for (let i = flatIdx - 1; i >= 0; i--) {
+      const l = list[i].level || 0;
+      if (l === itemLevel) { prevStart = i; break; }
+      if (l < itemLevel) return; // hit parent boundary
+    }
+    if (prevStart < 0) return;
+
+    // Extract current sub-group and insert before previous sibling
+    const group = list.splice(flatIdx, groupEnd - flatIdx + 1);
+    list.splice(prevStart, 0, ...group);
+  }
+
+  /** Move a child (any level) down among its siblings. Sub-children follow. */
+  moveChildDown(childCode: string): void {
+    const list = this.tempRowOrderedList;
+    const flatIdx = list.findIndex(i => i.code === childCode);
+    if (flatIdx < 0) return;
+
+    const itemLevel = list[flatIdx].level || 0;
+
+    // Find end of this item's sub-group
+    let groupEnd = flatIdx;
+    while (groupEnd + 1 < list.length && (list[groupEnd + 1].level || 0) > itemLevel) {
+      groupEnd++;
+    }
+
+    // Find next sibling at same level
+    let nextStart = -1;
+    for (let i = groupEnd + 1; i < list.length; i++) {
+      const l = list[i].level || 0;
+      if (l === itemLevel) { nextStart = i; break; }
+      if (l < itemLevel) return; // hit parent boundary
+    }
+    if (nextStart < 0) return;
+
+    // Find end of next sibling's sub-group
+    let nextEnd = nextStart;
+    while (nextEnd + 1 < list.length && (list[nextEnd + 1].level || 0) > itemLevel) {
+      nextEnd++;
+    }
+
+    // Extract next sibling's sub-group and insert before current item
+    const nextGroup = list.splice(nextStart, nextEnd - nextStart + 1);
+    list.splice(flatIdx, 0, ...nextGroup);
+  }
+
+  /** Check if a child can move up (has a previous sibling within same parent) */
+  canChildMoveUp(childCode: string): boolean {
+    const list = this.tempRowOrderedList;
+    const idx = list.findIndex(i => i.code === childCode);
+    if (idx <= 0) return false;
+    const level = list[idx].level || 0;
+    for (let i = idx - 1; i >= 0; i--) {
+      const l = list[i].level || 0;
+      if (l === level) return true;
+      if (l < level) return false;
+    }
+    return false;
+  }
+
+  /** Check if a child can move down (has a next sibling within same parent) */
+  canChildMoveDown(childCode: string): boolean {
+    const list = this.tempRowOrderedList;
+    const idx = list.findIndex(i => i.code === childCode);
+    if (idx < 0) return false;
+    const level = list[idx].level || 0;
+    // Skip past sub-group
+    let end = idx;
+    while (end + 1 < list.length && (list[end + 1].level || 0) > level) { end++; }
+    // Check forward for sibling
+    for (let i = end + 1; i < list.length; i++) {
+      const l = list[i].level || 0;
+      if (l === level) return true;
+      if (l < level) return false;
+    }
+    return false;
+  }
+
+  // --- HTML5 Drag & Drop for GROUP reorder ---
+  onGroupDragStart(event: DragEvent, groupIdx: number): void {
+    this.dragGroupIndex = groupIdx;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', String(groupIdx));
+    }
+  }
+
+  onGroupDragOver(event: DragEvent, groupIdx: number): void {
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    this.dragOverGroupIndex = groupIdx;
+  }
+
+  onGroupDragLeave(): void {
+    this.dragOverGroupIndex = null;
+  }
+
+  onGroupDrop(event: DragEvent, targetGroupIdx: number): void {
+    event.preventDefault();
+    if (this.dragGroupIndex === null || this.dragGroupIndex === targetGroupIdx) {
+      this.dragGroupIndex = null;
+      this.dragOverGroupIndex = null;
+      return;
+    }
+    const groups = this.getPreviewGroups();
+    const [movedGroup] = groups.splice(this.dragGroupIndex, 1);
+    const adjustedTarget = this.dragGroupIndex < targetGroupIdx ? targetGroupIdx - 1 : targetGroupIdx;
+    groups.splice(adjustedTarget, 0, movedGroup);
+    this.rebuildFromGroups(groups);
+    this.dragGroupIndex = null;
+    this.dragOverGroupIndex = null;
+  }
+
+  onGroupDragEnd(): void {
+    this.dragGroupIndex = null;
+    this.dragOverGroupIndex = null;
   }
 
   applyRowIndicators(): void {
     if (!this.hot) return;
 
-    // Collect selected items in order from the groups
-    const selected: IndicatorItem[] = [];
-    for (const group of this.rowIndicators()) {
-      for (const item of group.items) {
-        if (this.tempRowSelection.has(item.code)) {
-          selected.push(item);
-        }
-      }
-    }
+    // Use the user-ordered list (not catalog order)
+    const selected = [...this.tempRowOrderedList];
     this.selectedRowIndicators = selected;
 
     // Determine how many header rows exist
@@ -1648,7 +2325,6 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     if (requiredTotalRows > currentRowCount) {
       this.hot.alter('insert_row_below', currentRowCount - 1, requiredTotalRows - currentRowCount);
     } else if (requiredTotalRows < currentRowCount) {
-      // Remove excess rows from the bottom
       this.hot.alter('remove_row', requiredTotalRows, currentRowCount - requiredTotalRows);
     }
     this.gridRows = requiredTotalRows;
@@ -1657,19 +2333,22 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     this.rowCodeMap.clear();
     this.rowCodeNameMap.clear();
 
-    // Populate rows
+    // Populate rows — in user's chosen order
     const changes: [number, number, any][] = [];
+    let parentCounter = 0;
     for (let i = 0; i < selected.length; i++) {
       const rowIdx = headerRowCount + i;
       const item = selected[i];
 
       // Col 0 = STT
-      const sttLabel = this.buildSttLabel(item, i);
+      const level = item.level || 0;
+      if (level === 0) parentCounter++;
+      const sttLabel = level === 0 ? String(parentCounter) : '';
       changes.push([rowIdx, 0, sttLabel]);
 
-      // Col 1 = Tên chỉ tiêu (with indent based on level)
-      const indent = item.level ? '  '.repeat(item.level) : '';
-      const prefix = (item.level || 0) >= 2 ? '- ' : '';
+      // Col 1 = Tên chỉ tiêu (with indent)
+      const indent = level > 0 ? '  '.repeat(level) : '';
+      const prefix = level >= 2 ? '- ' : '';
       changes.push([rowIdx, 1, indent + prefix + item.name]);
 
       // Clear data columns
@@ -1681,7 +2360,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       this.rowCodeMap.set(rowIdx, item.code);
       this.rowCodeNameMap.set(rowIdx, item.name);
 
-      // Mark STT + Chỉ tiêu columns as read-only header-style
+      // Mark STT + Chỉ tiêu columns as read-only
       this.cellMetadata.set(`${rowIdx},0`, { role: 'text', readOnly: true });
       this.cellMetadata.set(`${rowIdx},1`, { role: 'text', readOnly: true });
     }
@@ -1691,12 +2370,6 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
     this.showRowIndicatorDialog.set(false);
     this.notify(`Đã áp dụng ${selected.length} chỉ tiêu dòng lên lưới`, 'success');
-  }
-
-  private buildSttLabel(item: IndicatorItem, index: number): string {
-    const level = item.level || 0;
-    if (level === 0) return String(index + 1);
-    return '';
   }
 
   // ==========================================
@@ -1851,15 +2524,9 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       .filter(g => g.items.length > 0);
   }
 
-  // --- Get preview list for dialog ---
+  // --- Get flat list for applying to grid ---
   getTempRowSelectedItems(): IndicatorItem[] {
-    const items: IndicatorItem[] = [];
-    for (const group of this.rowIndicators()) {
-      for (const item of group.items) {
-        if (this.tempRowSelection.has(item.code)) items.push(item);
-      }
-    }
-    return items;
+    return this.tempRowOrderedList;
   }
 
   getTempColSelectedItems(): IndicatorItem[] {

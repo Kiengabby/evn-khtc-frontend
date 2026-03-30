@@ -688,6 +688,39 @@ export class MockApiService {
     }
 
     // ============================================
+    // TEMPLATE LAYOUT STORE (Form Designer → Save/Load)
+    // ============================================
+    // In-memory map: formId → full ExportedTemplate JSON (mock DB)
+
+    private templateLayoutStore = new Map<string, any>();
+
+    async luuTemplateLayout(data: any): Promise<KetQuaApi<any>> {
+        await this.giaLapDelay();
+        const formId = data?.formId;
+        if (!formId) {
+            return { trangThai: false, maLoi: 'MISSING_FORM_ID', thongBao: 'formId is required', duLieu: null };
+        }
+        this.templateLayoutStore.set(formId, JSON.parse(JSON.stringify(data)));
+        console.log(`[MockApi] 💾 Đã lưu template layout "${formId}" vào memory store`);
+        return {
+            trangThai: true,
+            maLoi: null,
+            thongBao: `Đã lưu biểu mẫu "${data.formName || formId}" thành công`,
+            duLieu: data,
+        };
+    }
+
+    async layTemplateLayout(formId: string): Promise<KetQuaApi<any>> {
+        await this.giaLapDelay();
+        const stored = this.templateLayoutStore.get(formId);
+        if (!stored) {
+            return { trangThai: false, maLoi: 'NOT_FOUND', thongBao: `Không tìm thấy layout cho "${formId}"`, duLieu: null };
+        }
+        console.log(`[MockApi] 📥 Load template layout "${formId}" từ memory store`);
+        return { trangThai: true, maLoi: null, thongBao: 'OK', duLieu: JSON.parse(JSON.stringify(stored)) };
+    }
+
+    // ============================================
     // DANH MỤC MÃ CHỈ TIÊU (INDICATOR CODES)
     // ============================================
 

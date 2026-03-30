@@ -617,23 +617,104 @@
             </div>
           </div>
 
-          <!-- Right: Preview -->
+          <!-- Right: Preview (reorderable groups) -->
           <div class="ind-preview-panel">
-            <div class="ind-preview-title">
-              <i class="pi pi-eye"></i> Xem trước ({{ getTempRowSelectionCount() }} dòng)
+            <div class="ind-preview-header">
+              <div class="ind-preview-title">
+                <i class="pi pi-eye"></i> Xem trước
+              </div>
+              <span class="ind-preview-count">{{ getTempRowSelectionCount() }} dòng</span>
             </div>
+            @if (getTempRowSelectionCount() > 0) {
+              <div class="ind-preview-hint">
+                <i class="pi pi-arrows-v"></i>
+                Kéo thả nhóm hoặc dùng nút ↑↓ để sắp xếp
+              </div>
+            }
             <div class="ind-preview-list">
-              @for (item of getTempRowSelectedItems(); track item.code; let i = $index) {
-                <div class="ind-preview-item" [style.padding-left.px]="12 + (item.level || 0) * 16">
-                  <span class="ind-preview-stt">{{ (item.level || 0) === 0 ? (i + 1) : '' }}</span>
-                  <span class="ind-preview-name">
-                    @if ((item.level || 0) >= 2) { - }
-                    {{ item.name }}
-                  </span>
+              @for (group of getPreviewGroups(); track group.parent.code; let gi = $index) {
+                <!-- Drop indicator line (above each group) -->
+                <div class="ind-drop-indicator"
+                     [class.active]="dragOverGroupIndex === gi && dragGroupIndex !== gi && dragGroupIndex !== null">
+                </div>
+
+                <!-- Group container (draggable as unit) -->
+                <div class="ind-preview-group"
+                     [class.dragging]="dragGroupIndex === gi"
+                     [class.has-children]="group.children.length > 0"
+                     draggable="true"
+                     (dragstart)="onGroupDragStart($event, gi)"
+                     (dragover)="onGroupDragOver($event, gi)"
+                     (dragleave)="onGroupDragLeave()"
+                     (drop)="onGroupDrop($event, gi)"
+                     (dragend)="onGroupDragEnd()">
+
+                  <!-- Parent row -->
+                  <div class="ind-group-parent">
+                    <span class="ind-drag-handle" title="Kéo nhóm để sắp xếp">
+                      <i class="pi pi-ellipsis-v"></i>
+                      <i class="pi pi-ellipsis-v"></i>
+                    </span>
+                    <span class="ind-order-num">{{ gi + 1 }}</span>
+                    <span class="ind-parent-name">{{ group.parent.name }}</span>
+                    <div class="ind-group-actions">
+                      <button class="ind-action-icon" (click)="moveGroupUp(gi); $event.stopPropagation()" [disabled]="gi === 0" title="Di chuyển lên">
+                        <i class="pi pi-chevron-up"></i>
+                      </button>
+                      <button class="ind-action-icon" (click)="moveGroupDown(gi); $event.stopPropagation()"
+                              [disabled]="gi === getPreviewGroups().length - 1" title="Di chuyển xuống">
+                        <i class="pi pi-chevron-down"></i>
+                      </button>
+                      <button class="ind-action-icon remove" (click)="removeGroup(gi); $event.stopPropagation()" title="Bỏ chọn nhóm">
+                        <i class="pi pi-times"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Children rows -->
+                  @for (child of group.children; track child.code; let ci = $index) {
+                    <div class="ind-group-child"
+                         [class.level-1]="(child.level || 0) === 1"
+                         [class.level-2]="(child.level || 0) >= 2">
+                      <span class="ind-child-bullet"
+                            [class.l1]="(child.level || 0) === 1"
+                            [class.l2]="(child.level || 0) >= 2"></span>
+                      <span class="ind-child-name">{{ child.name }}</span>
+                      <div class="ind-child-actions">
+                        <button class="ind-action-icon sm"
+                                (click)="moveChildUp(child.code); $event.stopPropagation()"
+                                [disabled]="!canChildMoveUp(child.code)" title="Di chuyển lên">
+                          <i class="pi pi-chevron-up"></i>
+                        </button>
+                        <button class="ind-action-icon sm"
+                                (click)="moveChildDown(child.code); $event.stopPropagation()"
+                                [disabled]="!canChildMoveDown(child.code)" title="Di chuyển xuống">
+                          <i class="pi pi-chevron-down"></i>
+                        </button>
+                        <button class="ind-action-icon sm remove"
+                                (click)="removeChildFromGroup(child.code); $event.stopPropagation()"
+                                title="Bỏ chọn">
+                          <i class="pi pi-times"></i>
+                        </button>
+                      </div>
+                    </div>
+                  }
                 </div>
               }
+
+              <!-- Drop indicator at end -->
+              @if (dragGroupIndex !== null) {
+                <div class="ind-drop-indicator"
+                     [class.active]="dragOverGroupIndex === getPreviewGroups().length">
+                </div>
+              }
+
               @if (getTempRowSelectionCount() === 0) {
-                <div class="ind-preview-empty">Chưa chọn chỉ tiêu nào</div>
+                <div class="ind-preview-empty">
+                  <i class="pi pi-inbox"></i>
+                  <span>Chưa chọn chỉ tiêu nào</span>
+                  <small>Chọn từ danh sách bên trái</small>
+                </div>
               }
             </div>
           </div>

@@ -3,71 +3,70 @@
     {
       "group": "Cột cố định",
       "items": [
-        { "code": "STT", "name": "Số thứ tự", "type": "system" },
-        { "code": "CHITIEU_NAME", "name": "Tên chỉ tiêu", "type": "system" },
-        { "code": "UNIT", "name": "Đơn vị tính", "type": "system" }
+        { "code": "STT", "name": "Số thứ tự", "type": "system", "level": 0 },
+        { "code": "CHITIEU_NAME", "name": "Tên chỉ tiêu", "type": "system", "level": 0 },
+        { "code": "UNIT", "name": "Đơn vị tính", "type": "system", "level": 0 }
+      ]
+    },
+    {
+      "group": "Sản lượng theo tháng",
+      "items": [
+        { "code": "SL_GROUP", "name": "Sản lượng (triệu KWh)", "level": 0, "isGroupHeader": true },
+        { "code": "SL_T1", "name": "Tháng 1", "level": 1 },
+        { "code": "SL_T2", "name": "Tháng 2", "level": 1 },
+        { "code": "SL_T3", "name": "Tháng 3", "level": 1 },
+        { "code": "SL_T4", "name": "Tháng 4", "level": 1 },
+        { "code": "SL_T5", "name": "Tháng 5", "level": 1 },
+        { "code": "SL_T6", "name": "Tháng 6", "level": 1 },
+        { "code": "SL_T7", "name": "Tháng 7", "level": 1 },
+        { "code": "SL_T8", "name": "Tháng 8", "level": 1 },
+        { "code": "SL_T9", "name": "Tháng 9", "level": 1 },
+        { "code": "SL_T10", "name": "Tháng 10", "level": 1 },
+        { "code": "SL_T11", "name": "Tháng 11", "level": 1 },
+        { "code": "SL_T12", "name": "Tháng 12", "level": 1 },
+        { "code": "SL_NAM", "name": "Năm", "level": 1 }
+      ]
+    },
+    {
+      "group": "Kỳ kế hoạch",
+      "items": [
+        { "code": "KH_GROUP", "name": "Kế hoạch năm", "level": 0, "isGroupHeader": true },
+        { "code": "ACTUAL_N2", "name": "Thực hiện N-2", "level": 1 },
+        { "code": "ACTUAL_N1", "name": "Thực hiện N-1", "level": 1 },
+        { "code": "ESTIMATE_N1", "name": "Ước thực hiện N-1", "level": 1 },
+        { "code": "PLAN_N", "name": "Kế hoạch năm N", "level": 1 },
+        { "code": "PLAN_N1", "name": "Kế hoạch năm N+1", "level": 1 },
+        { "code": "PLAN_N2", "name": "Kế hoạch năm N+2", "level": 1 }
       ]
     },
     {
       "group": "Tổng hợp",
       "items": [
-        { "code": "TONG_CONG", "name": "Tổng cộng" }
+        { "code": "TONG_CONG", "name": "Tổng cộng", "level": 0 }
       ]
     },
     {
-      "group": "Kỳ báo cáo — Tháng",
+      "group": "Chi phí & Giá thành",
       "items": [
-        { "code": "THANG_1", "name": "Tháng 1" },
-        { "code": "THANG_2", "name": "Tháng 2" },
-        { "code": "THANG_3", "name": "Tháng 3" },
-        { "code": "THANG_4", "name": "Tháng 4" },
-        { "code": "THANG_5", "name": "Tháng 5" },
-        { "code": "THANG_6", "name": "Tháng 6" },
-        { "code": "THANG_7", "name": "Tháng 7" },
-        { "code": "THANG_8", "name": "Tháng 8" },
-        { "code": "THANG_9", "name": "Tháng 9" },
-        { "code": "THANG_10", "name": "Tháng 10" },
-        { "code": "THANG_11", "name": "Tháng 11" },
-        { "code": "THANG_12", "name": "Tháng 12" }
-      ]
-    },
-    {
-      "group": "Kỳ báo cáo — Quý",
-      "items": [
-        { "code": "QUY_1", "name": "Quý I" },
-        { "code": "QUY_2", "name": "Quý II" },
-        { "code": "QUY_3", "name": "Quý III" },
-        { "code": "QUY_4", "name": "Quý IV" }
-      ]
-    },
-    {
-      "group": "Kỳ báo cáo — Năm",
-      "items": [
-        { "code": "ACTUAL_N2", "name": "Thực hiện N-2" },
-        { "code": "ACTUAL_N1", "name": "Thực hiện N-1" },
-        { "code": "ESTIMATE_N1", "name": "Ước thực hiện N-1" },
-        { "code": "PLAN_N", "name": "Kế hoạch năm N" },
-        { "code": "PLAN_N1", "name": "Kế hoạch năm N+1" },
-        { "code": "PLAN_N2", "name": "Kế hoạch năm N+2" }
+        { "code": "CHI_PHI_TRIEU", "name": "Chi phí (Triệu VNĐ)", "level": 0 },
+        { "code": "GIA_BINH_QUAN", "name": "Giá bình quân (VNĐ/kWh)", "level": 0 }
       ]
     },
     {
       "group": "So sánh & Tỷ lệ",
       "items": [
-        { "code": "RATE_PERCENT", "name": "Tỷ lệ (%)" },
-        { "code": "DIFF_ABS", "name": "Chênh lệch tuyệt đối" },
-        { "code": "DIFF_PERCENT", "name": "Chênh lệch (%)" },
-        { "code": "INDEX_GROW", "name": "Chỉ số tăng trưởng" }
+        { "code": "SS_GROUP", "name": "So sánh", "level": 0, "isGroupHeader": true },
+        { "code": "RATE_PERCENT", "name": "Tỷ lệ (%)", "level": 1 },
+        { "code": "DIFF_ABS", "name": "Chênh lệch tuyệt đối", "level": 1 },
+        { "code": "DIFF_PERCENT", "name": "Chênh lệch (%)", "level": 1 },
+        { "code": "INDEX_GROW", "name": "Chỉ số tăng trưởng", "level": 1 }
       ]
     },
     {
       "group": "Khác",
       "items": [
-        { "code": "NOTE", "name": "Ghi chú" },
-        { "code": "FORMULA_COL", "name": "Cột công thức" },
-        { "code": "CUSTOM_1", "name": "Cột tùy chỉnh 1" },
-        { "code": "CUSTOM_2", "name": "Cột tùy chỉnh 2" },
-        { "code": "CUSTOM_3", "name": "Cột tùy chỉnh 3" }
+        { "code": "NOTE", "name": "Ghi chú", "level": 0 },
+        { "code": "FORMULA_COL", "name": "Cột công thức", "level": 0 }
       ]
     }
   ],

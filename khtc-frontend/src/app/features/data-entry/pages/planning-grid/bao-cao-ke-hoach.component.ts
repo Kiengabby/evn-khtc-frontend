@@ -15,6 +15,12 @@ import {
 import {
   PlanningApiService, TemplateListItem, PlanningScenarioItem, CellChangePayload,
 } from '../../services/planning-api.service';
+import {
+  LayoutGridRendererService, RenderedGridConfig, RenderedRowMeta, RenderedColMeta,
+} from '../../services/layout-grid-renderer.service';
+import {
+  LayoutJSON, GridCellData, LayoutColumnDef,
+} from '../../../../core/models/layout-template.model';
 
 interface PovDropdown {
   dimKey: string;
@@ -44,12 +50,19 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   private api    = inject(PlanningApiService);
   private parser = inject(TemplateParserService);
   private http   = inject(HttpClient);
+  private v2Renderer = inject(LayoutGridRendererService);
 
   // === Template & Data ===
   template   = signal<TemplateJson | null>(null);
   dimMeta    = signal<DimMetadata | null>(null);
   factData   = signal<FactDataPoint[]>([]);
   gridConfig: ParsedGridConfig | null = null;
+
+  // === V2 Layout mode ===
+  isV2Mode = false;
+  v2GridConfig: RenderedGridConfig | null = null;
+  v2LayoutJSON: LayoutJSON | null = null;
+  v2VisibleCols: LayoutColumnDef[] = [];
 
   // === Filters ===
   bieuMau = 'BKH_KH_01';
@@ -124,6 +137,29 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     this.dangTai.set(true);
     this.xoaThayDoi();
 
+    // Detect V2 format template
+    const v2Templates = ['NEW_TEMPLATE'];
+    if (v2Templates.includes(this.bieuMau)) {
+      this.isV2Mode = true;
+      this.api.loadFormV2(this.bieuMau).subscribe({
+        next: (res) => {
+          const layout = res.template.version.layoutJSON;
+          this.v2LayoutJSON = layout;
+          this.v2VisibleCols = layout.columns.filter(c => c.colCode !== 'METADATA_ROW');
+          this.v2GridConfig = this.v2Renderer.render(layout, res.dbData);
+          this.renderV2Grid();
+          this.dangTai.set(false);
+        },
+        error: (err) => {
+          this.hienThiThongBao('Lỗi tải dữ liệu V2: ' + (err?.message ?? err), 'error');
+          this.dangTai.set(false);
+        },
+      });
+      return;
+    }
+
+    // V1 (dimension-based) format
+    this.isV2Mode = false;
     this.api.loadForm(this.bieuMau).subscribe({
       next: (res) => {
         this.template.set(res.template);
@@ -137,6 +173,30 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
         this.hienThiThongBao('Lỗi tải dữ liệu: ' + (err?.message ?? err), 'error');
         this.dangTai.set(false);
       },
+    });
+  }
+
+  /** Render V2 (colCode/rowCode) grid */
+  private renderV2Grid(): void {
+    if (!this.v2GridConfig || !this.hot) return;
+    const cfg = this.v2GridConfig;
+
+    this.hot.updateSettings({
+      data:              cfg.data,
+      nestedHeaders:     cfg.nestedHeaders,
+      colWidths:         cfg.colWidths,
+      fixedColumnsStart: cfg.fixedColumnsStart,
+      columns:           cfg.columns,
+      mergeCells:        cfg.mergeCells.length > 0 ? cfg.mergeCells : false,
+      cells:             this.v2Renderer.buildCellCallback(
+                           cfg.rowMeta,
+                           this.v2VisibleCols),
+    });
+    this.hot.render();
+    this.xoaThayDoi();
+    console.log('[DataEntry] ✅ V2 grid rendered:', {
+      rows: cfg.data.length, cols: cfg.colWidths.length,
+      merges: cfg.mergeCells.length,
     });
   }
 
@@ -353,6 +413,40 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     if (this.trackedChanges.length === 0) return;
     this.dangLuu.set(true);
 
+    // V2 save: use rowCode/colCode format
+    if (this.isV2Mode && this.v2GridConfig) {
+      const v2Changes: GridCellData[] = [];
+      for (const tc of this.trackedChanges) {
+        const rm = this.v2GridConfig.rowMeta[tc.row];
+        const cm = this.v2GridConfig.colMeta[tc.col];
+        if (rm && cm) {
+          v2Changes.push({ rowCode: rm.rowCode, colCode: cm.colCode, value: tc.newValue });
+        }
+      }
+      this.api.saveFormV2({
+        formId: this.bieuMau,
+        version_year: this.nam,
+        orgId: 'EVN',
+        data: v2Changes,
+      }).subscribe({
+        next: (result) => {
+          this.dangLuu.set(false);
+          if (result.success) {
+            this.hienThiThongBao(result.message ?? `Đã lưu ${result.savedCount} thay đổi (V2)!`, 'success');
+            this.xoaThayDoi();
+          } else {
+            this.hienThiThongBao(result.message ?? 'Lưu thất bại', 'error');
+          }
+        },
+        error: (err) => {
+          this.dangLuu.set(false);
+          this.hienThiThongBao('Lỗi lưu V2: ' + (err?.message ?? err), 'error');
+        },
+      });
+      return;
+    }
+
+    // V1 save: dimension-based format
     const request = {
       templateId: this.bieuMau,
       pov: this.layPovHienTai(),

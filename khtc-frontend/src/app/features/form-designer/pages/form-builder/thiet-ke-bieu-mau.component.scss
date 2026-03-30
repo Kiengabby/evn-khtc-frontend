@@ -2583,14 +2583,20 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
   min-height: 0;
 }
 
-.ind-preview-title {
+.ind-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 12px 16px;
+  border-bottom: 1px solid $border;
+}
+
+.ind-preview-title {
   font-size: 12px;
   font-weight: 700;
   color: $text-secondary;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 1px solid $border;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -2598,10 +2604,38 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
   i { font-size: 13px; color: $primary; }
 }
 
+.ind-preview-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: $primary;
+  padding: 3px 10px;
+  background: $primary-light;
+  border-radius: 12px;
+  border: 1px solid rgba($primary, 0.2);
+}
+
+.ind-preview-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  margin: 0;
+  background: linear-gradient(135deg, #f0f4ff, #eef2ff);
+  border-bottom: 1px solid rgba($border, 0.5);
+  font-size: 11px;
+  color: #6366f1;
+  font-weight: 500;
+
+  i {
+    font-size: 11px;
+    opacity: 0.7;
+  }
+}
+
 .ind-preview-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 0;
+  padding: 6px 8px;
 
   scrollbar-width: thin;
   scrollbar-color: rgba(0,0,0,0.1) transparent;
@@ -2617,55 +2651,333 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
   }
 }
 
-.ind-preview-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 12px;
-  font-size: 12px;
-  border-bottom: 1px solid rgba($border, 0.3);
+// ---- Drop indicator line ----
+.ind-drop-indicator {
+  height: 0;
+  margin: 0 8px;
+  border-radius: 2px;
+  background: transparent;
+  transition: all 0.2s ease;
+  position: relative;
 
-  &:last-child { border-bottom: none; }
-}
+  &.active {
+    height: 3px;
+    margin: 2px 8px;
+    background: linear-gradient(90deg, $primary, #818cf8, $primary);
+    box-shadow: 0 0 8px rgba($primary, 0.4), 0 0 2px rgba($primary, 0.6);
+    animation: dropPulse 1s ease-in-out infinite;
 
-.ind-preview-stt {
-  min-width: 20px;
-  font-weight: 700;
-  color: $primary;
-  font-size: 11px;
-  text-align: right;
-}
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: $primary;
+      box-shadow: 0 0 4px rgba($primary, 0.5);
+    }
 
-.ind-preview-name {
-  font-weight: 500;
-  color: $text-primary;
-}
-
-.ind-preview-col {
-  padding: 6px 12px;
-  background: #fff;
-  border: 1px solid $border;
-  border-radius: 8px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: $text-primary;
-  white-space: nowrap;
-
-  &.fixed {
-    background: linear-gradient(135deg, #f0f4ff, #e8eefe);
-    border-color: #c7d2fe;
-    color: #4338ca;
+    &::before { left: -4px; }
+    &::after { right: -4px; }
   }
 }
 
-.ind-preview-empty {
-  padding: 24px 16px;
-  text-align: center;
-  color: $text-secondary;
-  font-size: 12.5px;
-  font-style: italic;
+@keyframes dropPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
+// ---- Preview group (parent + children) ----
+.ind-preview-group {
+  margin: 4px 0;
+  border: 1px solid rgba($border, 0.6);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba($primary, 0.25);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  }
+
+  &.has-children {
+    border-left: 3px solid rgba($primary, 0.3);
+
+    &:hover {
+      border-left-color: rgba($primary, 0.5);
+    }
+  }
+
+  &.dragging {
+    opacity: 0.3;
+    transform: scale(0.97);
+    background: #e2e8f0;
+    cursor: grabbing;
+    box-shadow: none;
+    border-style: dashed;
+  }
+}
+
+// ---- Group parent row ----
+.ind-group-parent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+// ---- Drag handle (double grip dots) ----
+.ind-drag-handle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 14px;
+  flex-shrink: 0;
+  opacity: 0.2;
+  cursor: grab;
+  transition: opacity 0.15s;
+  color: $text-secondary;
+
+  i {
+    font-size: 8px;
+    line-height: 1;
+    margin: -1px 0;
+  }
+
+  .ind-preview-group:hover & {
+    opacity: 0.5;
+  }
+}
+
+// ---- Order number ----
+.ind-order-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  color: $primary;
+  font-size: 10.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 1px solid rgba($primary, 0.12);
+}
+
+// ---- Parent name ----
+.ind-parent-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 12.5px;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+// ---- Group action buttons ----
+.ind-group-actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+
+  .ind-preview-group:hover & {
+    opacity: 1;
+  }
+}
+
+.ind-action-icon {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: $text-secondary;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+  padding: 0;
+
+  i { font-size: 10px; }
+
+  &:hover:not(:disabled) {
+    background: rgba($primary, 0.1);
+    color: $primary;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.9);
+  }
+
+  &:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+  }
+
+  &.remove {
+    &:hover:not(:disabled) {
+      background: rgba(220, 38, 38, 0.1);
+      color: #dc2626;
+    }
+  }
+
+  &.sm {
+    width: 20px;
+    height: 20px;
+
+    i { font-size: 9px; }
+  }
+}
+
+// ---- Group child row ----
+.ind-group-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 7px 20px;
+  border-top: 1px solid rgba($border, 0.2);
+  background: rgba(248, 249, 252, 0.6);
+  transition: all 0.15s ease;
+  min-height: 32px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: rgba($primary, 0.08);
+    transition: width 0.15s ease;
+  }
+
+  &:hover {
+    background: rgba($primary, 0.04);
+
+    &::before {
+      width: 3px;
+    }
+  }
+
+  &.level-1 {
+    padding-left: 24px;
+  }
+
+  &.level-2 {
+    padding-left: 40px;
+    background: rgba(248, 249, 252, 0.8);
+  }
+}
+
+// ---- Child action buttons ----
+.ind-child-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+
+  .ind-group-child:hover & {
+    opacity: 1;
+  }
+}
+
+// ---- Colored dot bullet ----
+.ind-child-bullet {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+  position: relative;
+
+  &.l1 {
+    background: linear-gradient(135deg, #818cf8, #6366f1);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+  }
+
+  &.l2 {
+    width: 5px;
+    height: 5px;
+    background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+    box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.12);
+  }
+
+  .ind-group-child:hover & {
+    transform: scale(1.3);
+  }
+}
+
+// ---- Child name ----
+.ind-child-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
+
+  .level-1 & {
+    font-weight: 550;
+    color: $text-primary;
+  }
+
+  .level-2 & {
+    font-weight: 450;
+    color: lighten($text-primary, 15%);
+    font-size: 11.5px;
+  }
+}
+
+// ---- Empty state ----
+.ind-preview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 40px 20px;
+  color: $text-secondary;
+
+  i {
+    font-size: 32px;
+    opacity: 0.2;
+    color: $primary;
+  }
+
+  span {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  small {
+    font-size: 11px;
+    opacity: 0.6;
+  }
+}
+
+// ---- Column preview (horizontal) ----
 .ind-preview-note {
   display: flex;
   align-items: center;
@@ -2680,6 +2992,16 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
   line-height: 1.4;
 
   i { font-size: 11px; flex-shrink: 0; }
+}
+
+.ind-preview-col {
+  padding: 6px 12px;
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: $text-primary;
 }
 
 // ---- Dialog footer ----
