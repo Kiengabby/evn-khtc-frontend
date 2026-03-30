@@ -28,43 +28,48 @@
       ]
     },
     {
-      "group": "Kỳ kế hoạch",
+      "group": "Chi phí & Giá",
       "items": [
-        { "code": "KH_GROUP", "name": "Kế hoạch năm", "level": 0, "isGroupHeader": true },
-        { "code": "ACTUAL_N2", "name": "Thực hiện N-2", "level": 1 },
-        { "code": "ACTUAL_N1", "name": "Thực hiện N-1", "level": 1 },
-        { "code": "ESTIMATE_N1", "name": "Ước thực hiện N-1", "level": 1 },
-        { "code": "PLAN_N", "name": "Kế hoạch năm N", "level": 1 },
-        { "code": "PLAN_N1", "name": "Kế hoạch năm N+1", "level": 1 },
-        { "code": "PLAN_N2", "name": "Kế hoạch năm N+2", "level": 1 }
+        { "code": "CHI_PHI", "name": "Chi phí (Triệu VNĐ)", "level": 0 },
+        { "code": "GIA_BQ", "name": "Giá bình quân (VNĐ/kWh)", "level": 0 }
       ]
     },
     {
-      "group": "Tổng hợp",
+      "group": "Kỳ báo cáo — Năm",
       "items": [
-        { "code": "TONG_CONG", "name": "Tổng cộng", "level": 0 }
+        { "code": "YEAR_GROUP", "name": "Kỳ báo cáo năm", "level": 0, "isGroupHeader": true },
+        { "code": "ACTUAL_N2", "name": "Thực hiện N-2", "level": 1, "parentCode": "YEAR_GROUP" },
+        { "code": "ACTUAL_N1", "name": "Thực hiện N-1", "level": 1, "parentCode": "YEAR_GROUP" },
+        { "code": "ESTIMATE_N1", "name": "Ước thực hiện N-1", "level": 1, "parentCode": "YEAR_GROUP" },
+        { "code": "PLAN_N", "name": "Kế hoạch năm N", "level": 1, "parentCode": "YEAR_GROUP" },
+        { "code": "PLAN_N1", "name": "Kế hoạch năm N+1", "level": 1, "parentCode": "YEAR_GROUP" },
+        { "code": "PLAN_N2", "name": "Kế hoạch năm N+2", "level": 1, "parentCode": "YEAR_GROUP" }
       ]
     },
     {
-      "group": "Chi phí & Giá thành",
+      "group": "Kỳ báo cáo — Quý",
       "items": [
-        { "code": "CHI_PHI_TRIEU", "name": "Chi phí (Triệu VNĐ)", "level": 0 },
-        { "code": "GIA_BINH_QUAN", "name": "Giá bình quân (VNĐ/kWh)", "level": 0 }
+        { "code": "QUY_GROUP", "name": "Kỳ báo cáo quý", "level": 0, "isGroupHeader": true },
+        { "code": "QUY_1", "name": "Quý I", "level": 1, "parentCode": "QUY_GROUP" },
+        { "code": "QUY_2", "name": "Quý II", "level": 1, "parentCode": "QUY_GROUP" },
+        { "code": "QUY_3", "name": "Quý III", "level": 1, "parentCode": "QUY_GROUP" },
+        { "code": "QUY_4", "name": "Quý IV", "level": 1, "parentCode": "QUY_GROUP" }
       ]
     },
     {
       "group": "So sánh & Tỷ lệ",
       "items": [
-        { "code": "SS_GROUP", "name": "So sánh", "level": 0, "isGroupHeader": true },
-        { "code": "RATE_PERCENT", "name": "Tỷ lệ (%)", "level": 1 },
-        { "code": "DIFF_ABS", "name": "Chênh lệch tuyệt đối", "level": 1 },
-        { "code": "DIFF_PERCENT", "name": "Chênh lệch (%)", "level": 1 },
-        { "code": "INDEX_GROW", "name": "Chỉ số tăng trưởng", "level": 1 }
+        { "code": "SS_GROUP", "name": "So sánh & Tỷ lệ", "level": 0, "isGroupHeader": true },
+        { "code": "RATE_PERCENT", "name": "Tỷ lệ (%)", "level": 1, "parentCode": "SS_GROUP" },
+        { "code": "DIFF_ABS", "name": "Chênh lệch tuyệt đối", "level": 1, "parentCode": "SS_GROUP" },
+        { "code": "DIFF_PERCENT", "name": "Chênh lệch (%)", "level": 1, "parentCode": "SS_GROUP" },
+        { "code": "INDEX_GROW", "name": "Chỉ số tăng trưởng", "level": 1, "parentCode": "SS_GROUP" }
       ]
     },
     {
-      "group": "Khác",
+      "group": "Tổng hợp & Khác",
       "items": [
+        { "code": "TONG_CONG", "name": "Tổng cộng", "level": 0 },
         { "code": "NOTE", "name": "Ghi chú", "level": 0 },
         { "code": "FORMULA_COL", "name": "Cột công thức", "level": 0 }
       ]

@@ -22,6 +22,7 @@ interface IndicatorItem {
   name: string;
   type?: string; // 'system' for fixed columns
   level?: number; // 0=parent, 1=child, 2=sub-child
+  isGroupHeader?: boolean; // true = column group header (creates colspan, no colCode)
 }
 
 interface IndicatorGroup {
@@ -186,10 +187,13 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   tempRowSelection = new Set<string>();  // codes selected in dialog (for fast lookup)
   tempRowOrderedList: IndicatorItem[] = []; // ordered list for preview (user can reorder)
   tempColSelection = new Set<string>();
+  tempColOrderedList: IndicatorItem[] = [];
   indicatorSearchTerm = '';
 
   dragGroupIndex: number | null = null;
   dragOverGroupIndex: number | null = null;
+  dragColGroupIndex: number | null = null;
+  dragOverColGroupIndex: number | null = null;
 
   // === Lifecycle ===
 
@@ -2314,8 +2318,11 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     const selected = [...this.tempRowOrderedList];
     this.selectedRowIndicators = selected;
 
-    // Determine how many header rows exist
-    const headerRowCount = this.fixedRows || 1;
+    // Determine how many header rows exist (read from grid settings as primary source)
+    const gridFixedRows = this.hot?.getSettings().fixedRowsTop;
+    const headerRowCount = (typeof gridFixedRows === 'number' && gridFixedRows > 0)
+      ? gridFixedRows
+      : (this.fixedRows || 1);
     const colCount = this.hot.countCols();
     const currentRowCount = this.hot.countRows();
     const requiredBodyRows = selected.length;
@@ -2378,20 +2385,157 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   openColIndicatorDialog(): void {
     this.tempColSelection.clear();
+    this.tempColOrderedList = [];
+
+    // Restore from previously saved state
     for (const item of this.selectedColIndicators) {
       this.tempColSelection.add(item.code);
+      this.tempColOrderedList.push({ ...item });
     }
+
+    // Re-group orphan children under their group headers (fixes Issue #1)
+    const groupHeaders = this.tempColOrderedList.filter(i => i.isGroupHeader);
+    for (const gh of groupHeaders) {
+      this.regroupColOrphans(gh);
+    }
+
     this.indicatorSearchTerm = '';
+    this.dragColGroupIndex = null;
+    this.dragOverColGroupIndex = null;
     this.showColIndicatorDialog.set(true);
   }
 
   toggleTempColIndicator(item: IndicatorItem): void {
-    if (item.type === 'system') return; // system columns can't be toggled
+    if (item.type === 'system') return;
     if (this.tempColSelection.has(item.code)) {
+      // --- Deselect ---
       this.tempColSelection.delete(item.code);
+      // If group header, also remove its children
+      if (item.isGroupHeader) {
+        const childCodes = this.getColGroupChildCodes(item.code);
+        for (const cc of childCodes) this.tempColSelection.delete(cc);
+        this.tempColOrderedList = this.tempColOrderedList.filter(
+          i => i.code !== item.code && !childCodes.has(i.code)
+        );
+      } else {
+        this.tempColOrderedList = this.tempColOrderedList.filter(i => i.code !== item.code);
+      }
     } else {
+      // --- Select ---
       this.tempColSelection.add(item.code);
+      const level = item.level || 0;
+      if (level === 0) {
+        this.tempColOrderedList.push({ ...item });
+        if (item.isGroupHeader) {
+          // Auto-select all children (Issue #3: notification)
+          const childCount = this.autoSelectColChildren(item);
+          this.regroupColOrphans(item);
+          if (childCount > 0) {
+            this.notify(`Đã thêm "${item.name}" + ${childCount} cột con`, 'success');
+          }
+        }
+      } else {
+        // Child: insert under parent
+        const parentCode = this.findColParentCode(item.code);
+        if (parentCode) {
+          const parentIdx = this.tempColOrderedList.findIndex(i => i.code === parentCode);
+          if (parentIdx >= 0) {
+            let insertIdx = parentIdx + 1;
+            const parentLevel = this.tempColOrderedList[parentIdx].level || 0;
+            while (insertIdx < this.tempColOrderedList.length &&
+                   (this.tempColOrderedList[insertIdx].level || 0) > parentLevel) {
+              insertIdx++;
+            }
+            this.tempColOrderedList.splice(insertIdx, 0, { ...item });
+            return;
+          }
+        }
+        this.tempColOrderedList.push({ ...item });
+      }
     }
+  }
+
+  /** Auto-select all children of a group header. Returns count of children added. */
+  private autoSelectColChildren(parentItem: IndicatorItem): number {
+    let count = 0;
+    const parentLevel = parentItem.level || 0;
+    for (const group of this.colIndicators()) {
+      let found = false;
+      for (const item of group.items) {
+        if (item.code === parentItem.code) { found = true; continue; }
+        if (found) {
+          if ((item.level || 0) > parentLevel) {
+            if (!this.tempColSelection.has(item.code)) {
+              this.tempColSelection.add(item.code);
+              this.tempColOrderedList.push({ ...item });
+              count++;
+            }
+          } else {
+            break;
+          }
+        }
+      }
+    }
+    return count;
+  }
+
+  /** Get all child codes belonging to a group header */
+  private getColGroupChildCodes(parentCode: string): Set<string> {
+    const codes = new Set<string>();
+    for (const group of this.colIndicators()) {
+      let found = false;
+      let parentLevel = 0;
+      for (const item of group.items) {
+        if (item.code === parentCode) { found = true; parentLevel = item.level || 0; continue; }
+        if (found) {
+          if ((item.level || 0) > parentLevel) codes.add(item.code);
+          else break;
+        }
+      }
+    }
+    return codes;
+  }
+
+  private regroupColOrphans(parentItem: IndicatorItem): void {
+    const parentLevel = parentItem.level || 0;
+    const childCodes = new Set<string>();
+    for (const group of this.colIndicators()) {
+      let found = false;
+      for (const item of group.items) {
+        if (item.code === parentItem.code) { found = true; continue; }
+        if (found) {
+          if ((item.level || 0) > parentLevel) childCodes.add(item.code);
+          else break;
+        }
+      }
+    }
+    const orphans: IndicatorItem[] = [];
+    this.tempColOrderedList = this.tempColOrderedList.filter(i => {
+      if (childCodes.has(i.code) && i.code !== parentItem.code) { orphans.push(i); return false; }
+      return true;
+    });
+    if (orphans.length > 0) {
+      const parentIdx = this.tempColOrderedList.findIndex(i => i.code === parentItem.code);
+      if (parentIdx >= 0) {
+        this.tempColOrderedList.splice(parentIdx + 1, 0, ...orphans);
+      }
+    }
+  }
+
+  findColParentCode(childCode: string): string | null {
+    for (const group of this.colIndicators()) {
+      for (let i = 0; i < group.items.length; i++) {
+        if (group.items[i].code === childCode) {
+          const childLevel = group.items[i].level || 0;
+          if (childLevel === 0) return null;
+          for (let j = i - 1; j >= 0; j--) {
+            if ((group.items[j].level || 0) < childLevel) return group.items[j].code;
+          }
+          return null;
+        }
+      }
+    }
+    return null;
   }
 
   isTempColSelected(code: string): boolean {
@@ -2399,10 +2543,13 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   selectAllColIndicators(): void {
+    this.tempColSelection.clear();
+    this.tempColOrderedList = [];
     for (const group of this.colIndicators()) {
       for (const item of group.items) {
         if (item.type !== 'system') {
           this.tempColSelection.add(item.code);
+          this.tempColOrderedList.push({ ...item });
         }
       }
     }
@@ -2410,33 +2557,174 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   deselectAllColIndicators(): void {
     this.tempColSelection.clear();
+    this.tempColOrderedList = [];
   }
 
   getTempColSelectionCount(): number {
-    return this.tempColSelection.size;
+    return this.tempColOrderedList.filter(i => !i.isGroupHeader).length;
   }
 
+  // --- Column group preview ---
+  getColPreviewGroups(): PreviewGroup[] {
+    const groups: PreviewGroup[] = [];
+    const list = this.tempColOrderedList;
+    let i = 0;
+    while (i < list.length) {
+      const item = list[i];
+      const level = item.level || 0;
+      const group: PreviewGroup = { parent: item, children: [] };
+      i++;
+      while (i < list.length && (list[i].level || 0) > level) {
+        group.children.push(list[i]);
+        i++;
+      }
+      groups.push(group);
+    }
+    return groups;
+  }
+
+  /** Count leaf columns (actual data columns, not group headers) */
+  getColLeafCount(): number {
+    return this.tempColOrderedList.filter(i => !i.isGroupHeader).length;
+  }
+
+  // --- Column group reorder ---
+  moveColGroupUp(groupIdx: number): void {
+    if (groupIdx <= 0) return;
+    const groups = this.getColPreviewGroups();
+    [groups[groupIdx - 1], groups[groupIdx]] = [groups[groupIdx], groups[groupIdx - 1]];
+    this.tempColOrderedList = groups.flatMap(g => [g.parent, ...g.children]);
+  }
+
+  moveColGroupDown(groupIdx: number): void {
+    const groups = this.getColPreviewGroups();
+    if (groupIdx >= groups.length - 1) return;
+    [groups[groupIdx], groups[groupIdx + 1]] = [groups[groupIdx + 1], groups[groupIdx]];
+    this.tempColOrderedList = groups.flatMap(g => [g.parent, ...g.children]);
+  }
+
+  removeColGroup(groupIdx: number): void {
+    const groups = this.getColPreviewGroups();
+    if (groupIdx < 0 || groupIdx >= groups.length) return;
+    const group = groups[groupIdx];
+    this.tempColSelection.delete(group.parent.code);
+    for (const child of group.children) this.tempColSelection.delete(child.code);
+    groups.splice(groupIdx, 1);
+    this.tempColOrderedList = groups.flatMap(g => [g.parent, ...g.children]);
+  }
+
+  removeColChild(childCode: string): void {
+    this.tempColSelection.delete(childCode);
+    this.tempColOrderedList = this.tempColOrderedList.filter(i => i.code !== childCode);
+  }
+
+  // Column child movement (reuse same pattern as rows)
+  moveColChildUp(childCode: string): void {
+    const list = this.tempColOrderedList;
+    const flatIdx = list.findIndex(i => i.code === childCode);
+    if (flatIdx <= 0) return;
+    const itemLevel = list[flatIdx].level || 0;
+    let groupEnd = flatIdx;
+    while (groupEnd + 1 < list.length && (list[groupEnd + 1].level || 0) > itemLevel) groupEnd++;
+    let prevStart = -1;
+    for (let i = flatIdx - 1; i >= 0; i--) {
+      const l = list[i].level || 0;
+      if (l === itemLevel) { prevStart = i; break; }
+      if (l < itemLevel) return;
+    }
+    if (prevStart < 0) return;
+    const group = list.splice(flatIdx, groupEnd - flatIdx + 1);
+    list.splice(prevStart, 0, ...group);
+  }
+
+  moveColChildDown(childCode: string): void {
+    const list = this.tempColOrderedList;
+    const flatIdx = list.findIndex(i => i.code === childCode);
+    if (flatIdx < 0) return;
+    const itemLevel = list[flatIdx].level || 0;
+    let groupEnd = flatIdx;
+    while (groupEnd + 1 < list.length && (list[groupEnd + 1].level || 0) > itemLevel) groupEnd++;
+    let nextStart = -1;
+    for (let i = groupEnd + 1; i < list.length; i++) {
+      const l = list[i].level || 0;
+      if (l === itemLevel) { nextStart = i; break; }
+      if (l < itemLevel) return;
+    }
+    if (nextStart < 0) return;
+    let nextEnd = nextStart;
+    while (nextEnd + 1 < list.length && (list[nextEnd + 1].level || 0) > itemLevel) nextEnd++;
+    const nextGroup = list.splice(nextStart, nextEnd - nextStart + 1);
+    list.splice(flatIdx, 0, ...nextGroup);
+  }
+
+  canColChildMoveUp(childCode: string): boolean {
+    const list = this.tempColOrderedList;
+    const idx = list.findIndex(i => i.code === childCode);
+    if (idx <= 0) return false;
+    const level = list[idx].level || 0;
+    for (let i = idx - 1; i >= 0; i--) {
+      const l = list[i].level || 0;
+      if (l === level) return true;
+      if (l < level) return false;
+    }
+    return false;
+  }
+
+  canColChildMoveDown(childCode: string): boolean {
+    const list = this.tempColOrderedList;
+    const idx = list.findIndex(i => i.code === childCode);
+    if (idx < 0) return false;
+    const level = list[idx].level || 0;
+    let end = idx;
+    while (end + 1 < list.length && (list[end + 1].level || 0) > level) end++;
+    for (let i = end + 1; i < list.length; i++) {
+      const l = list[i].level || 0;
+      if (l === level) return true;
+      if (l < level) return false;
+    }
+    return false;
+  }
+
+  // --- Column group D&D ---
+  onColGroupDragStart(event: DragEvent, groupIdx: number): void {
+    this.dragColGroupIndex = groupIdx;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', String(groupIdx));
+    }
+  }
+  onColGroupDragOver(event: DragEvent, groupIdx: number): void {
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    this.dragOverColGroupIndex = groupIdx;
+  }
+  onColGroupDragLeave(): void { this.dragOverColGroupIndex = null; }
+  onColGroupDrop(event: DragEvent, targetGroupIdx: number): void {
+    event.preventDefault();
+    if (this.dragColGroupIndex === null || this.dragColGroupIndex === targetGroupIdx) {
+      this.dragColGroupIndex = null; this.dragOverColGroupIndex = null; return;
+    }
+    const groups = this.getColPreviewGroups();
+    const [movedGroup] = groups.splice(this.dragColGroupIndex, 1);
+    const adj = this.dragColGroupIndex < targetGroupIdx ? targetGroupIdx - 1 : targetGroupIdx;
+    groups.splice(adj, 0, movedGroup);
+    this.tempColOrderedList = groups.flatMap(g => [g.parent, ...g.children]);
+    this.dragColGroupIndex = null; this.dragOverColGroupIndex = null;
+  }
+  onColGroupDragEnd(): void { this.dragColGroupIndex = null; this.dragOverColGroupIndex = null; }
+
+  // --- Apply column indicators with multi-level headers ---
   applyColIndicators(): void {
     if (!this.hot) return;
 
-    // Collect selected items in order from groups (skip system columns)
-    const selected: IndicatorItem[] = [];
-    for (const group of this.colIndicators()) {
-      for (const item of group.items) {
-        if (item.type === 'system') continue;
-        if (this.tempColSelection.has(item.code)) {
-          selected.push(item);
-        }
-      }
-    }
-    this.selectedColIndicators = selected;
+    // Build leaf columns (skip group headers — they only create colspan)
+    const leafCols = this.tempColOrderedList.filter(i => !i.isGroupHeader);
+    this.selectedColIndicators = [...this.tempColOrderedList]; // store full ordered list
 
-    // Fixed columns: STT(0), Chỉ tiêu(1), ĐVT(2) = 3 fixed cols
-    const fixedColCount = 3;
-    const requiredCols = fixedColCount + selected.length;
+    const fixedColCount = 3; // STT, Chỉ tiêu, ĐVT
+    const requiredCols = fixedColCount + leafCols.length;
     const currentCols = this.hot.countCols();
 
-    // Adjust column count
     if (requiredCols > currentCols) {
       this.hot.alter('insert_col_end', currentCols - 1, requiredCols - currentCols);
     } else if (requiredCols < currentCols) {
@@ -2444,20 +2732,31 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     }
     this.gridCols = requiredCols;
 
-    // Clear old code maps for data columns
     this.columnCodeMap.clear();
     this.columnCodeNameMap.clear();
 
-    // Set header row values
-    const headerRow = 0;
+    // Dynamic header row count based on max level (Issue #2)
+    const maxLevel = Math.max(0, ...this.tempColOrderedList.map(i => i.level || 0));
+    const hasGroupHeaders = maxLevel > 0;
+    const headerRows = hasGroupHeaders ? maxLevel + 1 : 1;
+
+    // Ensure grid has enough rows for headers
+    const currentRows = this.hot.countRows();
+    if (currentRows < headerRows + 1) {
+      this.hot.alter('insert_row_below', currentRows - 1, headerRows + 1 - currentRows);
+    }
+
     const changes: [number, number, any][] = [];
 
-    // Ensure fixed columns have labels
-    changes.push([headerRow, 0, 'STT']);
-    changes.push([headerRow, 1, 'Chỉ tiêu']);
-    changes.push([headerRow, 2, 'Đơn vị tính']);
-
-    // Set fixed col code maps
+    // Fixed column headers
+    changes.push([0, 0, 'STT']);
+    changes.push([0, 1, 'Chỉ tiêu']);
+    changes.push([0, 2, 'Đơn vị tính']);
+    if (hasGroupHeaders) {
+      changes.push([1, 0, '']);
+      changes.push([1, 1, '']);
+      changes.push([1, 2, '']);
+    }
     this.columnCodeMap.set(0, 'STT');
     this.columnCodeNameMap.set(0, 'Số thứ tự');
     this.columnCodeMap.set(1, 'CHITIEU_NAME');
@@ -2465,33 +2764,63 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     this.columnCodeMap.set(2, 'UNIT');
     this.columnCodeNameMap.set(2, 'Đơn vị tính');
 
-    // Populate selected column headers
-    for (let i = 0; i < selected.length; i++) {
-      const colIdx = fixedColCount + i;
-      const item = selected[i];
+    // Build column groups from ordered list
+    const groups = this.getColPreviewGroups();
+    let colIdx = fixedColCount;
+    const mergeCells: { row: number; col: number; rowspan: number; colspan: number }[] = [];
 
-      changes.push([headerRow, colIdx, item.name]);
-
-      // Store code mapping
-      this.columnCodeMap.set(colIdx, item.code);
-      this.columnCodeNameMap.set(colIdx, item.name);
-
-      // Mark header cell
-      this.cellMetadata.set(`${headerRow},${colIdx}`, { role: 'header', readOnly: true });
+    // Fixed cols get rowspan 2 if multi-level
+    if (hasGroupHeaders) {
+      mergeCells.push({ row: 0, col: 0, rowspan: 2, colspan: 1 });
+      mergeCells.push({ row: 0, col: 1, rowspan: 2, colspan: 1 });
+      mergeCells.push({ row: 0, col: 2, rowspan: 2, colspan: 1 });
     }
 
-    // Set column widths
-    const newWidths: number[] = [50, 250, 100]; // STT, Chỉ tiêu, ĐVT
-    for (let i = 0; i < selected.length; i++) {
-      newWidths.push(120);
+    for (const group of groups) {
+      if (group.parent.isGroupHeader && group.children.length > 0) {
+        // Group header: row 0 = parent name (colspan), row 1 = child names
+        const startCol = colIdx;
+        changes.push([0, startCol, group.parent.name]);
+        mergeCells.push({ row: 0, col: startCol, rowspan: 1, colspan: group.children.length });
+
+        for (const child of group.children) {
+          changes.push([1, colIdx, child.name]);
+          this.columnCodeMap.set(colIdx, child.code);
+          this.columnCodeNameMap.set(colIdx, child.name);
+          this.cellMetadata.set(`0,${colIdx}`, { role: 'header', readOnly: true });
+          this.cellMetadata.set(`1,${colIdx}`, { role: 'header', readOnly: true });
+          colIdx++;
+        }
+      } else {
+        // Standalone column: row 0 = name (rowspan 2 if multi-level)
+        changes.push([0, colIdx, group.parent.name]);
+        if (hasGroupHeaders) {
+          changes.push([1, colIdx, '']);
+          mergeCells.push({ row: 0, col: colIdx, rowspan: 2, colspan: 1 });
+        }
+        this.columnCodeMap.set(colIdx, group.parent.code);
+        this.columnCodeNameMap.set(colIdx, group.parent.name);
+        this.cellMetadata.set(`0,${colIdx}`, { role: 'header', readOnly: true });
+        colIdx++;
+      }
     }
-    this.hot.updateSettings({ colWidths: newWidths });
+
+    // Column widths
+    const newWidths: number[] = [50, 250, 100];
+    for (let i = 0; i < leafCols.length; i++) newWidths.push(120);
+    this.hot.updateSettings({
+      colWidths: newWidths,
+      mergeCells: mergeCells.length > 0 ? mergeCells : false,
+      fixedRowsTop: headerRows,
+    } as any);
+
+    // Sync component property with grid setting to prevent stale reads in applyRowIndicators()
+    this.fixedRows = headerRows;
 
     this.hot.setDataAtCell(changes, 'loadData');
     this.hot.render();
-
     this.showColIndicatorDialog.set(false);
-    this.notify(`Đã áp dụng ${selected.length} chỉ tiêu cột lên lưới`, 'success');
+    this.notify(`Đã áp dụng ${leafCols.length} chỉ tiêu cột lên lưới`, 'success');
   }
 
   // --- Filtered indicators for dialog search ---
@@ -2530,13 +2859,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   getTempColSelectedItems(): IndicatorItem[] {
-    const items: IndicatorItem[] = [];
-    for (const group of this.colIndicators()) {
-      for (const item of group.items) {
-        if (item.type !== 'system' && this.tempColSelection.has(item.code)) items.push(item);
-      }
-    }
-    return items;
+    return this.tempColOrderedList;
   }
 
 }

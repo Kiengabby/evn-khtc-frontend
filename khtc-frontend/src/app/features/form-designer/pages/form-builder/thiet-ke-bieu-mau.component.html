@@ -774,10 +774,14 @@
                   <div class="ind-group-title">{{ group.group }}</div>
                   @for (item of group.items; track item.code) {
                     <label class="ind-item" [class.selected]="isTempColSelected(item.code)"
+                           [class.indent-1]="(item.level || 0) === 1"
                            (click)="toggleTempColIndicator(item)">
                       <span class="ind-checkbox" [class.checked]="isTempColSelected(item.code)">
                         @if (isTempColSelected(item.code)) { <i class="pi pi-check"></i> }
                       </span>
+                      @if (item.isGroupHeader) {
+                        <i class="pi pi-th-large" style="color: #6366f1; font-size: 11px; margin-right: 2px;"></i>
+                      }
                       <span class="ind-item-name">{{ item.name }}</span>
                       <span class="ind-item-code">{{ item.code }}</span>
                     </label>
@@ -793,23 +797,104 @@
             </div>
           </div>
 
-          <!-- Right: Preview -->
+          <!-- Right: Group-based Preview -->
           <div class="ind-preview-panel">
-            <div class="ind-preview-title">
-              <i class="pi pi-eye"></i> Xem trước cột đã chọn
-            </div>
-            @if (getTempColSelectionCount() > 0) {
-              <div class="ind-preview-note">
-                <i class="pi pi-info-circle"></i>
-                3 cột cố định (STT, Chỉ tiêu, ĐVT) + {{ getTempColSelectionCount() }} cột dữ liệu
+            <div class="ind-preview-header">
+              <div class="ind-preview-title">
+                <i class="pi pi-eye"></i> XEM TRƯỚC
               </div>
-              <div class="ind-preview-list horizontal">
-                @for (item of getTempColSelectedItems(); track item.code) {
-                  <div class="ind-preview-col">{{ item.name }}</div>
+              <span class="ind-count-badge">{{ getColLeafCount() }} cột</span>
+            </div>
+
+            @if (getColPreviewGroups().length > 0) {
+              <div class="ind-preview-hint">
+                <i class="pi pi-arrows-v"></i>
+                Kéo thả nhóm hoặc dùng nút ↕ để sắp xếp
+              </div>
+
+              <div class="ind-preview-list">
+                @for (group of getColPreviewGroups(); track group.parent.code; let gi = $index) {
+                  <div class="ind-preview-group"
+                       draggable="true"
+                       (dragstart)="onColGroupDragStart($event, gi)"
+                       (dragover)="onColGroupDragOver($event, gi)"
+                       (dragleave)="onColGroupDragLeave()"
+                       (drop)="onColGroupDrop($event, gi)"
+                       (dragend)="onColGroupDragEnd()"
+                       [class.drag-over]="dragOverColGroupIndex === gi">
+
+                    <!-- Parent row -->
+                    <div class="ind-group-parent">
+                      <span class="ind-parent-badge">{{ gi + 1 }}</span>
+                      <span class="ind-parent-name">
+                        @if (group.parent.isGroupHeader) {
+                          <i class="pi pi-th-large" style="font-size: 10px; opacity: 0.5; margin-right: 3px;"></i>
+                        }
+                        {{ group.parent.name }}
+                      </span>
+                      @if (group.children.length > 0) {
+                        <span class="ind-child-count">({{ group.children.length }} cột con)</span>
+                      }
+                      <div class="ind-group-actions">
+                        <button class="ind-action-icon"
+                                (click)="moveColGroupUp(gi); $event.stopPropagation()"
+                                [disabled]="gi === 0" title="Di chuyển lên">
+                          <i class="pi pi-chevron-up"></i>
+                        </button>
+                        <button class="ind-action-icon"
+                                (click)="moveColGroupDown(gi); $event.stopPropagation()"
+                                [disabled]="gi === getColPreviewGroups().length - 1" title="Di chuyển xuống">
+                          <i class="pi pi-chevron-down"></i>
+                        </button>
+                        <button class="ind-action-icon remove"
+                                (click)="removeColGroup(gi); $event.stopPropagation()" title="Bỏ chọn nhóm">
+                          <i class="pi pi-times"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Children rows -->
+                    @for (child of group.children; track child.code) {
+                      <div class="ind-group-child level-1">
+                        <span class="ind-child-bullet l1"></span>
+                        <span class="ind-child-name">{{ child.name }}</span>
+                        <div class="ind-child-actions">
+                          <button class="ind-action-icon sm"
+                                  (click)="moveColChildUp(child.code); $event.stopPropagation()"
+                                  [disabled]="!canColChildMoveUp(child.code)" title="Di chuyển lên">
+                            <i class="pi pi-chevron-up"></i>
+                          </button>
+                          <button class="ind-action-icon sm"
+                                  (click)="moveColChildDown(child.code); $event.stopPropagation()"
+                                  [disabled]="!canColChildMoveDown(child.code)" title="Di chuyển xuống">
+                            <i class="pi pi-chevron-down"></i>
+                          </button>
+                          <button class="ind-action-icon sm remove"
+                                  (click)="removeColChild(child.code); $event.stopPropagation()"
+                                  title="Bỏ chọn">
+                            <i class="pi pi-times"></i>
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Drop indicator at end -->
+                @if (dragColGroupIndex !== null) {
+                  <div class="ind-drop-indicator"
+                       (dragover)="onColGroupDragOver($event, getColPreviewGroups().length)"
+                       (drop)="onColGroupDrop($event, getColPreviewGroups().length)">
+                    <span>Thả vào cuối</span>
+                  </div>
                 }
               </div>
             } @else {
-              <div class="ind-preview-empty">Chưa chọn chỉ tiêu cột nào</div>
+              <div class="ind-preview-empty">
+                <i class="pi pi-table" style="font-size: 32px; opacity: 0.3;"></i>
+                <span>Chưa chọn chỉ tiêu cột nào</span>
+                <small>Chọn từ danh sách bên trái</small>
+              </div>
             }
           </div>
         </div>
@@ -818,8 +903,8 @@
           <button class="modern-btn secondary" (click)="showColIndicatorDialog.set(false)">
             <i class="pi pi-times"></i> Hủy
           </button>
-          <button class="modern-btn primary" (click)="applyColIndicators()" [disabled]="getTempColSelectionCount() === 0">
-            <i class="pi pi-check"></i> Áp dụng ({{ getTempColSelectionCount() }})
+          <button class="modern-btn primary" (click)="applyColIndicators()" [disabled]="getColLeafCount() === 0">
+            <i class="pi pi-check"></i> Áp dụng ({{ getColLeafCount() }})
           </button>
         </div>
       </div>
