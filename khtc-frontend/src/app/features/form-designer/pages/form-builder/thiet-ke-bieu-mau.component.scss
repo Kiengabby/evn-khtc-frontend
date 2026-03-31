@@ -351,26 +351,46 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
   i { font-size: 24px; color: $primary; }
 }
 
-// === PROPERTIES PANEL (REDESIGNED) ===
+// === PROPERTIES PANEL (REDESIGNED — Modern Lightweight) ===
 .props-panel {
   width: 300px;
   min-width: 280px;
   max-width: 310px;
-  background: #f5f7fa;
-  border-left: 1px solid $border;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-left: 1px solid rgba($border, 0.7);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: panelSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-// ---- Header ----
+@keyframes panelSlideIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+// ---- Header (lightweight — no heavy blue gradient) ----
 .pp-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid rgba($border, 0.7);
   flex-shrink: 0;
+  position: relative;
+
+  // Accent left border instead of full gradient
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, $primary 0%, $primary-mid 100%);
+    border-radius: 0 3px 3px 0;
+  }
 }
 
 .pp-header-left {
@@ -382,46 +402,53 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
 .pp-header-icon {
   width: 34px;
   height: 34px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba($primary, 0.08), rgba($primary, 0.15));
+  border: 1px solid rgba($primary, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
-  i { font-size: 15px; color: #fff; }
+  transition: all 0.2s;
+  i { font-size: 15px; color: $primary; }
+
+  .pp-header:hover & {
+    background: linear-gradient(135deg, rgba($primary, 0.12), rgba($primary, 0.2));
+  }
 }
 
 .pp-header-title {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
-  color: #fff;
+  color: $text-primary;
   line-height: 1.2;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .pp-header-sub {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.75);
+  color: $text-secondary;
   font-family: 'Consolas', monospace;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .pp-close-btn {
   width: 28px;
   height: 28px;
-  border: none;
+  border: 1px solid rgba($border, 0.6);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.02);
+  color: $text-secondary;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   i { font-size: 12px; }
   &:hover {
-    background: rgba(255, 255, 255, 0.25);
-    color: #fff;
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #ef4444;
+    transform: rotate(90deg);
   }
 }
 
@@ -429,41 +456,62 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
 .pp-body {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 
   scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.15) transparent;
-  &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
+  scrollbar-color: rgba(0,0,0,0.12) transparent;
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.12);
+    border-radius: 10px;
+    &:hover { background: rgba(0,0,0,0.2); }
+  }
 }
 
 // ---- Section card ----
 .pp-card {
   background: #fff;
-  border: 1px solid rgba($border, 0.8);
+  border: 1px solid rgba($border, 0.6);
   border-radius: 12px;
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+  transition: box-shadow 0.2s, border-color 0.2s;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+    border-color: rgba($primary, 0.15);
+  }
 }
 
 .pp-card-title {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   color: $text-secondary;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.7px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba($border, 0.7);
-  i { font-size: 12px; color: $primary; }
+  border-bottom: 1px solid rgba($border, 0.5);
+  i {
+    font-size: 12px;
+    color: $primary;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($primary, 0.08);
+    border-radius: 6px;
+  }
 }
 
 // ---- Form field ----
@@ -665,53 +713,83 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 11px 16px;
-  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  padding: 10px 16px;
+  background: $primary;
   color: #fff;
   border: none;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba($primary, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba($primary, 0.3);
   letter-spacing: 0.01em;
+  position: relative;
+  overflow: hidden;
+
+  // Subtle shine effect
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+    transition: left 0.5s;
+  }
 
   i { font-size: 13px; }
 
   &:hover {
-    background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
-    box-shadow: 0 4px 14px rgba($primary, 0.35);
+    background: $primary-dark;
+    box-shadow: 0 4px 12px rgba($primary, 0.3);
     transform: translateY(-1px);
+
+    &::before {
+      left: 100%;
+    }
   }
 
   &:active {
     transform: translateY(0);
-    box-shadow: 0 2px 6px rgba($primary, 0.2);
+    box-shadow: 0 1px 4px rgba($primary, 0.2);
   }
 }
 
 // ---- Legend ----
 .pp-legend {
-  background: #fff;
-  border: 1px solid rgba($border, 0.8);
-  border-radius: 12px;
+  background: rgba(#fff, 0.7);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba($border, 0.5);
+  border-radius: 10px;
   padding: 12px 14px;
 }
 
 .pp-legend-title {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.7px;
   color: $text-secondary;
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  &::before {
+    content: '';
+    width: 12px;
+    height: 2px;
+    background: $primary;
+    border-radius: 2px;
+  }
 }
 
 .pp-legend-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px 8px;
+  gap: 6px 10px;
 }
 
 .pp-legend-item {
@@ -721,6 +799,7 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
   font-size: 11.5px;
   color: $text-primary;
   font-weight: 500;
+  padding: 3px 0;
 }
 
 .pp-dot {
@@ -728,11 +807,12 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
   height: 10px;
   border-radius: 3px;
   flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12);
 
-  &.header  { background: rgba($color-header, 0.75); }
-  &.text    { background: rgba($color-text, 0.75); }
+  &.header  { background: rgba($color-header, 0.8); }
+  &.text    { background: rgba($color-text, 0.8); }
   &.data    { background: lighten($primary, 25%); }
-  &.formula { background: rgba($color-formula, 0.75); }
+  &.formula { background: rgba($color-formula, 0.8); }
 }
 
 
@@ -1807,6 +1887,8 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
     background: rgba($color-header, 0.12) !important;
     font-weight: 600 !important;
     color: color.adjust($color-header, $lightness: -15%) !important;
+    text-align: center !important;
+    vertical-align: middle !important;
   }
 
   .cell-designer-text {
@@ -1839,6 +1921,35 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
     color: $text-secondary;
     font-size: 11px;
     font-weight: 500;
+  }
+
+  // Centering classes applied by cells() callback
+  .handsontable td.htCenter {
+    text-align: center !important;
+  }
+
+  .handsontable td.htMiddle {
+    vertical-align: middle !important;
+  }
+
+  // Merged cell parent — prevent column shifting on selection
+  .handsontable td.merged-cell-parent {
+    text-align: center !important;
+    vertical-align: middle !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+  }
+
+  // Fix merged cell selection misalignment — keep column widths stable
+  .handsontable .wtHolder {
+    table-layout: fixed;
+  }
+
+  // Prevent selection border from shifting columns on merged cells
+  .handsontable td.area,
+  .handsontable td.current {
+    box-sizing: border-box !important;
   }
 }
 

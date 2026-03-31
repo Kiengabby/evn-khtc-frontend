@@ -400,10 +400,21 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
           else if (meta.role === 'data') baseClass = 'cell-designer-data';
           else if (meta.role === 'formula') baseClass = 'cell-designer-formula';
         }
+        // Header rows: always center + header style
+        const headerRowCount = this.fixedRows || 0;
+        if (headerRowCount > 0 && row < headerRowCount) {
+          if (!baseClass.includes('cell-designer-header')) {
+            baseClass = (baseClass ? baseClass + ' ' : '') + 'cell-designer-header';
+          }
+          baseClass = (baseClass ? baseClass + ' ' : '') + 'htCenter htMiddle';
+        }
         // Add centering classes if this cell is a merge parent
         const isMergeParent = this.mergedCells.some(m => m.row === row && m.col === col);
         if (isMergeParent) {
-          baseClass = (baseClass ? baseClass + ' ' : '') + 'htCenter htMiddle merged-cell-parent';
+          if (!baseClass.includes('htCenter')) {
+            baseClass = (baseClass ? baseClass + ' ' : '') + 'htCenter htMiddle';
+          }
+          baseClass = (baseClass ? baseClass + ' ' : '') + 'merged-cell-parent';
         }
         if (baseClass) cellProps.className = baseClass;
         return cellProps;
@@ -2318,6 +2329,18 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     const selected = [...this.tempRowOrderedList];
     this.selectedRowIndicators = selected;
 
+    this.writeRowIndicatorData(selected);
+    this.hot.render();
+
+    this.showRowIndicatorDialog.set(false);
+    this.notify(`Đã áp dụng ${selected.length} chỉ tiêu dòng lên lưới`, 'success');
+  }
+
+  /** Write row indicator body data to the grid at the correct offset below headers.
+   *  Shared by applyRowIndicators() and applyColIndicators() to keep body rows in sync. */
+  private writeRowIndicatorData(selected: IndicatorItem[]): void {
+    if (!this.hot || selected.length === 0) return;
+
     // Determine how many header rows exist (read from grid settings as primary source)
     const gridFixedRows = this.hot?.getSettings().fixedRowsTop;
     const headerRowCount = (typeof gridFixedRows === 'number' && gridFixedRows > 0)
@@ -2373,10 +2396,6 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     }
 
     this.hot.setDataAtCell(changes, 'loadData');
-    this.hot.render();
-
-    this.showRowIndicatorDialog.set(false);
-    this.notify(`Đã áp dụng ${selected.length} chỉ tiêu dòng lên lưới`, 'success');
   }
 
   // ==========================================
@@ -2817,7 +2836,20 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     // Sync component property with grid setting to prevent stale reads in applyRowIndicators()
     this.fixedRows = headerRows;
 
+    // Sync programmatic merges into this.mergedCells so cells() callback can apply centering
+    // Remove old header merges (rows within header area), then add new ones
+    this.mergedCells = this.mergedCells.filter(m => m.row >= headerRows);
+    for (const mc of mergeCells) {
+      this.mergedCells.push(mc);
+    }
+
     this.hot.setDataAtCell(changes, 'loadData');
+
+    // Re-apply existing row indicators at the correct offset after header count change
+    if (this.selectedRowIndicators.length > 0) {
+      this.writeRowIndicatorData(this.selectedRowIndicators);
+    }
+
     this.hot.render();
     this.showColIndicatorDialog.set(false);
     this.notify(`Đã áp dụng ${leafCols.length} chỉ tiêu cột lên lưới`, 'success');
