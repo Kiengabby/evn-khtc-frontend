@@ -1,803 +1,1051 @@
 // ============================================
-// Styles: Excel-like Financial Planning Grid
+// Data Entry — Planning Grid (Redesigned)
+// Modern Enterprise UI — EVN Workflow Style
 // ============================================
 @use 'styles/variables' as *;
 @use 'styles/mixins' as *;
 
+// ── Local design tokens ──────────────────────
+$accent:         $primary;
+$accent-dark:    $primary-dark;
+$accent-light:   $primary-lighter;
+$text-main:      $gray-800;
+$text-sub:       $gray-500;
+$text-muted:     $gray-400;
+$border-soft:    $surface-border;
+$bg-page:        #f5f7fa;
+$bg-card:        #ffffff;
+$radius:         6px;
+$radius-md:      8px;
+$radius-lg:      12px;
+
 :host {
-    display: block;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.excel-page {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
+// === PAGE LAYOUT ===
+.page-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  height: 100%;
+  background: #f5f7fa;
 }
 
-// === HEADER ===
-.excel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
+// ============================================
+// PAGE HEADER
+// ============================================
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  gap: 16px;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.03);
+
+  // Accent left stripe
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, $accent 0%, $accent-dark 100%);
+    border-radius: 10px 0 0 10px;
+  }
 }
 
-.excel-title {
-    font-size: 1.375rem;
-    font-weight: $font-weight-bold;
-    color: $gray-800;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    i {
-        color: $primary;
-    }
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1;
 }
 
-.excel-desc {
-    font-size: $font-size-xs;
-    color: $gray-500;
-    margin-top: 2px;
+.header-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba($accent, 0.1), rgba($accent, 0.15));
+  border: 1.5px solid rgba($accent, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba($accent, 0.08);
+
+  i {
+    font-size: 22px;
+    color: $accent;
+  }
+
+  .page-header:hover & {
+    background: linear-gradient(135deg, rgba($accent, 0.15), rgba($accent, 0.25));
+    box-shadow: 0 4px 12px rgba($accent, 0.15);
+  }
 }
 
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.page-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.page-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 3px 10px;
+  border-radius: 5px;
+  border: 1px solid #bfdbfe;
+  font-family: $font-family-mono;
+  align-self: flex-start;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.08);
+
+  i { font-size: 10px; }
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .change-badge {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 5px 12px;
-    background: #FEF3C7;
-    color: #92400E;
-    border-radius: $border-radius-full;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  color: #92400E;
+  border: 1px solid #FCD34D;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  animation: badgePulse 2s ease-in-out infinite;
+
+  i { font-size: 10px; }
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(252, 211, 77, 0); }
 }
 
 .btn-save {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 20px;
-    background: $primary;
-    color: white;
-    border: none;
-    border-radius: $border-radius;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
-    cursor: pointer;
-    transition: all $transition-fast;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 22px;
+  background: linear-gradient(135deg, $accent 0%, $accent-dark 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba($accent, 0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+  letter-spacing: 0.02em;
+  position: relative;
+  overflow: hidden;
 
-    &:hover:not(:disabled) {
-        background: $primary-dark;
-    }
+  i { font-size: 14px; font-weight: 700; }
 
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba($accent, 0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+
+    &::before {
+      opacity: 1;
     }
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba($accent, 0.2), inset 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    transform: none;
+  }
 }
 
-// === FILTER BAR ===
-.filter-bar {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 16px;
-    background: white;
-    border: 1px solid $surface-border;
-    border-radius: $border-radius-md $border-radius-md 0 0;
-    flex-wrap: wrap;
-    
-    // Mobile responsive
-    @media (max-width: 768px) {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-        
-        .filter-group {
-            flex-direction: column;
-            
-            .filter-item {
-                min-width: auto;
-                
-                select {
-                    width: 100%;
-                }
-            }
-        }
-        
-        .filter-actions {
-            justify-content: center;
-        }
-    }
+// ============================================
+// FILTER SECTION
+// ============================================
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+  border: 1px solid $border-soft;
+  border-radius: $radius-lg $radius-lg 0 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
 }
 
-.filter-group {
-    display: flex;
-    gap: 12px;
-    flex: 1;
-    flex-wrap: wrap;
+.filter-main {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  width: 100%;
 }
 
 .filter-item {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 160px;
-    flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 
-    &.filter-wide {
-        flex: 2;
-        min-width: 280px;
-    }
+  &.filter-wide {
+    grid-column: span 1;
+    min-width: 200px;
+  }
 
-    &.filter-narrow {
-        flex: 0.5;
-        min-width: 90px;
-    }
+  &.filter-narrow {
+    min-width: 100px;
+  }
 
-    &.filter-scenario {
-        flex: 1.25;
-        min-width: 200px;
-    }
-
-    label {
-        font-size: 0.6875rem;
-        font-weight: $font-weight-semibold;
-        color: $gray-500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-
-        i {
-            font-size: 0.65rem;
-        }
-    }
-
-    select {
-        padding: 7px 10px;
-        border: 1px solid $surface-border;
-        border-radius: $border-radius-sm;
-        font-size: $font-size-sm;
-        background: white;
-        color: $gray-800;
-        cursor: pointer;
-
-        &:focus {
-            outline: none;
-            border-color: $primary;
-        }
-    }
-}
-
-.filter-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-.btn-reload,
-.btn-excel {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 7px 14px;
-    border: 1px solid $surface-border;
-    border-radius: $border-radius-sm;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
-    cursor: pointer;
-    transition: all $transition-fast;
-    background: white;
-    color: $gray-700;
-
-    &:hover {
-        background: $gray-50;
-        border-color: $gray-400;
-    }
-}
-
-.btn-excel {
-    background: #E8F5E9;
-    color: #1B5E20;
-    border-color: #A5D6A7;
-
-    &:hover {
-        background: #C8E6C9;
-    }
-}
-
-.btn-json-test {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 7px 14px;
-    border: 1px dashed $gray-400;
-    border-radius: $border-radius-sm;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    cursor: pointer;
-    transition: all $transition-fast;
-    background: #FFFBEB;
-    color: #92400E;
-
-    &:hover {
-        background: #FEF3C7;
-        border-color: #D97706;
-    }
-
-    &.active {
-        background: #FDE68A;
-        border-style: solid;
-    }
-}
-
-.json-test-panel {
-    padding: 12px 16px;
-    background: #FFFBF5;
-    border: 1px solid #FDE68A;
-    border-top: none;
-    border-radius: 0 0 $border-radius-md $border-radius-md;
-}
-
-.json-test-hint {
-    font-size: $font-size-xs;
-    color: $gray-600;
-    margin: 0 0 8px;
-    line-height: 1.45;
-
-    code {
-        font-size: 0.7rem;
-        background: #FFF7ED;
-        padding: 1px 4px;
-        border-radius: 3px;
-        color: #9A3412;
-    }
-}
-
-.json-test-textarea {
-    width: 100%;
-    box-sizing: border-box;
-    font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+  label {
     font-size: 11px;
-    line-height: 1.4;
-    padding: 10px;
-    border: 1px solid $surface-border;
-    border-radius: $border-radius-sm;
-    resize: vertical;
-    min-height: 160px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    i {
+      font-size: 11px;
+      color: $accent;
+      opacity: 0.8;
+    }
+  }
+
+  select {
+    padding: 8px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    background: #fff;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+
+    &:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    }
 
     &:focus {
-        outline: none;
-        border-color: #D97706;
-    }
-}
-
-.json-test-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
-    align-items: center;
-}
-
-.json-test-file {
-    position: absolute;
-    width: 0;
-    height: 0;
-    opacity: 0;
-    overflow: hidden;
-}
-
-.btn-json-primary,
-.btn-json-secondary {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: $border-radius-sm;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    cursor: pointer;
-    border: 1px solid transparent;
-}
-
-.btn-json-primary {
-    background: #D97706;
-    color: white;
-    border-color: #B45309;
-
-    &:hover {
-        background: #B45309;
-    }
-}
-
-.btn-json-secondary {
-    background: white;
-    color: $gray-700;
-    border-color: $surface-border;
-
-    &:hover {
-        background: $gray-50;
-    }
-}
-
-// === EXCEL TOOLBAR ===
-.excel-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4px 8px;
-    background: #F3F4F6;
-    border-left: 1px solid $surface-border;
-    border-right: 1px solid $surface-border;
-    font-size: $font-size-xs;
-}
-
-.toolbar-group {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-}
-
-.tb-btn {
-    @include flex-center;
-    width: 28px;
-    height: 28px;
-    border: none;
-    background: transparent;
-    color: $gray-600;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.75rem;
-
-    &:hover:not(:disabled) {
-        background: $gray-200;
+      border-color: $accent;
+      background: #f0f9ff;
+      box-shadow: 0 0 0 3px rgba($accent, 0.12);
     }
 
     &:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+// ---- Action buttons (shared) ----
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+
+  i { font-size: 12px; font-weight: 600; }
+
+  &:hover {
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+    box-shadow: 0 2px 8px rgba(29, 78, 216, 0.12);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  &.btn-test {
+    border-style: dashed;
+    border-color: #fbbf24;
+    background: #fffbeb;
+    color: #92400e;
+
+    &:hover {
+      background: #fef3c7;
+      border-color: #d97706;
+      color: #b45309;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.12);
     }
 
-    strong {
-        font-size: 0.8125rem;
+    &.active {
+      background: #fde68a;
+      border-style: solid;
+      border-color: #d97706;
+      color: #92400e;
     }
+  }
+
+  &.btn-excel {
+    background: #f0fdf4;
+    color: #065f46;
+    border-color: #a7f3d0;
+
+    &:hover {
+      background: #dcfce7;
+      border-color: #6ee7b7;
+      color: #047857;
+      box-shadow: 0 2px 8px rgba(4, 120, 87, 0.12);
+    }
+  }
+
+  &.btn-apply {
+    background: linear-gradient(135deg, $accent, $accent-dark);
+    color: #fff;
+    border-color: $accent-dark;
+    box-shadow: 0 2px 8px rgba($accent, 0.25);
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba($accent, 0.35);
+    }
+  }
 }
 
-.tb-sep {
-    width: 1px;
-    height: 18px;
-    background: $gray-300;
-    margin: 0 4px;
+// ============================================
+// JSON TEST PANEL
+// ============================================
+.json-panel {
+  padding: 14px 16px;
+  background: #FFFDF7;
+  border: 1px solid #FDE68A;
+  border-top: none;
 }
 
-.zoom-label {
-    font-size: $font-size-xs;
-    color: $gray-500;
-    margin-left: 4px;
-    min-width: 35px;
-}
+.json-hint {
+  font-size: 12px;
+  color: $gray-600;
+  margin: 0 0 10px;
+  line-height: 1.5;
 
-.toolbar-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-    margin-left: 12px;
-}
-
-.cell-ref {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
-    background: white;
-    border: 1px solid $surface-border;
-    border-radius: 4px;
+  code {
+    font-size: 11px;
+    background: #FFF7ED;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #9A3412;
     font-family: $font-family-mono;
-    font-size: $font-size-xs;
-    color: $gray-700;
-    min-width: 60px;
+  }
+}
+
+.json-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: $font-family-mono;
+  font-size: 11.5px;
+  line-height: 1.45;
+  padding: 10px 12px;
+  border: 1.5px solid $border-soft;
+  border-radius: $radius;
+  resize: vertical;
+  min-height: 140px;
+  color: $text-main;
+  background: #fff;
+  transition: border-color 0.15s;
+
+  &:focus {
+    outline: none;
+    border-color: #D97706;
+    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.08);
+  }
+}
+
+.json-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.json-file-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+// ============================================
+// REPORT INFO BAR
+// ============================================
+.report-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba($accent, 0.06), rgba($accent, 0.12));
+  border: 1px solid rgba($accent, 0.15);
+  border-left: none;
+  border-right: none;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba($accent, 0.05);
+
+  // Left accent stripe
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, $accent 0%, $accent-dark 100%);
+  }
+
+  > i {
+    font-size: 14px;
+    color: $accent;
+    opacity: 0.8;
+    flex-shrink: 0;
+  }
+}
+
+.report-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.report-sep {
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+.report-desc {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+// ============================================
+// GRID TOOLBAR
+// ============================================
+.grid-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-left: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #cbd5e1;
+  min-height: 40px;
+  gap: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #e2e8f0;
+    color: #1e293b;
+    border-color: #cbd5e1;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.tb-divider {
+  width: 1px;
+  height: 20px;
+  background: #cbd5e1;
+  margin: 0 6px;
+}
+
+.zoom-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.zoom-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  min-width: 40px;
+  text-align: center;
+  font-family: $font-family-mono;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  margin-left: 8px;
+  min-width: 0;
+}
+
+.name-box {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  flex-shrink: 0;
+  min-width: 88px;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.08);
+
+  .cell-name {
+    font-size: 12px;
+    font-weight: 700;
+    font-family: $font-family-mono;
+    color: #1d4ed8;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    i {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+  }
 }
 
 .formula-bar {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 8px;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 4px 10px;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  min-width: 0;
+
+  &:focus-within {
+    border-color: $accent;
+    background: #f0f9ff;
+    box-shadow: 0 2px 6px rgba($accent, 0.12);
+  }
+
+  .fx-label {
+    font-size: 12px;
+    font-weight: 700;
+    font-style: italic;
+    color: #64748b;
+    font-family: serif;
+    flex-shrink: 0;
+  }
+
+  .formula-input {
     flex: 1;
-    gap: 8px;
-    background: white;
-    border: 1px solid $surface-border;
-    border-radius: 4px;
-    padding: 2px 8px;
+    border: none;
+    outline: none;
+    font-family: $font-family-mono;
+    font-size: 11.5px;
+    color: #1e293b;
+    background: transparent;
+    padding: 2px 0;
+    min-width: 0;
 
-    strong {
-        font-size: 0.8125rem;
-        color: $gray-600;
-        font-style: italic;
-        font-family: serif;
+    &::placeholder {
+      color: #cbd5e1;
+      font-family: $font-family;
+      font-style: normal;
+      font-size: 12px;
     }
-
-    .formula-input {
-        flex: 1;
-        border: none;
-        outline: none;
-        font-family: $font-family-mono;
-        font-size: 0.8125rem;
-        color: $gray-800;
-        background: transparent;
-        padding: 2px 0;
-    }
+  }
 }
 
-.data-info {
-    font-size: $font-size-xs;
-    color: $gray-500;
-}
-
-// === REPORT BANNER ===
-.report-banner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 8px 16px;
-    background: $primary;
-    color: white;
-    font-size: $font-size-xs;
-}
-
-.banner-org {
-    opacity: 0.8;
-    font-size: 0.6875rem;
-    letter-spacing: 0.5px;
-}
-
-.banner-title {
-    font-size: $font-size-sm;
-    font-weight: $font-weight-bold;
-}
-
-.banner-sub {
-    opacity: 0.7;
-    font-size: 0.6875rem;
-}
-
-// === HANDSONTABLE WRAPPER ===
-.hot-wrap {
-    position: relative;
-    overflow: auto;
-    border-left: 1px solid $surface-border;
-    border-right: 1px solid $surface-border;
-    background: white;
-    // Performance optimizations
-    will-change: transform;
-    contain: layout style paint;
-    
-    // Responsive breakpoints
-    @media (max-width: 768px) {
-        font-size: 0.75rem;
-        
-        .handsontable {
-            min-width: 800px; // Horizontal scroll on mobile
-        }
-    }
+// ============================================
+// GRID CONTAINER (Handsontable wrapper)
+// ============================================
+.grid-container {
+  position: relative;
+  overflow: auto;
+  border-left: 1px solid $border-soft;
+  border-right: 1px solid $border-soft;
+  background: #fff;
+  will-change: transform;
+  contain: layout style paint;
+  flex: 1;
+  min-height: 0;
 }
 
 #hotContainer {
-    width: 100%;
+  width: 100%;
 }
 
+// Loading overlay
 .loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(2px);
-    @include flex-center;
-    z-index: 1000;
-    
-    .loading-content {
-        text-align: center;
-        
-        .spinner-wrapper {
-            margin-bottom: 12px;
-            
-            i {
-                font-size: 2rem;
-                color: $primary;
-            }
-        }
-        
-        .loading-text {
-            color: $gray-600;
-            font-size: $font-size-sm;
-            margin-bottom: 16px;
-            font-weight: $font-weight-medium;
-        }
-        
-        .loading-progress {
-            width: 200px;
-            height: 3px;
-            background: $gray-200;
-            border-radius: 2px;
-            overflow: hidden;
-            
-            .progress-bar {
-                height: 100%;
-                background: linear-gradient(90deg, $primary, $primary-dark);
-                border-radius: 2px;
-                animation: loadingProgress 1.5s ease-in-out infinite;
-            }
-        }
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-content {
+  text-align: center;
+
+  .spinner-wrap {
+    margin-bottom: 14px;
+
+    i {
+      font-size: 28px;
+      color: $accent;
     }
+  }
+
+  .loading-text {
+    color: $gray-600;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 0 0 16px;
+  }
 }
 
-@keyframes loadingProgress {
-    0% { width: 0; }
-    50% { width: 70%; }
-    100% { width: 100%; }
+.loading-bar {
+  width: 180px;
+  height: 3px;
+  background: $gray-200;
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 0 auto;
+
+  .loading-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $accent, $accent-dark);
+    border-radius: 2px;
+    animation: loadProgress 1.5s ease-in-out infinite;
+  }
 }
 
-// === HANDSONTABLE CUSTOM THEME (EVN Modern UI) ===
+@keyframes loadProgress {
+  0% { width: 0; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+// ============================================
+// HANDSONTABLE THEME (EVN Modern)
+// ============================================
 :host ::ng-deep {
+  .handsontable {
+    font-family: $font-family !important;
+    border: none !important;
 
-    // ==========================================
-    // 1. Grid & Borders Background Setup
-    // ==========================================
-    .handsontable {
-        font-family: $font-family !important;
-        border: none !important;
+    .wtHider {
+      padding: 0 0 50px 0 !important;
+    }
+  }
 
-        // Bỏ viền thừa của Grid wrapper
-        .wtHider {
-            padding: 0 0 50px 0 !important;
-        }
-    }
+  // Corner & inline start headers
+  .handsontable th.ht_clone_top_inline_start_corner,
+  .handsontable .ht_clone_inline_start thead th {
+    background: #F8F9FA !important;
+    color: $gray-500 !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    border-color: #E2E8F0 !important;
+  }
 
-    // ==========================================
-    // 2. Headers (Row Numbers & Column Headers)
-    // ==========================================
-    // Góc giao nhau trên cùng bên trái // STT
-    .handsontable th.ht_clone_top_inline_start_corner,
-    .handsontable .ht_clone_inline_start thead th {
-        background: #F8F9FA !important;
-        color: $gray-500 !important;
-        font-size: 0.75rem !important;
-        font-weight: 500 !important;
-        text-align: center !important;
-        border-color: #E2E8F0 !important;
-    }
+  // Column headers
+  .handsontable thead th {
+    background: #F1F5F9 !important;
+    color: #1E293B !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    border-color: #E2E8F0 !important;
+    padding: 8px 10px !important;
+    text-align: center !important;
+    white-space: normal !important;
+    vertical-align: middle !important;
+    line-height: 1.4;
 
-    // Tiêu đề cột (Top Header)
-    .handsontable thead th {
-        background: #F1F5F9 !important; // Xám xanh rất nhạt
-        color: #1E293B !important;     // Xám đậm
-        font-size: 0.75rem !important;
-        font-weight: 600 !important;
-        border-color: #E2E8F0 !important;
-        padding: 8px 10px !important;
-        text-align: center !important;
-        white-space: normal !important;
-        vertical-align: middle !important;
-        line-height: 1.4;
-        transition: background-color 0.2s ease;
-        
-        // Cột đang được chọn (active header)
-        &.ht__active_highlight {
-            background-color: #E0E7FF !important; // Xanh nhạt focus
-            color: $primary-dark !important;
-        }
+    &.ht__active_highlight {
+      background-color: #E0E7FF !important;
+      color: $accent-dark !important;
     }
+  }
 
-    // ==========================================
-    // 3. Cells Base Styling
-    // ==========================================
-    .handsontable td {
-        font-size: 0.8125rem !important; // 13px - To & rõ ràng hơn
-        color: #334155 !important;
-        border-color: #E2E8F0 !important;
-        padding: 6px 10px !important;
-        line-height: 1.5;
-        vertical-align: middle !important;
-        transition: background-color 0.15s ease;
-    }
+  // Cell base
+  .handsontable td {
+    font-size: 13px !important;
+    color: #334155 !important;
+    border-color: #E2E8F0 !important;
+    padding: 6px 10px !important;
+    line-height: 1.5;
+    vertical-align: middle !important;
+    transition: background-color 0.12s ease;
+  }
 
-    // ==========================================
-    // 4. Specific Column Styles 
-    // ==========================================
-    // Cột STT
-    .handsontable td.cell-stt {
-        background: #F8FAFC !important;
-        color: #64748B !important;
-        font-size: 0.75rem !important;
-        font-weight: 500 !important;
-    }
+  // STT column
+  .handsontable td.cell-stt {
+    background: #F8FAFC !important;
+    color: #64748B !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+  }
 
-    // Cột Nội dung (Fixed Width + Truncate)
-    .handsontable td.cell-noidung {
-        font-weight: 600 !important;
-        color: #0F172A !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        text-align: left !important;
-        padding-left: 12px !important;
-    }
+  // Content column
+  .handsontable td.cell-noidung {
+    font-weight: 600 !important;
+    color: #0F172A !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-align: left !important;
+    padding-left: 12px !important;
+  }
 
-    // ==========================================
-    // 5. Hierarchy Rows (Row Styling)
-    // ==========================================
-    // Dòng tổng cộng (Tổng cấp 0) - Highlighted EVN Blue
-    .handsontable td.cell-tong {
-        font-weight: 700 !important;
-        background: #EEF2FF !important; // Nền xanh EVN cực nhạt
-        color: $primary !important;
-        border-top: 2px solid $primary !important;
-        border-bottom: 2px solid $primary !important;
-        font-size: 0.875rem !important; // Chữ to hơn 1 chút
-    }
+  // Total row
+  .handsontable td.cell-tong {
+    font-weight: 700 !important;
+    background: #EEF2FF !important;
+    color: $accent !important;
+    border-top: 2px solid $accent !important;
+    border-bottom: 2px solid $accent !important;
+    font-size: 13.5px !important;
+  }
 
-    // Dòng nhóm cấp 1 (Parent Row) -> Không nhập liệu được
-    .handsontable td.cell-nhom {
-        font-weight: 700 !important;
-        background: #F8FAFC !important;
-        color: #334155 !important;
-        box-shadow: inset 0 -1px 0 #E2E8F0 !important;
-    }
+  // Group row
+  .handsontable td.cell-nhom {
+    font-weight: 700 !important;
+    background: #F8FAFC !important;
+    color: #334155 !important;
+    box-shadow: inset 0 -1px 0 #E2E8F0 !important;
+  }
 
-    // Cột công thức (Tự động tính)
-    .handsontable td.cell-formula {
-        background: #F1F5F9 !important; // Nền xám nhạt khóa edit
-        color: #475569 !important;
-        font-weight: 600 !important;
-    }
+  // Formula column
+  .handsontable td.cell-formula {
+    background: #F1F5F9 !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+  }
 
-    // Ô nhập liệu bình thường (Editable)
-    .handsontable td.cell-editable {
-        background: white !important;
-        color: #0F172A !important;
-    }
+  // Editable cell
+  .handsontable td.cell-editable {
+    background: white !important;
+    color: #0F172A !important;
+  }
 
-    // ==========================================
-    // 6. User Interaction & Highlights
-    // ==========================================
-    // Viền xanh đậm bao quanh ô/vùng đang active
-    .handsontable .htBorders .wtBorder {
-        background-color: $primary !important;
-        z-index: 15 !important;
-    }
-    
-    // Fill handle (Ô vuông kéo chuột) góc dưới phải
-    .handsontable .wtBorder.corner {
-        background-color: $primary !important;
-        border: 1px solid white !important;
-        width: 6px !important;
-        height: 6px !important;
-    }
+  // Active borders
+  .handsontable .htBorders .wtBorder {
+    background-color: $accent !important;
+    z-index: 15 !important;
+  }
 
-    // Selection background area
-    .handsontable td.area {
-        background-color: rgba($primary, 0.1) !important;
-    }
+  // Fill handle
+  .handsontable .wtBorder.corner {
+    background-color: $accent !important;
+    border: 1px solid white !important;
+    width: 6px !important;
+    height: 6px !important;
+  }
 
-    // Hover chỉ trên từng ô (không dùng tr:hover td — sẽ bôi cả hàng)
-    .handsontable tbody td:not(.cell-tong):not(.cell-nhom):hover {
-        background: #F8FAFC !important; // Highlight xám nhẹ
-    }
+  // Selection area
+  .handsontable td.area {
+    background-color: rgba($accent, 0.1) !important;
+  }
 
-    .handsontable tbody td.cell-editable:hover {
-        background: #F0F9FF !important; // Báo hiệu ô có thể nhập = xanh mờ
-    }
+  // Hover
+  .handsontable tbody td:not(.cell-tong):not(.cell-nhom):hover {
+    background: #F8FAFC !important;
+  }
 
-    // Error / Invalid cell
-    .handsontable td.htInvalid {
-        background-color: #FEF2F2 !important; // Đỏ nhạt
-        color: #DC2626 !important;            // Code đỏ đậm
-        font-weight: bold !important;
-    }
+  .handsontable tbody td.cell-editable:hover {
+    background: #F0F9FF !important;
+  }
 
-    // Comment Indicator góc phải trên
-    .handsontable td.htCommentCell::after {
-        border-color: transparent #EAB308 transparent transparent !important; // Vàng nổi bật
-    }
+  // Invalid
+  .handsontable td.htInvalid {
+    background-color: #FEF2F2 !important;
+    color: #DC2626 !important;
+    font-weight: bold !important;
+  }
 
-    // ==========================================
-    // 7. Scroll & Fixed Column UI
-    // ==========================================
-    // Thanh cuộn (Scrollbar)
-    .handsontable .wtHolder {
-        @include custom-scrollbar(8px);
-    }
+  // Comment indicator
+  .handsontable td.htCommentCell::after {
+    border-color: transparent #EAB308 transparent transparent !important;
+  }
 
-    // Bóng đổ mờ cho phần Cột bị Đóng Băng (Frozen Columns)
-    .handsontable .ht_clone_inline_start td,
-    .handsontable .ht_clone_inline_start th {
-        border-right: 1px solid #CBD5E1 !important;
-    }
-    
-    .handsontable .ht_clone_inline_start {
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05); // Shadow for fixed left columns
-        z-index: 10;
-    }
+  // Scrollbar
+  .handsontable .wtHolder {
+    @include custom-scrollbar(8px);
+  }
+
+  // Frozen column borders
+  .handsontable .ht_clone_inline_start td,
+  .handsontable .ht_clone_inline_start th {
+    border-right: 1px solid #CBD5E1 !important;
+  }
+
+  .handsontable .ht_clone_inline_start {
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+  }
 }
 
-// === STATUS BAR ===
+// ============================================
+// ============================================
+// STATUS BAR
+// ============================================
 .status-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 12px;
-    background: #F3F4F6;
-    border: 1px solid $surface-border;
-    border-radius: 0 0 $border-radius-md $border-radius-md;
-    font-size: $font-size-xs;
-    color: $gray-500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: linear-gradient(180deg, #f9fafb 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 0 0 10px 10px;
+  font-size: 12px;
+  color: #64748b;
+  min-height: 36px;
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.04);
 }
 
 .status-left,
 .status-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.status-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #64748b;
+
+  i {
+    font-size: 8px;
+    color: #10b981;
+  }
+
+  &.unsaved {
+    color: #f59e0b;
 
     i {
-        font-size: 0.5rem;
+      color: #f59e0b;
+      animation: statusPulse 1.5s ease-in-out infinite;
     }
+  }
 }
 
-// === TOAST ===
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+.status-calc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: $font-family-mono;
+  font-size: 11px;
+  color: #64748b;
+  padding: 4px 8px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+
+  strong {
+    color: #1e293b;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+}
+
+// ============================================
+// TOAST NOTIFICATIONS
+// ============================================
 .toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
-    border-radius: $border-radius-md;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    box-shadow: $shadow-lg;
-    z-index: $z-toast;
-    animation: slideUp 300ms ease;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: $radius-lg;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: $z-toast;
+  animation: toastSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 240px;
+  max-width: 400px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 
-    &.toast-success {
-        background: $success;
-        color: white;
-    }
+  i { font-size: 16px; }
 
-    &.toast-error {
-        background: $error;
-        color: white;
-    }
+  &.toast-success {
+    background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
+    color: #15803D;
+    border: 1px solid #BBF7D0;
+    border-left: 4px solid #22C55E;
+  }
+
+  &.toast-error {
+    background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
+    color: #B91C1C;
+    border: 1px solid #FECACA;
+    border-left: 4px solid #EF4444;
+  }
 }
 
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
+@keyframes toastSlideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+// ============================================
+// RESPONSIVE
+// ============================================
+@media (max-width: 768px) {
+  .filter-section {
+    flex-direction: column;
+    align-items: stretch;
+
+    .filter-main {
+      flex-direction: column;
+
+      .filter-item {
+        min-width: auto;
+
+        select { width: 100%; }
+      }
     }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    .filter-actions {
+      justify-content: center;
     }
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
+    .header-right {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+
+  .grid-toolbar {
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+
+    .toolbar-right {
+      margin-left: 0;
+    }
+  }
 }
