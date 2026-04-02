@@ -34,8 +34,22 @@
         color: $gray-500 !important;
     }
 
+    // Single clean border on current cell — outline avoids double-border with wtBorder
     .ht_master td.current {
         outline: 2px solid $primary !important;
+        outline-offset: -1px !important;
+    }
+
+    // Hide ALL wtBorder divs — CSS outline handles selection visually
+    .htBorders .wtBorder {
+        display: none !important;
+    }
+
+    // Keep only the fill handle (corner drag square)
+    .htBorders .wtBorder.corner {
+        display: block !important;
+        background-color: $primary !important;
+        border: 1px solid white !important;
     }
 
     .khtc-label-row td {

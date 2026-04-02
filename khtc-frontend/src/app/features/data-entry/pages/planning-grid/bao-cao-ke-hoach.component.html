@@ -19,11 +19,6 @@
         </span>
       }
       <div class="header-actions">
-        <button type="button" class="btn-action btn-test" (click)="togglePanelJsonTest()"
-                [class.active]="panelJsonTestMo()">
-          <i class="pi pi-code"></i> Test JSON
-        </button>
-        <button class="btn-action" (click)="onPovChange()"><i class="pi pi-refresh"></i> Tải lại</button>
         <button class="btn-action btn-excel" (click)="xuatExcel()"><i class="pi pi-file-excel"></i> Xuất Excel</button>
         <button class="btn-save" (click)="luuDuLieu()" [disabled]="(!isV2Mode && soOThayDoi() === 0) || dangLuu()">
           @if (dangLuu()) { <i class="pi pi-spin pi-spinner"></i> }

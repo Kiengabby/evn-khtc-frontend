@@ -2020,10 +2020,32 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
     table-layout: fixed;
   }
 
-  // Prevent selection border from shifting columns on merged cells
-  .handsontable td.area,
+  // Current cell — outline only, no extra border layers
   .handsontable td.current {
+    outline: 2px solid $primary !important;
+    outline-offset: -1px !important;
+    position: relative;
+    z-index: 5;
     box-sizing: border-box !important;
+  }
+
+  // Area selection background
+  .handsontable td.area {
+    background-color: rgba($primary, 0.07) !important;
+    box-sizing: border-box !important;
+  }
+
+  // Hide all wtBorder overlay divs — CSS outline handles it
+  .handsontable .htBorders .wtBorder {
+    display: none !important;
+  }
+
+  // Keep fill handle corner visible
+  .handsontable .htBorders .wtBorder.corner {
+    display: block !important;
+    background-color: $primary !important;
+    border: 1px solid white !important;
+    z-index: 20 !important;
   }
 }
 
