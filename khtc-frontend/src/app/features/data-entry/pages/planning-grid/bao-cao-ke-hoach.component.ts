@@ -1,5 +1,5 @@
 import {
-  Component, ViewChild, ElementRef,
+  Component, ViewChild, ElementRef, HostListener,
   OnInit, AfterViewInit, OnDestroy,
   signal, inject,
 } from '@angular/core';
@@ -21,6 +21,7 @@ import {
 import {
   LayoutJSON, GridCellData, LayoutColumnDef,
 } from '../../../../core/models/layout-template.model';
+import { FormRegistryService } from '../../../../core/services/form-registry.service';
 
 interface PovDropdown {
   dimKey: string;
@@ -46,11 +47,22 @@ interface TrackedChange {
 })
 export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('hotEl') hotEl!: ElementRef;
+  @ViewChild('periodRef') periodRef!: ElementRef;
+
+  /** Close period dropdown when clicking outside */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.periodDropdownOpen && this.periodRef &&
+        !this.periodRef.nativeElement.contains(event.target)) {
+      this.periodDropdownOpen = false;
+    }
+  }
 
   private api    = inject(PlanningApiService);
   private parser = inject(TemplateParserService);
   private http   = inject(HttpClient);
   private v2Renderer = inject(LayoutGridRendererService);
+  private formRegistry = inject(FormRegistryService);
 
   // === Template & Data ===
   template   = signal<TemplateJson | null>(null);
@@ -64,11 +76,91 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   v2LayoutJSON: LayoutJSON | null = null;
   v2VisibleCols: LayoutColumnDef[] = [];
 
-  // === Filters ===
-  bieuMau = 'BKH_KH_01';
-  nam     = 2026;
-  /** Kịch bản (SCE: Kế hoạch KH / Thực hiện TH) — gửi kèm khi lưu; không trộn vào POV grid để khớp fact (SCE theo cột) */
-  kichBan = 'KH';
+  // === Filters (theo API BE) ===
+  formId = 'BKH';           // Mã biểu mẫu
+  entityCode = 'EVN';       // Mã đơn vị
+  nam = 2026;               // Năm
+  period = 'Kỳ 1';          // Kỳ báo cáo — BE bắt buộc (NullRef nếu rỗng)
+  scenario = 'Kế hoạch';    // Kịch bản
+
+  // Danh sách kỳ báo cáo nhóm theo loại
+  periodGroups = [
+    {
+      group: 'Kỳ',
+      icon: 'pi-calendar',
+      items: [
+        { value: 'Kỳ 1',  label: 'Kỳ 1', sub: 'Tháng 1–6' },
+        { value: 'Kỳ 2',  label: 'Kỳ 2', sub: 'Tháng 7–12' },
+      ],
+    },
+    {
+      group: 'Quý',
+      icon: 'pi-chart-bar',
+      items: [
+        { value: 'Q1', label: 'Quý 1', sub: 'T1–T3' },
+        { value: 'Q2', label: 'Quý 2', sub: 'T4–T6' },
+        { value: 'Q3', label: 'Quý 3', sub: 'T7–T9' },
+        { value: 'Q4', label: 'Quý 4', sub: 'T10–T12' },
+      ],
+    },
+    {
+      group: 'Tháng',
+      icon: 'pi-calendar-plus',
+      items: [
+        { value: 'T1',  label: 'Tháng 1',  sub: '' },
+        { value: 'T2',  label: 'Tháng 2',  sub: '' },
+        { value: 'T3',  label: 'Tháng 3',  sub: '' },
+        { value: 'T4',  label: 'Tháng 4',  sub: '' },
+        { value: 'T5',  label: 'Tháng 5',  sub: '' },
+        { value: 'T6',  label: 'Tháng 6',  sub: '' },
+        { value: 'T7',  label: 'Tháng 7',  sub: '' },
+        { value: 'T8',  label: 'Tháng 8',  sub: '' },
+        { value: 'T9',  label: 'Tháng 9',  sub: '' },
+        { value: 'T10', label: 'Tháng 10', sub: '' },
+        { value: 'T11', label: 'Tháng 11', sub: '' },
+        { value: 'T12', label: 'Tháng 12', sub: '' },
+      ],
+    },
+    {
+      group: 'Tổng hợp',
+      icon: 'pi-check-circle',
+      items: [
+        { value: 'Năm', label: 'Cả năm', sub: 'T1–T12' },
+      ],
+    },
+  ];
+
+  // Custom dropdown state
+  periodDropdownOpen = false;
+
+  get periodLabel(): string {
+    for (const g of this.periodGroups) {
+      const found = g.items.find(i => i.value === this.period);
+      if (found) return found.label;
+    }
+    return this.period;
+  }
+
+  selectPeriod(value: string): void {
+    this.period = value;
+    this.periodDropdownOpen = false;
+  }
+
+  togglePeriodDropdown(): void {
+    this.periodDropdownOpen = !this.periodDropdownOpen;
+  }
+
+  closePeriodDropdown(): void {
+    this.periodDropdownOpen = false;
+  }
+  
+  // Backward compatible aliases
+  get bieuMau(): string { return this.formId; }
+  set bieuMau(v: string) { this.formId = v; }
+  get kichBan(): string { return this.scenario; }
+  set kichBan(v: string) { this.scenario = v; }
+  
+  // Danh sách dropdown (có thể mở rộng sau)
   danhSachBieuMau = signal<TemplateListItem[]>([]);
   danhSachKichBan = signal<PlanningScenarioItem[]>([]);
   povDropdowns    = signal<PovDropdown[]>([]);
@@ -96,13 +188,12 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngOnInit(): void {
     document.addEventListener('keydown', this.xuLyPhimTat);
-    this.taiDanhSachBieuMau();
-    this.taiDanhSachKichBan();
+    // Không cần load danh sách biểu mẫu - user nhập trực tiếp formId
   }
 
   ngAfterViewInit(): void {
     this.khoiTaoGrid();
-    this.taiForm();
+    // Không tự động load - đợi user nhấn nút "Tải biểu mẫu"
   }
 
   ngOnDestroy(): void {
@@ -111,54 +202,50 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   // ===================================
-  // 1. Load danh sách biểu mẫu
-  // ===================================
-
-  private taiDanhSachBieuMau(): void {
-    this.api.getTemplateList().subscribe(list => {
-      this.danhSachBieuMau.set(list);
-    });
-  }
-
-  private taiDanhSachKichBan(): void {
-    this.api.getScenarioList().subscribe(list => {
-      this.danhSachKichBan.set(list);
-      if (list.length && !list.some(k => k.scenarioId === this.kichBan)) {
-        this.kichBan = list[0].scenarioId;
-      }
-    });
-  }
-
-  // ===================================
-  // 2. Load form (template + dimMeta + factData)
+  // 1. Load form từ API (V2)
   // ===================================
 
   taiForm(): void {
+    if (!this.formId?.trim()) {
+      this.hienThiThongBao('Vui lòng nhập Mã biểu mẫu (formId)', 'error');
+      return;
+    }
+    
     this.dangTai.set(true);
     this.xoaThayDoi();
 
-    // Detect V2 format template
-    const v2Templates = ['NEW_TEMPLATE'];
-    if (v2Templates.includes(this.bieuMau)) {
-      this.isV2Mode = true;
-      this.api.loadFormV2(this.bieuMau).subscribe({
-        next: (res) => {
-          const layout = res.template.version.layoutJSON;
-          this.v2LayoutJSON = layout;
-          this.v2VisibleCols = layout.columns.filter(c => c.colCode !== 'METADATA_ROW');
-          this.v2GridConfig = this.v2Renderer.render(layout, res.dbData);
-          this.renderV2Grid();
-          this.dangTai.set(false);
-        },
-        error: (err) => {
-          this.hienThiThongBao('Lỗi tải dữ liệu V2: ' + (err?.message ?? err), 'error');
-          this.dangTai.set(false);
-        },
-      });
-      return;
-    }
+    // ★ Gọi API V2 với đầy đủ params theo Swagger spec
+    this.isV2Mode = true;
+    console.log('[DataEntry] 🔍 Loading V2 form:', {
+      formId: this.formId,
+      entityCode: this.entityCode,
+      year: this.nam,
+      period: this.period,
+      scenario: this.scenario,
+    });
 
-    // V1 (dimension-based) format
+    this.api.loadFormV2(this.formId, this.entityCode, this.nam, this.period, this.scenario).subscribe({
+      next: (res) => {
+        console.log('[DataEntry] 📥 V2 form loaded:', res.template.formId, res.template.formName);
+        const layout = res.template.version.layoutJSON;
+        this.v2LayoutJSON = layout;
+        this.v2VisibleCols = layout.columns.filter(c => c.colCode !== 'METADATA_ROW');
+        this.v2GridConfig = this.v2Renderer.render(layout, res.dbData);
+        this.renderV2Grid();
+        this.dangTai.set(false);
+        this.hienThiThongBao(`Đã tải biểu mẫu "${res.template.formName}"`, 'success');
+      },
+      error: (err) => {
+        console.error('[DataEntry] ❌ V2 load error:', err);
+        const errMsg = err?.message || err?.error?.message || JSON.stringify(err);
+        this.hienThiThongBao('Lỗi tải biểu mẫu: ' + errMsg, 'error');
+        this.dangTai.set(false);
+      },
+    });
+  }
+
+  /** Fallback: Load form V1 (dimension-based) - giữ cho backward compatible */
+  private loadFormV1Fallback(): void {
     this.isV2Mode = false;
     this.api.loadForm(this.bieuMau).subscribe({
       next: (res) => {
@@ -180,23 +267,30 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   private renderV2Grid(): void {
     if (!this.v2GridConfig || !this.hot) return;
     const cfg = this.v2GridConfig;
+    const hdrCount = cfg.headerRowCount || 0;
 
     this.hot.updateSettings({
       data:              cfg.data,
-      nestedHeaders:     cfg.nestedHeaders,
+      colHeaders:        false,              // Headers are data rows, not column headers
+      nestedHeaders:     undefined as any,    // Disable nestedHeaders plugin
       colWidths:         cfg.colWidths,
       fixedColumnsStart: cfg.fixedColumnsStart,
+      fixedRowsTop:      cfg.fixedRowsTop,    // Freeze header rows at top
       columns:           cfg.columns,
       mergeCells:        cfg.mergeCells.length > 0 ? cfg.mergeCells : false,
       cells:             this.v2Renderer.buildCellCallback(
                            cfg.rowMeta,
                            this.v2VisibleCols),
+      // Custom row headers: blank for header rows, sequential numbers for data rows
+      rowHeaders:        hdrCount > 0
+                           ? ((index: number) => index < hdrCount ? '' : String(index - hdrCount + 1)) as any
+                           : true,
     });
     this.hot.render();
     this.xoaThayDoi();
     console.log('[DataEntry] ✅ V2 grid rendered:', {
       rows: cfg.data.length, cols: cfg.colWidths.length,
-      merges: cfg.mergeCells.length,
+      merges: cfg.mergeCells.length, headerRows: hdrCount,
     });
   }
 
@@ -410,29 +504,43 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   // ===================================
 
   luuDuLieu(): void {
-    if (this.trackedChanges.length === 0) return;
-    this.dangLuu.set(true);
+    // V2 save: collect ALL data cells from grid (not just changes)
+    if (this.isV2Mode && this.v2GridConfig && this.hot) {
+      this.dangLuu.set(true);
+      
+      // Extract ALL editable cells from the current grid
+      const allCells = this.v2Renderer.extractAllDataCells(
+        this.hot,
+        this.v2GridConfig.rowMeta,
+        this.v2GridConfig.colMeta,
+      );
 
-    // V2 save: use rowCode/colCode format
-    if (this.isV2Mode && this.v2GridConfig) {
-      const v2Changes: GridCellData[] = [];
-      for (const tc of this.trackedChanges) {
-        const rm = this.v2GridConfig.rowMeta[tc.row];
-        const cm = this.v2GridConfig.colMeta[tc.col];
-        if (rm && cm) {
-          v2Changes.push({ rowCode: rm.rowCode, colCode: cm.colCode, value: tc.newValue });
-        }
+      if (allCells.length === 0) {
+        this.hienThiThongBao('Không có dữ liệu để lưu', 'error');
+        this.dangLuu.set(false);
+        return;
       }
+
+      console.log('[DataEntry] 💾 Saving V2:', {
+        formId: this.formId,
+        year: this.nam,
+        period: this.period,
+        scenario: this.scenario,
+        cellCount: allCells.length,
+      });
+
       this.api.saveFormV2({
-        formId: this.bieuMau,
+        formId: this.formId,
         version_year: this.nam,
-        orgId: 'EVN',
-        data: v2Changes,
+        orgId: this.entityCode,
+        period: this.period,
+        scenario: this.scenario,
+        data: allCells,
       }).subscribe({
         next: (result) => {
           this.dangLuu.set(false);
           if (result.success) {
-            this.hienThiThongBao(result.message ?? `Đã lưu ${result.savedCount} thay đổi (V2)!`, 'success');
+            this.hienThiThongBao(result.message ?? `Đã lưu ${result.savedCount} ô dữ liệu!`, 'success');
             this.xoaThayDoi();
           } else {
             this.hienThiThongBao(result.message ?? 'Lưu thất bại', 'error');
@@ -446,7 +554,10 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
       return;
     }
 
-    // V1 save: dimension-based format
+    // V1 save: dimension-based format (need tracked changes)
+    if (this.trackedChanges.length === 0) return;
+    this.dangLuu.set(true);
+
     const request = {
       templateId: this.bieuMau,
       pov: this.layPovHienTai(),

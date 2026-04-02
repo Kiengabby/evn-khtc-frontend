@@ -1,0 +1,167 @@
+﻿{
+    "succeeded":  true,
+    "message":  null,
+    "data":  [
+                 {
+                     "accountId":  "4fa86f64-5717-4762-b3fc-23c963f66aa6",
+                     "accountCode":  "LN",
+                     "accountName":  "LỢI NHUẬN THUẦN",
+                     "parentAccountId":  null,
+                     "children":  [
+
+                                  ]
+                 },
+                 {
+                     "accountId":  "4fa85f64-5717-4562-b3fc-2c963f66aaa6",
+                     "accountCode":  "DT",
+                     "accountName":  "TỔNG DOANH THU",
+                     "parentAccountId":  null,
+                     "children":  [
+                                      {
+                                          "accountId":  "b7f45a23-167d-4e0d-a2c0-4f33b1f133ff",
+                                          "accountCode":  "DT_BH",
+                                          "accountName":  "Doanh thu bán hàng và cung cấp dịch vụ",
+                                          "parentAccountId":  "4fa85f64-5717-4562-b3fc-2c963f66aaa6",
+                                          "children":  [
+
+                                                       ]
+                                      },
+                                      {
+                                          "accountId":  "c9f45a23-167d-4e0d-a2c0-4f33b1f133ff",
+                                          "accountCode":  "DT_TC",
+                                          "accountName":  "Doanh thu hoạt động tài chính",
+                                          "parentAccountId":  "4fa85f64-5717-4562-b3fc-2c963f66aaa6",
+                                          "children":  [
+
+                                                       ]
+                                      }
+                                  ]
+                 },
+                 {
+                     "accountId":  "4fa86f64-5717-4562-b3fc-2c963f66aaa6",
+                     "accountCode":  "CP",
+                     "accountName":  "TỔNG CHI PHÍ",
+                     "parentAccountId":  null,
+                     "children":  [
+                                      {
+                                          "accountId":  "b7f45a23-167d-5e0d-a2c0-4f33b1f133ff",
+                                          "accountCode":  "CP_GV",
+                                          "accountName":  "Giá vốn hàng bán",
+                                          "parentAccountId":  "4fa86f64-5717-4562-b3fc-2c963f66aaa6",
+                                          "children":  [
+
+                                                       ]
+                                      },
+                                      {
+                                          "accountId":  "c9f45a23-167d-6e0d-a2c0-4f33b1f133ff",
+                                          "accountCode":  "CP_QL",
+                                          "accountName":  "Chi phí quản lý doanh nghiệp",
+                                          "parentAccountId":  "4fa86f64-5717-4562-b3fc-2c963f66aaa6",
+                                          "children":  [
+
+                                                       ]
+                                      }
+                                  ]
+                 },
+                 {
+                     "accountId":  "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                     "accountCode":  "TS",
+                     "accountName":  "TỔNG CỘNG TÀI SẢN",
+                     "parentAccountId":  null,
+                     "children":  [
+                                      {
+                                          "accountId":  "ed7a97cf-7c0b-4bd5-ba77-05d71160b15a",
+                                          "accountCode":  "TS_NH",
+                                          "accountName":  "Tài sản ngắn hạn",
+                                          "parentAccountId":  "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                          "children":  [
+
+                                                       ]
+                                      },
+                                      {
+                                          "accountId":  "ed7a97cf-7c0b-4bd5-ba77-05d71160b15b",
+                                          "accountCode":  "TS_CD",
+                                          "accountName":  "Tài sản cố định",
+                                          "parentAccountId":  "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                          "children":  [
+
+                                                       ]
+                                      },
+                                      {
+                                          "accountId":  "5c142609-d9d5-49be-a103-4967679b06e4",
+                                          "accountCode":  "TS_DT_NH",
+                                          "accountName":  "Đầu tư tài chính ngắn hạn",
+                                          "parentAccountId":  "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                          "children":  [
+
+                                                       ]
+                                      },
+                                      {
+                                          "accountId":  "a8f45a23-067d-4e0d-a2c0-4f33b1f133ff",
+                                          "accountCode":  "TS_DH",
+                                          "accountName":  "Tài sản dài hạn",
+                                          "parentAccountId":  "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                          "children":  [
+
+                                                       ]
+                                      },
+                                      {
+                                          "accountId":  "4f9cb8bf-acf6-4c76-92b2-d3ac678df8e9",
+                                          "accountCode":  "TS_TIEN",
+                                          "accountName":  "Tiền và các khoản tương đương tiền",
+                                          "parentAccountId":  "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                          "children":  [
+
+                                                       ]
+                                      }
+                                  ]
+                 },
+                 {
+                     "accountId":  "4fa85f64-5717-4562-b3fc-2c963f66afa6",
+                     "accountCode":  "NV",
+                     "accountName":  "TỔNG CỘNG NGUỒN VỐN",
+                     "parentAccountId":  null,
+                     "children":  [
+                                      {
+                                          "accountId":  "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+                                          "accountCode":  "NV_NO",
+                                          "accountName":  "Nợ phải trả",
+                                          "parentAccountId":  "4fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                          "children":  [
+
+                                                       ]
+                                      },
+                                      {
+                                          "accountId":  "a9f45a23-167d-4e0d-a2c0-4f33b1f133ff",
+                                          "accountCode":  "NV_VCSH",
+                                          "accountName":  "Vốn chủ sở hữu",
+                                          "parentAccountId":  "4fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                          "children":  [
+
+                                                       ]
+                                      },
+                                      {
+                                          "accountId":  "a8f45a33-167d-4e0d-a2c0-4f33b1f133ff",
+                                          "accountCode":  "NV_NO_DH",
+                                          "accountName":  "Nợ dài hạn",
+                                          "parentAccountId":  "4fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                          "children":  [
+
+                                                       ]
+                                      }
+                                  ]
+                 },
+                 {
+                     "accountId":  "3fa85f64-5717-4562-b3fc-3c963f66afa7",
+                     "accountCode":  "NV_NO_NH",
+                     "accountName":  "Nợ ngắn hạn",
+                     "parentAccountId":  null,
+                     "children":  [
+
+                                  ]
+                 }
+             ],
+    "errors":  null,
+    "statusCode":  200,
+    "errorCode":  0
+}

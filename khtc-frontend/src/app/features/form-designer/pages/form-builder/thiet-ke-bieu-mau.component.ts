@@ -8,6 +8,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import Handsontable from 'handsontable';
 import { HyperFormula } from 'hyperformula';
 import { BieuMauService } from '../../services/bieu-mau.service';
+import { FormConfigApiService } from '../../services/form-config-api.service';
+import { DimAccountApiService } from '../../services/dim-account-api.service';
 import { FormTemplate } from '../../../../core/models/form-template.model';
 
 import {
@@ -43,6 +45,7 @@ interface PreviewGroup {
 interface ExportedTemplate {
   formId: string;
   formName: string;
+  isActive: boolean;
   orgList: string[];
   isDynamicRow: boolean;
   layoutConfig: {
@@ -119,6 +122,8 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private bieuMauService = inject(BieuMauService);
+  private formConfigApi = inject(FormConfigApiService);
+  private dimAccountApi = inject(DimAccountApiService);
 
   bieuMau = signal<FormTemplate | null>(null);
   dangTai = signal(false);
@@ -165,11 +170,10 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   zoomLevel = signal(100);
 
   showInfoDialog = signal(false);
-  templateInfo = { templateId: '', templateName: '', version: '2026' };
+  templateInfo = { templateId: '', templateName: '', version: '2026', isActive: true };
 
+  // Danh sách đơn vị áp dụng — khớp với BE appliedEntities
   entValues: string[] = ['EVN', 'EVNHCMC', 'EVNHANOI'];
-  sceValues: string[] = ['KH', 'TH'];
-  yeaValues: string[] = ['2025', '2026'];
 
   // === Indicator Code (Mã chỉ tiêu) ===
   colIndicators = signal<IndicatorGroup[]>([]);
@@ -1080,17 +1084,41 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     this.dangLuu.set(true);
     const exported = this.exportToJson();
     console.log('[FormDesigner] 📤 JSON gửi lên BE:', JSON.stringify(exported, null, 2));
+
+    // ── 1. Lưu vào mock store (giữ hoạt động offline) ──
     try {
       const res = await this.bieuMauService.luuTemplate(exported);
       if (res.trangThai) {
-        this.notify(res.thongBao || 'Đã lưu biểu mẫu thành công!', 'success');
-      } else {
-        this.notify(res.thongBao || 'Lưu biểu mẫu thất bại', 'error');
+        console.log('[FormDesigner] ✅ Mock store: lưu thành công');
       }
     } catch (err) {
-      this.notify('Lỗi khi lưu biểu mẫu', 'error');
+      console.warn('[FormDesigner] ⚠️ Mock store lỗi:', err);
     }
-    this.dangLuu.set(false);
+
+    // ── 2. Gọi API thật: Step 1 (save-form) → Step 2 (save-form-config) ──
+    this.formConfigApi.saveTemplateAndConfig(exported).subscribe({
+      next: (response) => {
+        this.dangLuu.set(false);
+        if (response.succeeded) {
+          console.log('[FormDesigner] ✅ API thật: lưu thành công', response);
+          this.notify(response.message || 'Đã lưu biểu mẫu lên server thành công!', 'success');
+        } else {
+          console.error('[FormDesigner] ❌ API thật: lỗi', response);
+          const errMsg = response.errors?.join(', ') || response.message || 'Lưu thất bại';
+          this.notify(`Lỗi từ server: ${errMsg}`, 'error');
+        }
+      },
+      error: (err) => {
+        this.dangLuu.set(false);
+        console.error('[FormDesigner] ❌ API thật: HTTP error', err);
+        // Handle both PascalCase (.NET) and camelCase error bodies
+        const errBody = err.error;
+        const serverErrors = errBody?.Errors?.join(', ') || errBody?.errors?.join(', ') || '';
+        const serverMsg = errBody?.Message || errBody?.message || '';
+        const detail = serverErrors || serverMsg || err.message || 'Lỗi không xác định';
+        this.notify(`Lỗi kết nối server: ${detail}`, 'error');
+      },
+    });
   }
 
   private exportToJson(): ExportedTemplate {
@@ -1242,6 +1270,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     return {
       formId: this.templateInfo.templateId || this.formId || 'NEW_TEMPLATE',
       formName: this.templateInfo.templateName || 'Biểu mẫu mới',
+      isActive: this.templateInfo.isActive ?? true,
       orgList: this.entValues.map(v => v.trim()).filter(Boolean),
       isDynamicRow: false,
       layoutConfig: {
@@ -1899,24 +1928,50 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   addEntValue(): void { this.entValues.push(''); }
   removeEntValue(i: number): void { if (this.entValues.length > 1) this.entValues.splice(i, 1); }
-  addSceValue(): void { this.sceValues.push(''); }
-  removeSceValue(i: number): void { if (this.sceValues.length > 1) this.sceValues.splice(i, 1); }
-  addYeaValue(): void { this.yeaValues.push(''); }
-  removeYeaValue(i: number): void { if (this.yeaValues.length > 1) this.yeaValues.splice(i, 1); }
 
   // ==========================================
   // Indicator Code (Mã chỉ tiêu) Management
   // ==========================================
 
   private async loadIndicatorCodes(): Promise<void> {
+    // === Row Indicators: gọi API thật DimAccount/get-tree ===
+    this.dimAccountApi.loadAccountTree().subscribe({
+      next: (groups) => {
+        if (groups.length > 0) {
+          this.rowIndicators.set(groups);
+          console.log('[FormDesigner] ✅ Row indicators loaded from API:', groups.length, 'groups');
+        } else {
+          console.warn('[FormDesigner] ⚠️ API trả 0 groups, fallback mock');
+          this.loadRowIndicatorsFromMock();
+        }
+      },
+      error: () => {
+        console.warn('[FormDesigner] ❌ API DimAccount failed, fallback mock');
+        this.loadRowIndicatorsFromMock();
+      },
+    });
+
+    // === Column Indicators: vẫn dùng mock (cột thời gian, kỳ báo cáo) ===
     try {
       const res = await this.bieuMauService.layDanhMucMaChiTieu();
-      if (res.trangThai && res.duLieu) {
-        this.colIndicators.set(res.duLieu.columnIndicators || []);
-        this.rowIndicators.set(res.duLieu.rowIndicators || []);
+      if (res.trangThai && res.duLieu?.columnIndicators) {
+        this.colIndicators.set(res.duLieu.columnIndicators);
+        console.log('[FormDesigner] ✅ Column indicators loaded from mock');
       }
     } catch {
-      console.warn('[FormDesigner] Không load được danh mục mã chỉ tiêu');
+      console.warn('[FormDesigner] ⚠️ Không load được column indicators mock');
+    }
+  }
+
+  /** Fallback: load row indicators từ mock JSON nếu API fail */
+  private async loadRowIndicatorsFromMock(): Promise<void> {
+    try {
+      const res = await this.bieuMauService.layDanhMucMaChiTieu();
+      if (res.trangThai && res.duLieu?.rowIndicators) {
+        this.rowIndicators.set(res.duLieu.rowIndicators);
+      }
+    } catch {
+      console.warn('[FormDesigner] ⚠️ Cả API và mock đều fail');
     }
   }
 

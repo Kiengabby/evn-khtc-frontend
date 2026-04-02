@@ -433,28 +433,28 @@
 
           <div class="info-section">
             <div class="section-header">
-              <i class="pi pi-sitemap"></i>
-              <h3>Cấu hình Dimensions</h3>
-              <div class="section-badge">Quan trọng</div>
+              <i class="pi pi-building"></i>
+              <h3>Đơn vị áp dụng</h3>
+              <div class="section-badge">appliedEntities</div>
             </div>
 
             <div class="dimensions-help">
               <div class="help-card">
                 <i class="pi pi-lightbulb"></i>
                 <div>
-                  <strong>Dimensions là gì?</strong>
-                  <p>Các tiêu chí phân loại để backend biết dữ liệu thuộc về đơn vị/kịch bản/năm nào</p>
+                  <strong>Danh sách đơn vị</strong>
+                  <p>Các đơn vị trong tập đoàn EVN được phép sử dụng biểu mẫu này</p>
                 </div>
               </div>
             </div>
 
             <div class="dimensions-modern">
-              <div class="dim-card">
+              <div class="dim-card" style="width: 100%">
                 <div class="dim-card-header">
-                  <div class="dim-badge ent">ENT</div>
+                  <div class="dim-badge ent">ORG</div>
                   <div class="dim-info">
                     <h4>Đơn vị</h4>
-                    <p>Các đơn vị trong tập đoàn EVN</p>
+                    <p>Mã đơn vị (EVN, EVNHCMC, EVNHANOI...)</p>
                   </div>
                 </div>
                 <div class="dim-values">
@@ -477,62 +477,44 @@
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <div class="dim-card">
-                <div class="dim-card-header">
-                  <div class="dim-badge sce">SCE</div>
-                  <div class="dim-info">
-                    <h4>Kịch bản</h4>
-                    <p>Loại dữ liệu: Kế hoạch, Thực hiện...</p>
+          <div class="info-section">
+            <div class="section-header">
+              <i class="pi pi-calendar"></i>
+              <h3>Phiên bản năm</h3>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="modern-label">
+                  Năm phiên bản <span class="required">*</span>
+                </label>
+                <div class="input-wrapper">
+                  <input type="number"
+                         [(ngModel)]="templateInfo.version"
+                         placeholder="VD: 2026"
+                         min="2020"
+                         max="2050"
+                         class="modern-input">
+                  <div class="input-icon">
+                    <i class="pi pi-calendar"></i>
                   </div>
                 </div>
-                <div class="dim-values">
-                  @for (value of sceValues; track $index) {
-                    <div class="modern-value-item">
-                      <input type="text"
-                             [(ngModel)]="sceValues[$index]"
-                             class="modern-value-input"
-                             placeholder="VD: KH, TH...">
-                      @if (sceValues.length > 1) {
-                        <button type="button" class="remove-value-btn" (click)="removeSceValue($index)">
-                          <i class="pi pi-times"></i>
-                        </button>
-                      }
-                    </div>
-                  }
-                  <button type="button" class="add-value-btn" (click)="addSceValue()">
-                    <i class="pi pi-plus"></i>
-                    <span>Thêm kịch bản</span>
-                  </button>
-                </div>
+                <small class="field-hint">Năm áp dụng cho phiên bản layout này</small>
               </div>
 
-              <div class="dim-card">
-                <div class="dim-card-header">
-                  <div class="dim-badge yea">YEA</div>
-                  <div class="dim-info">
-                    <h4>Năm</h4>
-                    <p>Các năm áp dụng cho báo cáo</p>
-                  </div>
-                </div>
-                <div class="dim-values">
-                  @for (value of yeaValues; track $index) {
-                    <div class="modern-value-item">
-                      <input type="text"
-                             [(ngModel)]="yeaValues[$index]"
-                             class="modern-value-input"
-                             placeholder="VD: 2025, 2026...">
-                      @if (yeaValues.length > 1) {
-                        <button type="button" class="remove-value-btn" (click)="removeYeaValue($index)">
-                          <i class="pi pi-times"></i>
-                        </button>
-                      }
-                    </div>
-                  }
-                  <button type="button" class="add-value-btn" (click)="addYeaValue()">
-                    <i class="pi pi-plus"></i>
-                    <span>Thêm năm</span>
-                  </button>
+              <div class="form-field">
+                <label class="modern-label">
+                  Trạng thái
+                </label>
+                <div class="toggle-wrapper">
+                  <label class="toggle-switch">
+                    <input type="checkbox" [(ngModel)]="templateInfo.isActive">
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <span class="toggle-label">{{ templateInfo.isActive ? 'Đang hoạt động' : 'Không hoạt động' }}</span>
                 </div>
               </div>
             </div>

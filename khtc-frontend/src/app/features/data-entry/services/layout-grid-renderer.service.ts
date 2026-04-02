@@ -3,8 +3,8 @@
 // Chuyển đổi LayoutJSON (format V2 từ Form Designer)
 // thành cấu hình Handsontable cho Data Entry module.
 //
-// Khác với TemplateParserService (POV/Dimension-based),
-// service này dùng colCode/rowCode + headerRows/mergeCells.
+// Sử dụng data-row headers + mergeCells (thay vì nestedHeaders)
+// để hỗ trợ đầy đủ rowspan/colspan cho header phức tạp.
 // ============================================
 
 import { Injectable } from '@angular/core';
@@ -18,23 +18,21 @@ import {
 // ============================================
 
 export interface RenderedGridConfig {
-  /** data[row][col] — Handsontable data matrix */
+  /** data[row][col] — Handsontable data matrix (headers + body) */
   data: any[][];
-  /** Nested headers for multi-level headers */
-  nestedHeaders: any[][];
   /** Column widths */
   colWidths: number[];
   /** Fixed columns on the left */
   fixedColumnsStart: number;
   /** Handsontable columns config (type, readOnly, etc.) */
   columns: any[];
-  /** Merge cell definitions */
+  /** Merge cell definitions (for both header and body area) */
   mergeCells: MergeCellDef[];
-  /** Fixed rows on top */
+  /** Number of fixed rows at top (= header rows) */
   fixedRowsTop: number;
-  /** Hidden columns config */
-  hiddenColumns?: { columns: number[]; indicators: boolean };
-  /** Row metadata for save tracking */
+  /** Number of header rows in the data array */
+  headerRowCount: number;
+  /** Row metadata for save tracking (includes header rows) */
   rowMeta: RenderedRowMeta[];
   /** Column metadata for save tracking */
   colMeta: RenderedColMeta[];
@@ -45,6 +43,8 @@ export interface RenderedRowMeta {
   title: string;
   level: number;
   isReadOnly: boolean;
+  /** True if this row is a header row (not a data row) */
+  isHeader?: boolean;
 }
 
 export interface RenderedColMeta {
@@ -73,65 +73,76 @@ export class LayoutGridRendererService {
     // Separate hidden (METADATA_ROW) from visible columns
     const metadataColIdx = allCols.findIndex(c => c.colCode === 'METADATA_ROW');
     const visibleCols = allCols.filter(c => c.colCode !== 'METADATA_ROW');
-    const hiddenColIndices = metadataColIdx >= 0 ? [metadataColIdx] : [];
 
-    const headerRowCount = layout.fixedRowsTop || layout.headerRows?.length || 1;
+    const headerRowCount = layout.fixedRowsTop || layout.headerRows?.length || 0;
     const bodyRows = layout.rows || [];
 
-    // Build components
-    const nestedHeaders = this.buildNestedHeaders(layout.headerRows, visibleCols, headerRowCount);
-    const { data, rowMeta } = this.buildDataRows(visibleCols, bodyRows);
+    // ── Build header rows as data rows ──
+    const headerData = this.buildHeaderDataRows(layout.headerRows, visibleCols);
+    const headerRowMeta: RenderedRowMeta[] = headerData.map((_, i) => ({
+      rowCode: `__HEADER_${i}__`,
+      title: '',
+      level: 0,
+      isReadOnly: true,
+      isHeader: true,
+    }));
+
+    // ── Build body data rows ──
+    const { data: bodyData, rowMeta: bodyRowMeta } = this.buildDataRows(visibleCols, bodyRows);
+
+    // ── Combine header + body ──
+    const data = [...headerData, ...bodyData];
+    const rowMeta = [...headerRowMeta, ...bodyRowMeta];
+
+    // ── Other config ──
     const colWidths = visibleCols.map(c => c.width || 120);
     const columns = this.buildColumns(visibleCols);
     const mergeCells = this.buildMergeCells(layout.mergeCells, metadataColIdx);
     const colMeta = this.buildColMeta(visibleCols);
 
-    // Populate fact data from dbData
+    // ── Populate fact data (only body rows, header rows are skipped by rowCode lookup) ──
     this.populateDbData(data, rowMeta, colMeta, dbData);
 
     return {
       data,
-      nestedHeaders,
       colWidths,
       fixedColumnsStart: Math.max(0, (layout.freezeColumns || 1) - (metadataColIdx >= 0 ? 1 : 0)),
       columns,
       mergeCells,
-      fixedRowsTop: 0, // header handled by nestedHeaders
-      hiddenColumns: hiddenColIndices.length > 0
-        ? { columns: hiddenColIndices, indicators: false }
-        : undefined,
+      fixedRowsTop: headerData.length,
+      headerRowCount: headerData.length,
       rowMeta,
       colMeta,
     };
   }
 
   // ==========================================================
-  // Nested Headers (multi-level header support)
+  // Header Data Rows (replace nestedHeaders with data rows)
   // ==========================================================
 
-  private buildNestedHeaders(
+  private buildHeaderDataRows(
     headerRows: LayoutHeaderRow[] | undefined,
     visibleCols: LayoutColumnDef[],
-    headerRowCount: number,
   ): any[][] {
     if (!headerRows || headerRows.length === 0) {
-      // Simple single-row header from column titles
+      // Single header row from column titles
       return [visibleCols.map(c => c.title)];
+    }
+
+    // Build colKey → visible column index lookup
+    const colKeyToIdx = new Map<string, number>();
+    for (let i = 0; i < visibleCols.length; i++) {
+      colKeyToIdx.set(visibleCols[i].key, i);
     }
 
     const result: any[][] = [];
     for (const headerRow of headerRows) {
-      const row: any[] = [];
+      const row = new Array(visibleCols.length).fill(null);
       for (const cell of headerRow.cells) {
         if (cell.colKey === 'ID') continue; // Skip metadata column
-
-        const colspan = cell.colspan || 1;
-        const label = cell.label;
-
-        if (colspan > 1) {
-          row.push({ label, colspan });
-        } else {
-          row.push(label);
+        const idx = colKeyToIdx.get(cell.colKey);
+        if (idx !== undefined) {
+          row[idx] = cell.label;
         }
       }
       result.push(row);
@@ -140,7 +151,7 @@ export class LayoutGridRendererService {
   }
 
   // ==========================================================
-  // Data Rows
+  // Body Data Rows
   // ==========================================================
 
   private buildDataRows(
@@ -155,22 +166,28 @@ export class LayoutGridRendererService {
     const chitieuIdx = visibleCols.findIndex(c =>
       c.colCode === 'CHITIEU_NAME' || c.colCode === 'NOI_DUNG'
     );
-    const unitIdx = visibleCols.findIndex(c =>
-      c.colCode === 'UNIT' || c.colCode === 'DVT'
-    );
 
-    let sttCounter = 0;
+    // Hierarchical STT counters per level: [level0, level1, level2, ...]
+    const sttCounters: number[] = [0, 0, 0, 0, 0];
 
     for (const rowDef of bodyRows) {
       const row = new Array(visibleCols.length).fill(null);
 
-      // STT column
-      if (sttIdx >= 0) {
-        if (rowDef.level === 0) {
-          sttCounter++;
-          // For parent-level items, leave empty or use Roman numerals
-          row[sttIdx] = rowDef.isReadOnly ? '' : String(sttCounter);
+      // STT column — hierarchical numbering (1, 2, 2.1, 2.2, 2.2.1, ...)
+      if (sttIdx >= 0 && !rowDef.isReadOnly) {
+        const level = rowDef.level;
+        // Increment counter at this level
+        sttCounters[level]++;
+        // Reset all deeper-level counters
+        for (let l = level + 1; l < sttCounters.length; l++) {
+          sttCounters[l] = 0;
         }
+        // Build hierarchical STT string
+        const parts: string[] = [];
+        for (let l = 0; l <= level; l++) {
+          parts.push(String(sttCounters[l]));
+        }
+        row[sttIdx] = parts.join('.');
       }
 
       // CHITIEU_NAME column (with indent)
@@ -199,10 +216,14 @@ export class LayoutGridRendererService {
   private buildColumns(visibleCols: LayoutColumnDef[]): any[] {
     return visibleCols.map((col, idx) => {
       const base: any = { data: idx, width: col.width || 120 };
+      const colCode = col.colCode?.toUpperCase();
 
-      if (col.type === 'numeric') {
+      // STT should always be text (displays 1, 2, 3 — not 1.00, 2.00)
+      if (colCode === 'STT' || colCode === 'MA_CHITIEU') {
+        base.type = 'text';
+      } else if (col.type === 'numeric') {
         base.type = 'numeric';
-        base.numericFormat = { pattern: '#,##0.00' };
+        base.numericFormat = { pattern: '#,##0' };
       } else {
         base.type = 'text';
       }
@@ -217,6 +238,7 @@ export class LayoutGridRendererService {
 
   // ==========================================================
   // Merge cells (adjust for hidden METADATA_ROW column)
+  // Headers are now data rows → include header merges
   // ==========================================================
 
   private buildMergeCells(
@@ -226,7 +248,9 @@ export class LayoutGridRendererService {
     if (!mergeCells) return [];
 
     return mergeCells
-      .filter(mc => mc.col !== metadataColIdx) // Skip metadata column merges
+      // Skip merges on the metadata column (it's hidden)
+      .filter(mc => mc.col !== metadataColIdx)
+      // Adjust col index (subtract 1 if metadata column is before this column)
       .map(mc => ({
         ...mc,
         col: metadataColIdx >= 0 && mc.col > metadataColIdx ? mc.col - 1 : mc.col,
@@ -259,10 +283,19 @@ export class LayoutGridRendererService {
   ): void {
     if (!dbData || dbData.length === 0) return;
 
-    // Build lookup: rowCode → row index
+    // Các cột label không được ghi đè từ dbData
+    const labelColCodes = new Set([
+      'STT', 'CHITIEU_NAME', 'NOI_DUNG', 'UNIT', 'DVT',
+      'MA_CHITIEU', 'TEN_CHITIEU', 'DON_VI',
+    ]);
+
+    // Build lookup: rowCode → row index in data array
+    // Header rows have rowCode "__HEADER_*__" → won't match any dbData → naturally skipped
     const rowLookup = new Map<string, number>();
     for (let i = 0; i < rowMeta.length; i++) {
-      rowLookup.set(rowMeta[i].rowCode, i);
+      if (!rowMeta[i].isHeader) {
+        rowLookup.set(rowMeta[i].rowCode, i);
+      }
     }
 
     // Build lookup: colCode → visible column index
@@ -271,8 +304,10 @@ export class LayoutGridRendererService {
       colLookup.set(cm.colCode, cm.visibleIndex);
     }
 
-    // Fill values
+    // Fill values (skip label columns)
     for (const cell of dbData) {
+      if (labelColCodes.has(cell.colCode.toUpperCase())) continue;
+
       const rowIdx = rowLookup.get(cell.rowCode);
       const colIdx = colLookup.get(cell.colCode);
       if (rowIdx !== undefined && colIdx !== undefined) {
@@ -295,7 +330,14 @@ export class LayoutGridRendererService {
       const cm = visibleCols[col] as any;
       if (!rm || !cm) return cell;
 
-      // ReadOnly rows (totals, formula rows)
+      // ── Header rows (frozen at top) ──
+      if (rm.isHeader) {
+        cell.readOnly = true;
+        cell.className = 'htCenter htMiddle cell-header';
+        return cell;
+      }
+
+      // ── ReadOnly rows (totals, formula rows) ──
       if (rm.isReadOnly) {
         cell.readOnly = true;
         if (cm.type === 'numeric') {
@@ -306,10 +348,12 @@ export class LayoutGridRendererService {
         return cell;
       }
 
-      // ReadOnly columns (STT, chi tiêu name, DVT)
-      if (cm.isReadOnly) {
+      // ── ReadOnly columns (STT, chi tiêu name, DVT) ──
+      const isColReadOnly = cm.isReadOnly ?? cm.readOnly ?? false;
+      if (isColReadOnly) {
         cell.readOnly = true;
-        if (cm.colCode === 'STT') {
+        const colCode = cm.colCode?.toUpperCase();
+        if (colCode === 'STT') {
           cell.className = 'htCenter htMiddle cell-stt';
         } else {
           cell.className = 'htMiddle cell-noidung';
@@ -317,7 +361,7 @@ export class LayoutGridRendererService {
         return cell;
       }
 
-      // Editable data cells
+      // ── Editable data cells ──
       cell.readOnly = false;
       cell.className = 'htRight htMiddle cell-editable';
       return cell;
@@ -340,7 +384,8 @@ export class LayoutGridRendererService {
       const col = typeof prop === 'number' ? prop : parseInt(prop, 10);
       const rm = rowMeta[row];
       const cm = colMeta[col];
-      if (!rm || !cm) continue;
+      // Skip header rows and missing meta
+      if (!rm || !cm || rm.isHeader) continue;
 
       result.push({
         rowCode: rm.rowCode,
@@ -349,6 +394,58 @@ export class LayoutGridRendererService {
       });
     }
 
+    return result;
+  }
+
+  // ==========================================================
+  // Extract ALL data cells from grid for full save
+  // ==========================================================
+
+  /**
+   * Trích xuất toàn bộ dữ liệu từ grid (không chỉ cells thay đổi).
+   * Dùng để gửi tất cả dữ liệu lên API save-submission.
+   *
+   * Bỏ qua:
+   *   - Header rows
+   *   - ReadOnly rows (dòng tổng)
+   *   - Label columns (STT, CHITIEU_NAME, UNIT)
+   */
+  extractAllDataCells(
+    hotInstance: any,
+    rowMeta: RenderedRowMeta[],
+    colMeta: RenderedColMeta[],
+  ): GridCellData[] {
+    const result: GridCellData[] = [];
+
+    // Các cột label không được gửi lên BE
+    const labelColCodes = new Set([
+      'STT', 'CHITIEU_NAME', 'NOI_DUNG', 'UNIT', 'DVT',
+      'MA_CHITIEU', 'TEN_CHITIEU', 'DON_VI', 'METADATA_ROW',
+    ]);
+
+    for (let row = 0; row < rowMeta.length; row++) {
+      const rm = rowMeta[row];
+      // Skip header rows and readOnly rows
+      if (rm.isHeader || rm.isReadOnly) continue;
+
+      for (let col = 0; col < colMeta.length; col++) {
+        const cm = colMeta[col];
+        // Skip label columns
+        if (labelColCodes.has(cm.colCode.toUpperCase())) continue;
+        if (cm.isReadOnly) continue;
+
+        const value = hotInstance.getDataAtCell(row, col);
+
+        // Luôn gửi giá trị (kể cả 0, null) để BE lưu đúng trạng thái
+        result.push({
+          rowCode: rm.rowCode,
+          colCode: cm.colCode,
+          value: value ?? 0,
+        });
+      }
+    }
+
+    console.log(`[LayoutGridRenderer] extractAllDataCells: ${result.length} cells extracted`);
     return result;
   }
 }

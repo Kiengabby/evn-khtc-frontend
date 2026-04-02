@@ -15,8 +15,8 @@ export interface AppConfig {
 }
 
 const DEFAULT_CONFIG: AppConfig = {
-    apiBaseUrl: 'http://localhost:5000',
-    apiGatewayUrl: 'http://localhost:5000',
+    apiBaseUrl: 'http://10.1.117.143:9090',
+    apiGatewayUrl: 'http://10.1.117.143:9090',
     appTitle: 'Hệ thống Kế hoạch Tài chính',
     version: '1.0.0',
     features: {},

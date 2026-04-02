@@ -128,6 +128,10 @@ export interface SaveGridPayload {
     formId: string;
     version_year: number;
     orgId: string;
+    /** Kỳ báo cáo (VD: '12', 'Q1') */
+    period?: string;
+    /** Kịch bản (VD: 'Kế hoạch', 'Thực hiện') */
+    scenario?: string;
     data: GridCellData[];
 }
 

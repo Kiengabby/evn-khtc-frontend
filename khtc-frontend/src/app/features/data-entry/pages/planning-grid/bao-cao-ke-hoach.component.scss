@@ -209,96 +209,345 @@ $radius-lg:      12px;
   }
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 // ============================================
-// FILTER SECTION
+// FILTER SECTION — Modern Compact
 // ============================================
 .filter-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
-  border: 1px solid $border-soft;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1px solid #e8ecf1;
   border-radius: $radius-lg $radius-lg 0 0;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
 .filter-main {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
   width: 100%;
+  flex-wrap: wrap;
 }
 
 .filter-item {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
+  flex: 1;
+  max-width: 220px;
+  position: relative; // for custom dropdown
 
   &.filter-wide {
-    grid-column: span 1;
-    min-width: 200px;
+    max-width: 260px;
   }
 
   &.filter-narrow {
-    min-width: 100px;
+    max-width: 110px;
+    flex: 0 0 110px;
+  }
+
+  &.filter-btn-col {
+    flex: 0 0 auto;
+    max-width: none;
   }
 
   label {
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
-    color: #475569;
+    color: #64748b;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.6px;
     display: flex;
     align-items: center;
     gap: 5px;
+    line-height: 1;
 
     i {
-      font-size: 11px;
+      font-size: 10px;
       color: $accent;
-      opacity: 0.8;
+      opacity: 0.7;
     }
   }
 
-  select {
-    padding: 8px 12px;
+  // ── Shared control styles ──
+  .input-wrap,
+  .select-wrap,
+  .period-trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  input.filter-input,
+  .select-wrap select,
+  .period-trigger {
+    width: 100%;
+    padding: 9px 12px;
     border: 1.5px solid #e2e8f0;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 13px;
     font-weight: 500;
-    background: #fff;
+    background: #fafbfc;
     color: #1e293b;
-    cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    height: 38px;
+    box-sizing: border-box;
 
     &:hover {
-      border-color: #cbd5e1;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      border-color: #94a3b8;
+      background: #fff;
     }
 
-    &:focus {
+    &:focus,
+    &.open {
       border-color: $accent;
-      background: #f0f9ff;
-      box-shadow: 0 0 0 3px rgba($accent, 0.12);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba($accent, 0.1), 0 2px 4px rgba($accent, 0.08);
+    }
+  }
+
+  input.filter-input {
+    cursor: text;
+
+    &::placeholder {
+      color: #a0aec0;
+      font-weight: 400;
+    }
+  }
+
+  // ── Custom select wrapper ──
+  .select-wrap {
+    position: relative;
+
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 32px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .select-arrow {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: #94a3b8;
+      pointer-events: none;
+      transition: color 0.2s;
+    }
+
+    &:hover .select-arrow {
+      color: $accent;
+    }
+  }
+
+  // ── Period custom trigger ──
+  .period-trigger {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    user-select: none;
+
+    .period-value {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .period-arrow {
+      font-size: 10px;
+      color: #94a3b8;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s;
+
+      &.rotated {
+        transform: rotate(180deg);
+        color: $accent;
+      }
+    }
+
+    &.open {
+      .period-value { color: $accent-dark; }
+    }
+  }
+
+  // ── Period dropdown panel ──
+  .period-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 340px;
+    max-height: 420px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+    z-index: 1000;
+    padding: 8px;
+    animation: periodPanelIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+    @include custom-scrollbar(6px);
+  }
+
+  @keyframes periodPanelIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .period-group {
+    &:not(:last-child) {
+      margin-bottom: 6px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+  }
+
+  .period-group-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 6px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #94a3b8;
+
+    i {
+      font-size: 11px;
+      color: #bdc6d0;
+    }
+  }
+
+  .period-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 0 4px;
+
+    &.month-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+  }
+
+  .period-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 7px 14px;
+    border: 1.5px solid #e8ecf1;
+    border-radius: 8px;
+    background: #fafbfc;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 0;
+
+    .chip-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #334155;
+      white-space: nowrap;
+    }
+
+    .chip-sub {
+      font-size: 9.5px;
+      font-weight: 500;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+
+    &:hover {
+      border-color: #bfdbfe;
+      background: #eff6ff;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+
+      .chip-label { color: #1d4ed8; }
+      .chip-sub { color: #60a5fa; }
+    }
+
+    &.active {
+      border-color: $accent;
+      background: linear-gradient(135deg, rgba($accent, 0.08), rgba($accent, 0.14));
+      box-shadow: 0 2px 8px rgba($accent, 0.15), inset 0 0 0 1px rgba($accent, 0.1);
+
+      .chip-label {
+        color: $accent-dark;
+        font-weight: 700;
+      }
+
+      .chip-sub {
+        color: $accent;
+      }
+    }
+  }
+
+  // ── Load button ──
+  .btn-load {
+    padding: 9px 20px;
+    height: 38px;
+    background: linear-gradient(135deg, $accent 0%, #1565c0 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba($accent, 0.25);
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba($accent, 0.35);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 1px 4px rgba($accent, 0.2);
     }
 
     &:disabled {
-      opacity: 0.5;
+      opacity: 0.55;
       cursor: not-allowed;
+      transform: none;
     }
+
+    i { font-size: 13px; font-weight: 700; }
   }
 }
 
 .filter-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
+  display: none;
 }
 
 // ---- Action buttons (shared) ----
