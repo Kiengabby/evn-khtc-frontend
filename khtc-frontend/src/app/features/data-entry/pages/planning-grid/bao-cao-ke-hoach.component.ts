@@ -374,10 +374,12 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     this.taiForm();
   }
 
-  /** Khi user chọn biểu mẫu từ dropdown */
+  /** Khi user chọn biểu mẫu từ dropdown -> tự động load */
   onFormTemplateChange(formCode: string): void {
     this.formId = formCode;
     console.log('[DataEntry] 🔄 Form selected:', this.formId);
+    // Tự động load biểu mẫu khi chọn
+    this.taiForm();
   }
 
   /** Gọi API lấy danh sách biểu mẫu */
@@ -388,12 +390,13 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
         this.danhSachBieuMauV2.set(list);
         this.dangTaiBieuMau.set(false);
         console.log('[DataEntry] 📋 FormTemplate list loaded:', list.length, 'items');
-        // ★ LUÔN auto-select item đầu tiên (không check formId trước)
-        // để đảm bảo dropdown và formId luôn đồng bộ
+        // ★ LUÔN auto-select item đầu tiên và tự động load
         if (list.length > 0) {
           this.selectedFormTemplateId.set(list[0].id);
           this.formId = list[0].formCode;
           console.log('[DataEntry] ✅ Auto-selected form:', this.formId, '(id:', list[0].id, ')');
+          // Tự động load biểu mẫu đầu tiên
+          this.taiForm();
         }
       },
       error: (err) => {
