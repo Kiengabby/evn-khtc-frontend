@@ -36,6 +36,11 @@ export interface RenderedGridConfig {
   rowMeta: RenderedRowMeta[];
   /** Column metadata for save tracking */
   colMeta: RenderedColMeta[];
+  /**
+   * Set of "row,col" keys whose cells contain formulas.
+   * Dùng trong buildCellCallback để apply class + readOnly đúng.
+   */
+  formulaCellSet: Set<string>;
 }
 
 export interface RenderedRowMeta {
@@ -100,8 +105,22 @@ export class LayoutGridRendererService {
     const mergeCells = this.buildMergeCells(layout.mergeCells, metadataColIdx);
     const colMeta = this.buildColMeta(visibleCols);
 
-    // ── Populate fact data (only body rows, header rows are skipped by rowCode lookup) ──
+    // ── Build colKey/rowKey lookup maps cho formula injection ──
+    const colKeyToCode = new Map<string, string>(); // colKey → colCode
+    for (const col of allCols) {
+      if (col.key) colKeyToCode.set(col.key, col.colCode);
+    }
+    const rowKeyToCode = new Map<string, string>(); // rowKey → rowCode
+    for (const row of bodyRows) {
+      if (row.rowKey) rowKeyToCode.set(row.rowKey, row.rowCode);
+    }
+
+    // ── Populate fact data ──
     this.populateDbData(data, rowMeta, colMeta, dbData);
+
+    // ── Apply formulas từ layoutJSON.mappings ──
+    // QUAN TRỌNG: Phải chạy SAU populateDbData để công thức không bị ghi đè bởi dbData
+    const formulaCellSet = this.applyFormulas(data, rowMeta, colMeta, layout, headerRowCount);
 
     return {
       data,
@@ -113,6 +132,7 @@ export class LayoutGridRendererService {
       headerRowCount: headerData.length,
       rowMeta,
       colMeta,
+      formulaCellSet,
     };
   }
 
@@ -272,6 +292,85 @@ export class LayoutGridRendererService {
   }
 
   // ==========================================================
+  // Apply formulas từ layoutJSON.mappings vào data matrix
+  // ==========================================================
+
+  /**
+   * Đọc layout.mappings, tìm các ô có cellRole="formula",
+   * inject chuỗi "=formula" vào data matrix.
+   * Trả về Set các key "row,col" để buildCellCallback nhận biết ô formula.
+   */
+  private applyFormulas(
+    data: any[][],
+    rowMeta: RenderedRowMeta[],
+    colMeta: RenderedColMeta[],
+    layout: LayoutJSON,
+    headerRowCount: number,
+  ): Set<string> {
+    const formulaCellSet = new Set<string>();
+    const mappings = layout.mappings;
+
+    // ★ DIAGNOSTIC: log để xác nhận mappings được nhận đúng
+    console.log('[Renderer] applyFormulas called:', {
+      hasMappings: !!mappings,
+      mappingsCount: mappings?.length ?? 0,
+      formulaCount: mappings?.filter(m => m.cellRole === 'formula')?.length ?? 0,
+      firstMapping: mappings?.[0],
+    });
+
+    if (!mappings || mappings.length === 0) return formulaCellSet;
+
+    // Build lookup: rowCode → data array index (body rows only)
+    const rowCodeToIdx = new Map<string, number>();
+    for (let i = 0; i < rowMeta.length; i++) {
+      if (!rowMeta[i].isHeader) {
+        rowCodeToIdx.set(rowMeta[i].rowCode, i);
+      }
+    }
+
+    // Build lookup: colCode → visible column index
+    const colCodeToIdx = new Map<string, number>();
+    for (let i = 0; i < colMeta.length; i++) {
+      colCodeToIdx.set(colMeta[i].colCode, i);
+    }
+
+    for (const mapping of mappings) {
+      // ★ Log từng mapping để debug
+      if (mapping.cellRole === 'formula') {
+        console.log('[Renderer] Formula mapping found:', {
+          rowCode: mapping.rowCode, colCode: mapping.colCode,
+          formula: mapping.formula,
+          rowIdx: rowCodeToIdx.get(mapping.rowCode),
+          colIdx: colCodeToIdx.get(mapping.colCode),
+        });
+      }
+      if (mapping.cellRole !== 'formula' || !mapping.formula) continue;
+
+      const rowIdx = rowCodeToIdx.get(mapping.rowCode);
+      const colIdx = colCodeToIdx.get(mapping.colCode);
+      if (rowIdx === undefined || colIdx === undefined) {
+        console.warn('[Renderer] ⚠️ Formula mapping - rowCode/colCode không tìm thấy trong grid:', mapping.rowCode, mapping.colCode);
+        continue;
+      }
+
+      // Normalize formula: đảm bảo bắt đầu bằng "="
+      const formula = mapping.formula.startsWith('=')
+        ? mapping.formula
+        : `=${mapping.formula}`;
+
+      // HyperFormula sử dụng dấu ";" làm separator
+      const hfFormula = formula.replace(/,/g, ';');
+
+      data[rowIdx][colIdx] = hfFormula;
+      formulaCellSet.add(`${rowIdx},${colIdx}`);
+      console.log(`[Renderer] ✅ Formula injected [${rowIdx},${colIdx}] (${mapping.rowCode}/${mapping.colCode}): ${hfFormula}`);
+    }
+
+    return formulaCellSet;
+  }
+
+
+  // ==========================================================
   // Populate database data into grid cells
   // ==========================================================
 
@@ -323,12 +422,21 @@ export class LayoutGridRendererService {
   buildCellCallback(
     rowMeta: RenderedRowMeta[],
     visibleCols: RenderedColMeta[] | LayoutColumnDef[],
+    formulaCellSet?: Set<string>,
   ): (row: number, col: number) => any {
     return (row: number, col: number): any => {
       const cell: any = {};
       const rm = rowMeta[row];
       const cm = visibleCols[col] as any;
       if (!rm || !cm) return cell;
+
+      // ── Ô công thức ── (ưu tiên cao nhất, check trước header)
+      const isFormula = formulaCellSet?.has(`${row},${col}`);
+      if (isFormula) {
+        cell.readOnly = true;
+        cell.className = 'htRight htMiddle cell-formula';
+        return cell;
+      }
 
       // ── Header rows (frozen at top) ──
       if (rm.isHeader) {

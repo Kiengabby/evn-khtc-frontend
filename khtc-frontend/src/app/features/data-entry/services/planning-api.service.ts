@@ -28,6 +28,15 @@ export interface TemplateListItem {
   templateUUID?: string;
 }
 
+/** Item trả về từ GET /api/v2/FormTemplate/get-list */
+export interface FormTemplateListItem {
+  id: number;
+  formCode: string;
+  formName: string;
+  description?: string;
+  isActive?: boolean;
+}
+
 /** Kịch bản nhập liệu (VD: Kế hoạch / Thực hiện — mã SCE) — gửi kèm khi lưu / tải dữ liệu */
 export interface PlanningScenarioItem {
   scenarioId: string;
@@ -138,6 +147,40 @@ export class PlanningApiService {
       ]).pipe(delay(100));
     }
     return this.http.get<TemplateListItem[]>(`${this.apiBaseUrl}/templates`);
+  }
+
+  /**
+   * Lấy danh sách biểu mẫu từ API thật.
+   * GET /api/v2/FormTemplate/get-list
+   * BE trả về: { Succeeded, Data: [ { id, formCode, formName, ... } ], Message }
+   */
+  getFormTemplateList(): Observable<FormTemplateListItem[]> {
+    const url = `${this.beApiBase}/api/v2/FormTemplate/get-list`;
+    console.log('[PlanningApi] 🌐 GET FormTemplate list:', url);
+
+    return this.http.get<any>(url).pipe(
+      timeout(15000),
+      catchError((err: unknown) => {
+        const httpErr = err as HttpErrorResponse;
+        const errMsg = `Không thể tải danh sách biểu mẫu: ${httpErr?.message || httpErr?.statusText || 'Unknown error'}`;
+        console.error('[PlanningApi] ❌ FormTemplate list error:', err);
+        return throwError(() => new Error(errMsg));
+      }),
+      map(raw => {
+        console.log('[PlanningApi] 📥 FormTemplate list raw:', raw);
+        // BE trả wrapped: { Succeeded, Data: [...], Message }
+        if (raw?.Succeeded !== undefined || raw?.succeeded !== undefined) {
+          const response = normalizeApiResponse(raw);
+          if (!response.succeeded) {
+            throw new Error(response.message || 'Tải danh sách biểu mẫu thất bại');
+          }
+          return (response.data as FormTemplateListItem[]) || [];
+        }
+        // Direct array
+        if (Array.isArray(raw)) return raw as FormTemplateListItem[];
+        return [];
+      }),
+    );
   }
 
   /** Danh sách kịch bản (mock / GET thật khi BE sẵn sàng) */

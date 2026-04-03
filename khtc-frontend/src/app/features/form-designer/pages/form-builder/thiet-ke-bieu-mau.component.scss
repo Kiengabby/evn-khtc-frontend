@@ -821,7 +821,7 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
 
   &.header  { background: rgba($color-header, 0.8); }
   &.text    { background: rgba($color-text, 0.8); }
-  &.data    { background: lighten($primary, 25%); }
+  &.data    { background: rgba($primary, 0.35); }
   &.formula { background: rgba($color-formula, 0.8); }
 }
 
@@ -3164,7 +3164,7 @@ $workspace-offset: $topbar-h + $breadcrumb-h;
 
   .level-2 & {
     font-weight: 450;
-    color: lighten($text-primary, 15%);
+    color: rgba($text-primary, 0.65);
     font-size: 11.5px;
   }
 }

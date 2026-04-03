@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Handsontable from 'handsontable';
 import { HyperFormula } from 'hyperformula';
+import { firstValueFrom } from 'rxjs';
 import { BieuMauService } from '../../services/bieu-mau.service';
 import { FormConfigApiService } from '../../services/form-config-api.service';
 import { DimAccountApiService } from '../../services/dim-account-api.service';
@@ -130,6 +131,18 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   dangLuu = signal(false);
   thongBao = signal<{ noiDung: string; loai: 'success' | 'error' } | null>(null);
 
+  /** UUID của biểu mẫu trên BE — dùng để UPDATE thay vì CREATE khi lưu lại */
+  existingFormUUID: string | null = null;
+
+  /**
+   * Promise coordination: resolve khi HOT đã được khởi tạo.
+   * loadTemplate() ở đây sau khi lấy xong data. Nếu HOT chưa xong → chờ.
+   * Nếu HOT đã xong trước → rebuildFromExportedTemplate chạy ngay lập tức.
+   * → Loại bỏ hoàn toàn setTimeout nhân tạo (100ms + 200ms).
+   */
+  private _hotReady!: Promise<void>;
+  private _hotReadyResolve!: () => void;
+
   hot: Handsontable | null = null;
   formId = '';
   selectedCell = signal<{ row: number; col: number } | null>(null);
@@ -201,19 +214,27 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   // === Lifecycle ===
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
+    // Tạo hotReady Promise NGAY đầu (trước cả API call)
+    this._hotReady = new Promise<void>(resolve => (this._hotReadyResolve = resolve));
+
     this.formId = this.route.snapshot.paramMap.get('id') || '';
     if (this.formId) {
-      await this.loadTemplate();
+      // KHAI HỊA: KHÔNG await → chạy song song với ngAfterViewInit/initDesigner
+      // loadTemplate() sẽ tự đợi this._hotReady trước khi rebuildFromExportedTemplate
+      this.loadTemplate();
     } else {
       this.showInfoDialog.set(true);
     }
-    // Load indicator codes from API
+    // Load indicator codes (parallel, không block bất kỳ thứ gì)
     this.loadIndicatorCodes();
   }
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.initDesigner(), 100);
+    setTimeout(() => {
+      this.initDesigner();
+      this._hotReadyResolve();
+    }, 0);
   }
 
   ngOnDestroy(): void {
@@ -229,31 +250,61 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   private async loadTemplate(): Promise<void> {
     this.dangTai.set(true);
+
     try {
-      // Try loading the full layout JSON first (saved by Form Designer)
-      const layoutRes = await this.bieuMauService.layTemplateLayout(this.formId);
-      if (layoutRes.trangThai && layoutRes.duLieu) {
-        console.log('[FormDesigner] 📥 Load layout từ store:', layoutRes.duLieu.formId);
-        this.templateInfo.templateId = layoutRes.duLieu.formId;
-        this.templateInfo.templateName = layoutRes.duLieu.formName;
-        if (layoutRes.duLieu.version?.year) {
-          this.templateInfo.version = String(layoutRes.duLieu.version.year);
+      const result = await firstValueFrom(
+        this.formConfigApi.loadFormForDesigner(this.formId)
+      );
+
+      if (result && result.layoutJSON) {
+        console.log('[FormDesigner] ✅ API data ready:', result.formCode, 'UUID:', result.formUUID);
+        this.templateInfo.templateId = result.formCode;
+        this.templateInfo.templateName = result.formName;
+        this.templateInfo.version = String(result.year);
+
+        if (result.formUUID) {
+          this.existingFormUUID = result.formUUID;
         }
-        if (layoutRes.duLieu.orgList) {
-          this.entValues = [...layoutRes.duLieu.orgList];
-        }
-        // Rebuild grid after Handsontable is initialized
-        setTimeout(() => this.rebuildFromExportedTemplate(layoutRes.duLieu), 200);
+
+        const exported: any = {
+          formId: result.formCode,
+          formName: result.formName,
+          version: { year: result.year, layoutJSON: result.layoutJSON },
+        };
+
+        await this._hotReady;
+        this.rebuildFromExportedTemplate(exported);
         this.dangTai.set(false);
         return;
       }
 
-      // Fallback: load basic form info
+      console.warn('[FormDesigner] ⚠️ API không trả layout, thử mock store...');
+    } catch (apiErr: any) {
+      console.warn('[FormDesigner] ⚠️ API error, fallback to mock store:', apiErr?.message || apiErr);
+    }
+
+    try {
+      const layoutRes = await this.bieuMauService.layTemplateLayout(this.formId);
+      if (layoutRes.trangThai && layoutRes.duLieu) {
+        console.log('[FormDesigner] 📥 Load layout từ mock store:', layoutRes.duLieu.formId);
+        this.templateInfo.templateId = layoutRes.duLieu.formId;
+        this.templateInfo.templateName = layoutRes.duLieu.formName;
+        if (layoutRes.duLieu.version?.year) this.templateInfo.version = String(layoutRes.duLieu.version.year);
+        if (layoutRes.duLieu.orgList) this.entValues = [...layoutRes.duLieu.orgList];
+
+        await this._hotReady;
+        this.rebuildFromExportedTemplate(layoutRes.duLieu);
+        this.dangTai.set(false);
+        return;
+      }
+
       const kq = await this.bieuMauService.layTheoId(this.formId);
       if (kq.trangThai && kq.duLieu) {
         this.bieuMau.set(kq.duLieu);
         this.templateInfo.templateId = kq.duLieu.formId;
         this.templateInfo.templateName = kq.duLieu.formName;
+      } else {
+        this.notify('Biểu mẫu chưa có layout — bắt đầu thiết kế mới', 'success');
       }
     } catch {
       this.notify('Không tải được biểu mẫu', 'error');
@@ -264,6 +315,11 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   // ==========================================
   // HANDSONTABLE INITIALIZATION
   // ==========================================
+
+  /**
+   * Khởi tạo Handsontable với lưới trống.
+   * Data sẽ được apply qua rebuildFromExportedTemplate() khi _hotReady resolve.
+   */
   private initDesigner(): void {
     if (!this.hotDesignerRef?.nativeElement) return;
 
@@ -300,14 +356,11 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       colWidths: this.createDefaultColWidths(),
       formulas: { engine: hfInstance },
 
-      // Intercept clicks in formula mode
       beforeOnCellMouseDown: (event: MouseEvent, coords: { row: number; col: number }) => {
         if (!this.isFormulaMode()) return;
         if (coords.row < 0 || coords.col < 0) return;
-
         event.stopImmediatePropagation();
         event.preventDefault();
-
         const ref = this.toCellAddress(coords.row, coords.col);
         this.insertRefAtCursor(ref);
         this.parseAndHighlightReferences(this.getActiveFormulaValue());
@@ -315,7 +368,6 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
       afterSelection: (r: number, c: number, r2: number, c2: number) => {
         if (this.isFormulaMode()) return;
-
         this.selectedCell.set({ row: r, col: c });
         this.selectedRange.set({ r1: r, c1: c, r2, c2 });
         this.updateCellInfo(r, c);
@@ -325,46 +377,30 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
       afterBeginEditing: (row: number, col: number) => {
         if (this.suppressEditorOpen) return;
-
         this.editingCell = { row, col };
         this.selectedCell.set({ row, col });
         this.updateCellInfo(row, col);
-
-        // HyperFormula automatically puts the formula into the editor textarea
-        // Just sync the formula bar
         const sourceValue = this.hot?.getSourceDataAtCell(row, col);
-        if (this.isFormula(sourceValue)) {
-          this.formulaBarValue = String(sourceValue);
-        }
-
+        if (this.isFormula(sourceValue)) this.formulaBarValue = String(sourceValue);
         this.attachEditorListener();
       },
 
       afterChange: (changes: any, source: string) => {
         if (source === 'loadData' || source === 'formula-commit' || !changes) return;
-
         for (const [row, prop, , newVal] of changes) {
           const colIdx = typeof prop === 'number' ? prop : parseInt(prop, 10);
           if (isNaN(colIdx)) continue;
-
           if (this.isFormula(newVal)) {
-            this.cellMetadata.set(`${row},${colIdx}`, {
-              role: 'formula', readOnly: true, formula: String(newVal),
-            });
+            this.cellMetadata.set(`${row},${colIdx}`, { role: 'formula', readOnly: true, formula: String(newVal) });
           }
         }
       },
 
       afterMergeCells: (_cellRange: any, mergeParent: any, auto: boolean) => {
         if (!auto) {
-          const existing = this.mergedCells.find(
-            m => m.row === mergeParent.row && m.col === mergeParent.col
-          );
+          const existing = this.mergedCells.find(m => m.row === mergeParent.row && m.col === mergeParent.col);
           if (!existing) {
-            this.mergedCells.push({
-              row: mergeParent.row, col: mergeParent.col,
-              rowspan: mergeParent.rowspan, colspan: mergeParent.colspan,
-            });
+            this.mergedCells.push({ row: mergeParent.row, col: mergeParent.col, rowspan: mergeParent.rowspan, colspan: mergeParent.colspan });
           }
           this.autoUpdateFixedRows();
         }
@@ -372,26 +408,15 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
       afterUnmergeCells: (cellRange: any, auto: boolean) => {
         if (!auto) {
-          this.mergedCells = this.mergedCells.filter(
-            m => !(m.row === cellRange.from.row && m.col === cellRange.from.col)
-          );
+          this.mergedCells = this.mergedCells.filter(m => !(m.row === cellRange.from.row && m.col === cellRange.from.col));
           this.autoUpdateFixedRows();
         }
       },
 
-      // === Row/Col re-indexing hooks (fix metadata drift on insert/delete) ===
-      afterCreateRow: (index: number, amount: number) => {
-        this.reindexRowInsert(index, amount);
-      },
-      afterRemoveRow: (index: number, amount: number) => {
-        this.reindexRowRemove(index, amount);
-      },
-      afterCreateCol: (index: number, amount: number) => {
-        this.reindexColInsert(index, amount);
-      },
-      afterRemoveCol: (index: number, amount: number) => {
-        this.reindexColRemove(index, amount);
-      },
+      afterCreateRow: (index: number, amount: number) => { this.reindexRowInsert(index, amount); },
+      afterRemoveRow: (index: number, amount: number) => { this.reindexRowRemove(index, amount); },
+      afterCreateCol: (index: number, amount: number) => { this.reindexColInsert(index, amount); },
+      afterRemoveCol: (index: number, amount: number) => { this.reindexColRemove(index, amount); },
 
       cells: (row: number, col: number) => {
         const meta = this.cellMetadata.get(`${row},${col}`);
@@ -404,20 +429,14 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
           else if (meta.role === 'data') baseClass = 'cell-designer-data';
           else if (meta.role === 'formula') baseClass = 'cell-designer-formula';
         }
-        // Header rows: always center + header style
         const headerRowCount = this.fixedRows || 0;
         if (headerRowCount > 0 && row < headerRowCount) {
-          if (!baseClass.includes('cell-designer-header')) {
-            baseClass = (baseClass ? baseClass + ' ' : '') + 'cell-designer-header';
-          }
+          if (!baseClass.includes('cell-designer-header')) baseClass = (baseClass ? baseClass + ' ' : '') + 'cell-designer-header';
           baseClass = (baseClass ? baseClass + ' ' : '') + 'htCenter htMiddle';
         }
-        // Add centering classes if this cell is a merge parent
         const isMergeParent = this.mergedCells.some(m => m.row === row && m.col === col);
         if (isMergeParent) {
-          if (!baseClass.includes('htCenter')) {
-            baseClass = (baseClass ? baseClass + ' ' : '') + 'htCenter htMiddle';
-          }
+          if (!baseClass.includes('htCenter')) baseClass = (baseClass ? baseClass + ' ' : '') + 'htCenter htMiddle';
           baseClass = (baseClass ? baseClass + ' ' : '') + 'merged-cell-parent';
         }
         if (baseClass) cellProps.className = baseClass;
@@ -427,6 +446,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
     setTimeout(() => this.refreshGridViewport(), 0);
   }
+
 
   // ==========================================
   // Formula helpers (HyperFormula handles all evaluation)
@@ -1083,7 +1103,11 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     if (!this.hot) return;
     this.dangLuu.set(true);
     const exported = this.exportToJson();
-    console.log('[FormDesigner] 📤 JSON gửi lên BE:', JSON.stringify(exported, null, 2));
+
+    // ★ Gắn UUID hiện tại vào exported để saveTemplateAndConfig gửi lên BE dưới dạng UPDATE
+    // Nếu existingFormUUID = null → BE sẽ tạo mới (form chưa có trên server)
+    (exported as any).existingFormUUID = this.existingFormUUID;
+    console.log('[FormDesigner] 📤 JSON gửi lên BE (formUUID:', this.existingFormUUID, '):', JSON.stringify(exported, null, 2));
 
     // ── 1. Lưu vào mock store (giữ hoạt động offline) ──
     try {
@@ -1101,6 +1125,13 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         this.dangLuu.set(false);
         if (response.succeeded) {
           console.log('[FormDesigner] ✅ API thật: lưu thành công', response);
+
+          // ★ FIX: Lưu UUID từ response để lần lưu tiếp theo sẽ UPDATE thay vì INSERT mới
+          if (response.data && typeof response.data === 'string' && !this.existingFormUUID) {
+            this.existingFormUUID = response.data;
+            console.log('[FormDesigner] 🔑 UUID mới được lưu:', this.existingFormUUID);
+          }
+
           this.notify(response.message || 'Đã lưu biểu mẫu lên server thành công!', 'success');
         } else {
           console.error('[FormDesigner] ❌ API thật: lỗi', response);

@@ -69,6 +69,152 @@ export class FormConfigApiService {
         );
     }
 
+    private getAndNormalize<T = any>(url: string): Observable<FormConfigApiResponse<T>> {
+        return this.http.get<any>(url).pipe(
+            catchError((httpErr: HttpErrorResponse) => {
+                const errBody = httpErr.error;
+                if (errBody && typeof errBody === 'object' &&
+                    (errBody.Succeeded !== undefined || errBody.succeeded !== undefined)) {
+                    console.warn('[FormConfigApi] ⚠️ HTTP', httpErr.status, '— body:', errBody);
+                    return of(errBody);
+                }
+                throw httpErr;
+            }),
+            map(raw => normalizeApiResponse<T>(raw)),
+        );
+    }
+
+    // ================================================================
+    //  GET FORM TEMPLATE LIST
+    //  GET /api/v2/FormTemplate/get-list
+    // ================================================================
+
+    /**
+     * Lấy danh sách biểu mẫu từ BE.
+     * BE trả về: { Succeeded, Data: [ { id, formCode, formName, description, isActive } ], Message }
+     */
+    getFormTemplateList(): Observable<any[]> {
+        const url = `${this.apiBase}/api/v2/FormTemplate/get-list`;
+        console.log('[FormConfigApi] 🌐 GET FormTemplate/get-list:', url);
+
+        return this.getAndNormalize<any[]>(url).pipe(
+            map(res => {
+                if (!res.succeeded) {
+                    console.warn('[FormConfigApi] ⚠️ get-list thất bại:', res.message);
+                    return [];
+                }
+                const data = res.data;
+                if (Array.isArray(data)) return data;
+                return [];
+            }),
+        );
+    }
+
+    // ================================================================
+    //  LOAD FORM LAYOUT (cho Form Designer — xem/sửa biểu mẫu đã lưu)
+    //  GET /api/v2/PlanningData/load-form?formCode=...&year=...
+    // ================================================================
+
+    /**
+     * Load layout đã lưu từ BE cho Form Designer (xem lại / chỉnh sửa).
+     * Sử dụng cùng endpoint mà Data Entry dùng, nhưng chỉ extract layoutJSON.
+     *
+     * @param formCode Mã biểu mẫu (VD: "AAA", "KHTC_SXKD_03")
+     * @param year Năm phiên bản (default: năm hiện tại)
+     * @returns { formCode, formName, year, layoutJSON } hoặc null nếu chưa có config
+     */
+    loadFormForDesigner(formCode: string, year?: number): Observable<{
+        formCode: string;
+        formName: string;
+        year: number;
+        layoutJSON: any;
+        formUUID: string | null;  // UUID từ BE để dùng khi UPDATE (không tạo mới)
+    } | null> {
+        const effectiveYear = year || new Date().getFullYear();
+        const url = `${this.apiBase}/api/v2/PlanningData/load-form`;
+
+        const params = new HttpParams()
+            .set('formCode', formCode)
+            .set('year', effectiveYear.toString())
+            .set('entityCode', 'EVN')
+            .set('period', 'Kỳ 1');  // BE yêu cầu period (NullRef nếu rỗng)
+
+        console.log('[FormConfigApi] 📥 Load form for designer:', { formCode, year: effectiveYear });
+
+        return this.http.get<any>(url, { params }).pipe(
+            catchError((httpErr: HttpErrorResponse) => {
+                const errBody = httpErr.error;
+                // BE trả HTTP error nhưng body có Succeeded → xử lý bình thường
+                if (errBody && typeof errBody === 'object' &&
+                    (errBody.Succeeded !== undefined || errBody.succeeded !== undefined)) {
+                    console.warn('[FormConfigApi] ⚠️ HTTP', httpErr.status, '— treating body as response');
+                    return of(errBody);
+                }
+                throw httpErr;
+            }),
+            map(raw => {
+                console.log('[FormConfigApi] 📥 Load form raw response:', raw);
+
+                // ── Normalize PascalCase → camelCase ──
+                let beData: any;
+                if (raw?.Succeeded !== undefined || raw?.succeeded !== undefined) {
+                    const response = normalizeApiResponse(raw);
+                    if (!response.succeeded) {
+                        console.warn('[FormConfigApi] ⚠️ Load form thất bại:', response.message);
+                        return null;
+                    }
+                    beData = response.data;
+                } else {
+                    beData = raw;
+                }
+
+                if (!beData) {
+                    console.warn('[FormConfigApi] ⚠️ Response data rỗng');
+                    return null;
+                }
+
+                // ── Parse layoutJSON ──
+                let layoutJSON: any = null;
+                const rawLayout = beData.layoutJSON || beData.LayoutJSON;
+
+                if (typeof rawLayout === 'string' && rawLayout.trim()) {
+                    try {
+                        layoutJSON = JSON.parse(rawLayout);
+                    } catch (e) {
+                        console.warn('[FormConfigApi] ⚠️ layoutJSON parse error:', e);
+                        return null;
+                    }
+                } else if (rawLayout && typeof rawLayout === 'object') {
+                    layoutJSON = rawLayout;
+                }
+
+                // Validate cấu trúc cơ bản
+                if (!layoutJSON?.columns || !Array.isArray(layoutJSON.columns) || layoutJSON.columns.length === 0) {
+                    console.warn('[FormConfigApi] ⚠️ layoutJSON không có columns hợp lệ');
+                    return null;
+                }
+
+                console.log('[FormConfigApi] ✅ Loaded form for designer:', {
+                    formCode: beData.formCode || formCode,
+                    formName: beData.formName,
+                    columns: layoutJSON.columns?.length,
+                    rows: layoutJSON.rows?.length,
+                    headerRows: layoutJSON.headerRows?.length,
+                    mappings: layoutJSON.mappings?.length,
+                    mergeCells: layoutJSON.mergeCells?.length,
+                });
+
+                return {
+                    formCode: beData.formCode || beData.formId || formCode,
+                    formName: beData.formName || beData.formConfig?.formName || formCode,
+                    year: effectiveYear,
+                    layoutJSON,
+                    formUUID: beData.formId || beData.FormId || null, // UUID để dùng khi UPDATE
+                };
+            }),
+        );
+    }
+
     // ================================================================
     //  STEP 1: SAVE FORM TEMPLATE (tạo/update biểu mẫu trên BE)
     // ================================================================
@@ -131,45 +277,47 @@ export class FormConfigApiService {
      * Dùng trong Form Designer khi nhấn "Lưu".
      */
     saveTemplateAndConfig(exportedTemplate: any): Observable<FormConfigApiResponse> {
-        // ── Step 1: Tạo/cập nhật FormTemplate ──
+        const existingUUID = exportedTemplate.existingFormUUID || null;
+
+        // ── Nếu form đã tồn tại trên BE (có UUID) → bỏ qua Step 1, nhảy thẳng Step 2 ──
+        // BE endpoint save-form chỉ hỗ trợ INSERT, không UPDATE.
+        // Gọi lại với formCode đã có → 400 FormCodeAlreadyExists.
+        if (existingUUID) {
+            console.log('[FormConfigApi] 🔄 Form đã tồn tại (UUID:', existingUUID, ') → Bỏ qua Step 1, chỉ lưu layout config');
+            return this.saveConfigOnly(existingUUID, exportedTemplate);
+        }
+
+        // ── Form mới: Step 1 (tạo FormTemplate) → Step 2 (lưu config) ──
+        const formCode = exportedTemplate.formId || 'NEW_TEMPLATE';
         const templateRequest: FormTemplateSaveRequest = {
-            formID: null, // null = tạo mới, BE sẽ gán UUID
-            formCode: exportedTemplate.formId || 'NEW_TEMPLATE',
+            formID: null, // null = INSERT mới trên BE
+            formCode,
             formName: exportedTemplate.formName || 'Biểu mẫu mới',
             isActive: exportedTemplate.isActive ?? true,
             appliedEntities: (exportedTemplate.orgList || []).join(','),
         };
+        console.log('[FormConfigApi] 📤 Step 1 — save-form (tạo mới formCode:', formCode, ')');
 
         return this.saveFormTemplate(templateRequest).pipe(
             switchMap((step1Response) => {
-                // ★ FIX: Giờ step1Response đã được normalize → succeeded đúng type
                 if (!step1Response.succeeded) {
                     console.error('[FormConfigApi] ❌ Step 1 thất bại:', step1Response);
-                    return of(step1Response); // Trả lỗi ngay
+                    return of(step1Response);
                 }
 
                 console.log('[FormConfigApi] ✅ Step 1 thành công:', step1Response);
 
-                // Lấy formID từ response BE (có thể là UUID mới được tạo)
-                // BE trả về data = string UUID, không phải object
+                // BE trả data = UUID string của FormTemplate vừa tạo
                 const beFormID = (typeof step1Response.data === 'string')
                     ? step1Response.data
-                    : (step1Response.data?.formID || step1Response.data?.id || exportedTemplate.formId);
+                    : (step1Response.data?.formID || step1Response.data?.id || null);
 
-                // ★ NEW: Đăng ký form vào FormRegistry (code → UUID mapping)
-                if (beFormID && templateRequest.formCode) {
-                    this.formRegistry.registerForm(templateRequest.formCode, beFormID);
+                // Đăng ký vào FormRegistry (code → UUID)
+                if (beFormID && formCode) {
+                    this.formRegistry.registerForm(formCode, beFormID);
                 }
 
-                // ── Step 2: Lưu FormConfig với formID từ BE ──
-                const configRequest = this.mapper.toSaveRequest(exportedTemplate);
-                // Override formID với giá trị từ BE
-                if (beFormID) {
-                    configRequest.formID = beFormID;
-                }
-
-                console.log('[FormConfigApi] 📤 Step 2 — save-form-config (formID từ BE):', configRequest.formID);
-                return this.saveFormConfigDirect(configRequest);
+                return this.saveConfigOnly(beFormID || formCode, exportedTemplate);
             }),
             catchError((err) => {
                 console.error('[FormConfigApi] ❌ Lỗi trong flow save:', err);
@@ -186,6 +334,25 @@ export class FormConfigApiService {
             }),
         );
     }
+
+    /**
+     * Chỉ lưu FormConfig (layout) với formID đã biết.
+     * Dùng khi UPDATE form đã tồn tại (bỏ qua bước tạo FormTemplate).
+     */
+    private saveConfigOnly(formID: string, exportedTemplate: any): Observable<FormConfigApiResponse> {
+        const configRequest = this.mapper.toSaveRequest(exportedTemplate);
+        configRequest.formID = formID;
+
+        console.log('[FormConfigApi] 📤 save-form-config (formID:', formID, ')');
+        return this.saveFormConfigDirect(configRequest).pipe(
+            map(response => ({
+                ...response,
+                // Propagate formID so component can store it for future updates
+                data: formID,
+            })),
+        );
+    }
+
 
     /**
      * Lưu config trực tiếp (dùng request đã transform sẵn).

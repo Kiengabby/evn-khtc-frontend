@@ -285,6 +285,17 @@ $radius-lg:      12px;
     max-width: none;
   }
 
+  // Dropdown biểu mẫu — rộng hơn để hiển thị formCode + formName
+  &.filter-form-select {
+    flex: 2 1 260px;
+    max-width: 360px;
+
+    .select-wrap select.filter-select {
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+  }
+
   // ── Label ──
   label {
     font-size: 10px;

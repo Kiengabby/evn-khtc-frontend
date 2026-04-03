@@ -1,156 +1,242 @@
 <div class="page-wrapper">
-      <div class="page-head">
-        <div>
-          <h1 class="page-title">Danh sách Biểu mẫu</h1>
-          <p class="page-desc">Quản lý các Form Template — Thêm, sửa, xóa và thiết kế biểu mẫu báo cáo</p>
-        </div>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="pi pi-file-edit"></i>
       </div>
-
-      <!-- Toolbar -->
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <div class="search-box">
-            <i class="pi pi-search"></i>
-            <input type="text" placeholder="Tìm mã hoặc tên biểu mẫu..."
-                   [(ngModel)]="tuKhoa" (input)="onTimKiem()">
-          </div>
-        </div>
-        <div class="toolbar-right">
-          <button class="btn-outline" (click)="moThietKeMoi()">
-            <i class="pi pi-table"></i> Thiết kế trực quan
-          </button>
-          <button class="btn-primary" (click)="moFormThemMoi()">
-            <i class="pi pi-plus"></i> Thêm biểu mẫu
-          </button>
-        </div>
+      <div class="header-text">
+        <h1 class="page-title">Quản lý Biểu mẫu</h1>
+        <p class="page-subtitle">Thiết kế và quản lý biểu mẫu báo cáo kế hoạch tài chính — Hệ thống KHTC</p>
       </div>
+    </div>
+  </div>
 
-      <!-- Cards grid -->
-      <div class="template-grid">
-        @if (dangTai()) {
-          <div class="loading-overlay">
-            <i class="pi pi-spin pi-spinner"></i> Đang tải...
-          </div>
+  <!-- Toolbar -->
+  <div class="toolbar-section">
+    <div class="toolbar-left">
+      <div class="search-box">
+        <i class="pi pi-search"></i>
+        <input type="text"
+               placeholder="Tìm kiếm theo mã, tên biểu mẫu..."
+               [(ngModel)]="tuKhoa"
+               (input)="onTimKiem()">
+        @if (tuKhoa) {
+          <button class="search-clear" (click)="tuKhoa = ''; onTimKiem()">
+            <i class="pi pi-times"></i>
+          </button>
         }
+      </div>
+      <div class="filter-chips">
+        <button class="chip" [class.chip-active]="boLoc === 'all'"
+                (click)="boLoc = 'all'; locDanhSach()">
+          Tất cả
+        </button>
+        <button class="chip" [class.chip-active]="boLoc === 'active'"
+                (click)="boLoc = 'active'; locDanhSach()">
+          <span class="chip-dot dot-active"></span>
+          Hoạt động
+        </button>
+        <button class="chip" [class.chip-active]="boLoc === 'inactive'"
+                (click)="boLoc = 'inactive'; locDanhSach()">
+          <span class="chip-dot dot-inactive"></span>
+          Ngừng sử dụng
+        </button>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <div class="view-toggle">
+        <button class="toggle-btn" [class.active]="viewMode === 'grid'"
+                (click)="viewMode = 'grid'" title="Dạng lưới">
+          <i class="pi pi-th-large"></i>
+        </button>
+        <button class="toggle-btn" [class.active]="viewMode === 'table'"
+                (click)="viewMode = 'table'" title="Dạng bảng">
+          <i class="pi pi-list"></i>
+        </button>
+      </div>
+      <button class="btn-refresh" (click)="taiDuLieu()" [disabled]="dangTai()">
+        <i class="pi" [class.pi-refresh]="!dangTai()" [class.pi-spin]="dangTai()" [class.pi-spinner]="dangTai()"></i>
+        Tải lại
+      </button>
+      <button class="btn-primary-action" (click)="moThietKeMoi()">
+        <i class="pi pi-plus"></i>
+        Tạo biểu mẫu mới
+      </button>
+    </div>
+  </div>
 
-        @for (bm of danhSach(); track bm.formId) {
-          <div class="template-card">
-            <div class="card-header">
-              <span class="card-id">{{ bm.formId }}</span>
-              <div class="action-group">
-                <button class="action-btn" title="Sửa" (click)="moFormSua(bm)">
-                  <i class="pi pi-pencil"></i>
-                </button>
-                <button class="action-btn danger" title="Xóa" (click)="xacNhanXoa(bm)">
-                  <i class="pi pi-trash"></i>
-                </button>
+  <!-- Loading -->
+  @if (dangTai()) {
+    <div class="loading-state">
+      <div class="loading-spinner">
+        <div class="spinner-ring"></div>
+      </div>
+      <p>Đang tải dữ liệu từ hệ thống...</p>
+    </div>
+  }
+
+  <!-- GRID VIEW -->
+  @if (!dangTai() && viewMode === 'grid') {
+    <div class="template-grid">
+      @for (bm of danhSachHienThi(); track bm.formCode; let i = $index) {
+        <div class="template-card"
+             [class.inactive]="bm.isActive === false"
+             [style.animation-delay]="(i * 40) + 'ms'">
+          <div class="card-top">
+            <div class="card-icon-area" [style.background]="getCardAccent(i)">
+              <i class="pi" [class]="getFormIcon(bm.formName)"></i>
+            </div>
+            <div class="card-badges">
+              @if (bm.isActive !== false) {
+                <span class="status-badge badge-active">
+                  <span class="badge-dot"></span> Hoạt động
+                </span>
+              } @else {
+                <span class="status-badge badge-inactive">
+                  <span class="badge-dot"></span> Ngừng
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="card-body">
+            <span class="form-code">{{ bm.formCode }}</span>
+            <h3 class="form-name">{{ bm.formName }}</h3>
+            @if (bm.description) {
+              <p class="form-desc">{{ bm.description }}</p>
+            }
+          </div>
+
+          <div class="card-details">
+            @if (bm.currentVersion) {
+              <div class="detail-row">
+                <i class="pi pi-tag"></i>
+                <span>Phiên bản: <strong>{{ bm.currentVersion }}</strong></span>
               </div>
+            }
+            @if (bm.applyYear) {
+              <div class="detail-row">
+                <i class="pi pi-calendar"></i>
+                <span>Năm áp dụng: <strong>{{ bm.applyYear }}</strong></span>
+              </div>
+            }
+            <div class="detail-row">
+              <i class="pi pi-clock"></i>
+              <span>{{ formatDate(bm.createdAt) }}</span>
             </div>
-            <h3 class="card-title">{{ bm.formName }}</h3>
-            <div class="card-meta">
-              <span class="meta-item">
-                <i class="pi pi-building"></i> {{ bm.orgList.length }} đơn vị
-              </span>
-              <span class="meta-item">
-                <i class="pi pi-table"></i> {{ bm.layoutConfig.type || 'N/A' }}
-              </span>
-              @if (bm.isDynamicRow) {
-                <span class="badge badge-dynamic">Dynamic rows</span>
-              }
-            </div>
-            <div class="card-orgs">
-              @for (org of bm.orgList; track org) {
-                <span class="org-tag">{{ org }}</span>
-              }
-            </div>
-            <div class="card-footer">
-              <button class="btn-outline" (click)="moThietKe(bm.formId)">
-                <i class="pi pi-external-link"></i> Thiết kế
+          </div>
+
+          <div class="card-actions">
+            <button class="btn-design" (click)="moThietKe(bm.formCode)">
+              <i class="pi pi-pencil"></i>
+              Thiết kế
+            </button>
+            <div class="action-more">
+              <button class="btn-icon" title="Sửa" (click)="moThietKe(bm.formCode)">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button class="btn-icon btn-icon-danger" title="Xóa">
+                <i class="pi pi-trash"></i>
               </button>
             </div>
           </div>
-        } @empty {
-          @if (!dangTai()) {
-            <div class="empty-state">
-              <i class="pi pi-inbox"></i>
-              <p>Chưa có biểu mẫu nào</p>
-            </div>
-          }
-        }
-      </div>
-
-      <div class="pagination-bar">
-        <span class="pagination-info">Tổng {{ danhSach().length }} biểu mẫu</span>
-      </div>
-
-      <!-- Dialog thêm/sửa -->
-      @if (hienDialog()) {
-        <div class="dialog-overlay" (click)="dongDialog()">
-          <div class="dialog-box" (click)="$event.stopPropagation()">
-            <div class="dialog-header">
-              <h3>{{ dangSua() ? 'Sửa biểu mẫu' : 'Thêm biểu mẫu mới' }}</h3>
-              <button class="close-btn" (click)="dongDialog()"><i class="pi pi-times"></i></button>
-            </div>
-            <div class="dialog-body">
-              <div class="form-row">
-                <label>Mã biểu mẫu <span class="required">*</span></label>
-                <input type="text" [(ngModel)]="form.formId" [disabled]="dangSua()"
-                       placeholder="VD: F04_LUONG_NHAN_VIEN">
-              </div>
-              <div class="form-row">
-                <label>Tên biểu mẫu <span class="required">*</span></label>
-                <input type="text" [(ngModel)]="form.formName"
-                       placeholder="VD: BKH.KH.04 — Lương nhân viên">
-              </div>
-              <div class="form-row-2col">
-                <div class="form-row">
-                  <label>Loại biểu mẫu</label>
-                  <select [(ngModel)]="form.layoutType">
-                    <option value="financial_planning">Financial Planning</option>
-                    <option value="revenue_forecast">Revenue Forecast</option>
-                    <option value="production_plan">Production Plan</option>
-                    <option value="cost_analysis">Cost Analysis</option>
-                  </select>
-                </div>
-                <div class="form-row">
-                  <label>Cố định cột</label>
-                  <input type="number" [(ngModel)]="form.freezeColumns" min="0" max="10">
-                </div>
-              </div>
-              <div class="form-row">
-                <label>Đơn vị áp dụng</label>
-                <input type="text" [(ngModel)]="form.orgListStr"
-                       placeholder="EVNNPC, EVNCPC, EVNSPC (phân cách bằng dấu phẩy)">
-              </div>
-              <div class="form-row checkbox-row">
-                <label>
-                  <input type="checkbox" [(ngModel)]="form.isDynamicRow">
-                  Cho phép thêm dòng động (Dynamic Rows)
-                </label>
-              </div>
-              @if (loiForm()) {
-                <div class="form-error">
-                  <i class="pi pi-exclamation-circle"></i> {{ loiForm() }}
-                </div>
-              }
-            </div>
-            <div class="dialog-footer">
-              <button class="btn-secondary" (click)="dongDialog()">Hủy</button>
-              <button class="btn-primary" (click)="luuBieuMau()" [disabled]="dangLuu()">
-                @if (dangLuu()) { <i class="pi pi-spin pi-spinner"></i> }
-                {{ dangSua() ? 'Cập nhật' : 'Tạo mới' }}
-              </button>
-            </div>
-          </div>
         </div>
-      }
-
-      <!-- Toast -->
-      @if (thongBao()) {
-        <div class="toast" [class]="'toast-' + thongBao()!.loai">
-          <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
-             [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
-          {{ thongBao()!.noiDung }}
+      } @empty {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="pi pi-inbox"></i>
+          </div>
+          <h3>Không tìm thấy biểu mẫu</h3>
+          <p>Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc</p>
         </div>
       }
     </div>
+  }
+
+  <!-- TABLE VIEW -->
+  @if (!dangTai() && viewMode === 'table') {
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-code">Mã biểu mẫu</th>
+            <th class="col-name">Tên biểu mẫu</th>
+            <th class="col-version">Phiên bản</th>
+            <th class="col-year">Năm áp dụng</th>
+            <th class="col-status">Trạng thái</th>
+            <th class="col-date">Ngày tạo</th>
+            <th class="col-actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (bm of danhSachHienThi(); track bm.formCode; let i = $index) {
+            <tr [class.inactive-row]="bm.isActive === false"
+                [style.animation-delay]="(i * 30) + 'ms'">
+              <td class="col-code">
+                <span class="code-badge">{{ bm.formCode }}</span>
+              </td>
+              <td class="col-name">
+                <div class="name-cell">
+                  <div>
+                    <span class="cell-name">{{ bm.formName }}</span>
+                    @if (bm.description) {
+                      <span class="cell-desc">{{ bm.description }}</span>
+                    }
+                  </div>
+                </div>
+              </td>
+              <td class="col-version">
+                <span class="version-text">{{ bm.currentVersion || '—' }}</span>
+              </td>
+              <td class="col-year">{{ bm.applyYear || '—' }}</td>
+              <td class="col-status">
+                @if (bm.isActive !== false) {
+                  <span class="status-pill pill-active">Hoạt động</span>
+                } @else {
+                  <span class="status-pill pill-inactive">Ngừng</span>
+                }
+              </td>
+              <td class="col-date">{{ formatDate(bm.createdAt) }}</td>
+              <td class="col-actions">
+                <div class="table-actions">
+                  <button class="btn-table-action primary" (click)="moThietKe(bm.formCode)" title="Sửa biểu mẫu">
+                    <i class="pi pi-pencil"></i>
+                  </button>
+                  <button class="btn-table-action danger" title="Xóa biểu mẫu">
+                    <i class="pi pi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="table-empty">
+                <i class="pi pi-inbox"></i>
+                Không tìm thấy biểu mẫu nào
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Footer info -->
+  @if (!dangTai()) {
+    <div class="page-footer">
+      <span class="footer-info">
+        Hiển thị {{ danhSachHienThi().length }}/{{ danhSach().length }} biểu mẫu
+      </span>
+    </div>
+  }
+
+  <!-- Toast -->
+  @if (thongBao()) {
+    <div class="toast" [class]="'toast-' + thongBao()!.loai">
+      <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
+         [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+      {{ thongBao()!.noiDung }}
+    </div>
+  }
+</div>
