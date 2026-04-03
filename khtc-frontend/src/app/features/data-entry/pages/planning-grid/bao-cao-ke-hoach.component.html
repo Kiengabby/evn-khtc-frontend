@@ -32,12 +32,38 @@
   <!-- ===== FILTER SECTION ===== -->
   <section class="filter-section">
     <div class="filter-main">
-      <!-- formId -->
-      <div class="filter-item">
-        <label><i class="pi pi-file"></i> Mã biểu mẫu</label>
-        <div class="input-wrap">
-          <input type="text" [(ngModel)]="formId" placeholder="VD: BKH" class="filter-input" />
-        </div>
+      <!-- formId — dropdown từ API /api/v2/FormTemplate/get-list -->
+      <div class="filter-item filter-form-select">
+        <label>
+          <i class="pi pi-file"></i> Biểu mẫu
+          @if (dangTaiBieuMau()) {
+            <i class="pi pi-spin pi-spinner" style="margin-left:4px;font-size:11px;"></i>
+          }
+        </label>
+        @if (danhSachBieuMauV2().length > 0) {
+          <div class="select-wrap">
+            <select [ngModel]="formId"
+                    (ngModelChange)="onFormTemplateChange($event)"
+                    class="filter-select">
+              @for (tpl of danhSachBieuMauV2(); track tpl.formCode) {
+                <option [ngValue]="tpl.formCode">
+                  {{ tpl.formCode }} — {{ tpl.formName }}
+                </option>
+              }
+            </select>
+            <i class="pi pi-chevron-down select-arrow"></i>
+          </div>
+        } @else if (!dangTaiBieuMau()) {
+          <!-- Fallback: API lỗi hoặc list rỗng → nhập tay -->
+          <div class="input-wrap">
+            <input type="text" [(ngModel)]="formId" placeholder="VD: BKH" class="filter-input" />
+          </div>
+        } @else {
+          <!-- Đang tải -->
+          <div class="input-wrap">
+            <input type="text" disabled placeholder="Đang tải danh sách..." class="filter-input" />
+          </div>
+        }
       </div>
       <!-- entityCode -->
       <div class="filter-item">

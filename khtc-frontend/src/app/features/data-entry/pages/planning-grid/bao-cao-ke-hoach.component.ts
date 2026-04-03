@@ -13,7 +13,7 @@ import {
   ParsedGridConfig, PovSelection, FactDataPoint,
 } from '../../services/template-parser.service';
 import {
-  PlanningApiService, TemplateListItem, PlanningScenarioItem, CellChangePayload,
+  PlanningApiService, TemplateListItem, PlanningScenarioItem, CellChangePayload, FormTemplateListItem,
 } from '../../services/planning-api.service';
 import {
   LayoutGridRendererService, RenderedGridConfig, RenderedRowMeta, RenderedColMeta,
@@ -77,7 +77,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   v2VisibleCols: LayoutColumnDef[] = [];
 
   // === Filters (theo API BE) ===
-  formId = 'BKH';           // Mã biểu mẫu
+  formId = '';              // Mã biểu mẫu — sẽ được set từ API list ngay khi tải xong
   entityCode = 'EVN';       // Mã đơn vị
   nam = 2026;               // Năm
   period = 'Kỳ 1';          // Kỳ báo cáo — BE bắt buộc (NullRef nếu rỗng)
@@ -165,6 +165,13 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   danhSachKichBan = signal<PlanningScenarioItem[]>([]);
   povDropdowns    = signal<PovDropdown[]>([]);
 
+  /** Danh sách biểu mẫu từ API /api/v2/FormTemplate/get-list */
+  danhSachBieuMauV2 = signal<FormTemplateListItem[]>([]);
+  /** ID biểu mẫu hiện đang chọn (id từ FormTemplate) */
+  selectedFormTemplateId = signal<number | null>(null);
+  /** Đang tải danh sách biểu mẫu */
+  dangTaiBieuMau = signal(false);
+
   // === Grid state ===
   hot: Handsontable | null = null;
   dangTai         = signal(false);
@@ -188,7 +195,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngOnInit(): void {
     document.addEventListener('keydown', this.xuLyPhimTat);
-    // Không cần load danh sách biểu mẫu - user nhập trực tiếp formId
+    this.taiDanhSachBieuMau();
   }
 
   ngAfterViewInit(): void {
@@ -271,26 +278,29 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
 
     this.hot.updateSettings({
       data:              cfg.data,
-      colHeaders:        false,              // Headers are data rows, not column headers
-      nestedHeaders:     undefined as any,    // Disable nestedHeaders plugin
+      colHeaders:        false,
+      nestedHeaders:     undefined as any,
       colWidths:         cfg.colWidths,
       fixedColumnsStart: cfg.fixedColumnsStart,
-      fixedRowsTop:      cfg.fixedRowsTop,    // Freeze header rows at top
+      fixedRowsTop:      cfg.fixedRowsTop,
       columns:           cfg.columns,
       mergeCells:        cfg.mergeCells.length > 0 ? cfg.mergeCells : false,
-      cells:             this.v2Renderer.buildCellCallback(
-                           cfg.rowMeta,
-                           this.v2VisibleCols),
-      // Custom row headers: blank for header rows, sequential numbers for data rows
-      rowHeaders:        hdrCount > 0
-                           ? ((index: number) => index < hdrCount ? '' : String(index - hdrCount + 1)) as any
-                           : true,
+      // ★ Truyền formulaCellSet để ô công thức được highlight đúng và khóa sửa
+      cells: this.v2Renderer.buildCellCallback(
+        cfg.rowMeta,
+        this.v2VisibleCols,
+        cfg.formulaCellSet,
+      ),
+      rowHeaders: hdrCount > 0
+        ? ((index: number) => index < hdrCount ? '' : String(index - hdrCount + 1)) as any
+        : true,
     });
     this.hot.render();
     this.xoaThayDoi();
     console.log('[DataEntry] ✅ V2 grid rendered:', {
       rows: cfg.data.length, cols: cfg.colWidths.length,
       merges: cfg.mergeCells.length, headerRows: hdrCount,
+      formulaCells: cfg.formulaCellSet.size,
     });
   }
 
@@ -362,6 +372,35 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
 
   onBieuMauChange(): void {
     this.taiForm();
+  }
+
+  /** Khi user chọn biểu mẫu từ dropdown */
+  onFormTemplateChange(formCode: string): void {
+    this.formId = formCode;
+    console.log('[DataEntry] 🔄 Form selected:', this.formId);
+  }
+
+  /** Gọi API lấy danh sách biểu mẫu */
+  private taiDanhSachBieuMau(): void {
+    this.dangTaiBieuMau.set(true);
+    this.api.getFormTemplateList().subscribe({
+      next: (list) => {
+        this.danhSachBieuMauV2.set(list);
+        this.dangTaiBieuMau.set(false);
+        console.log('[DataEntry] 📋 FormTemplate list loaded:', list.length, 'items');
+        // ★ LUÔN auto-select item đầu tiên (không check formId trước)
+        // để đảm bảo dropdown và formId luôn đồng bộ
+        if (list.length > 0) {
+          this.selectedFormTemplateId.set(list[0].id);
+          this.formId = list[0].formCode;
+          console.log('[DataEntry] ✅ Auto-selected form:', this.formId, '(id:', list[0].id, ')');
+        }
+      },
+      error: (err) => {
+        this.dangTaiBieuMau.set(false);
+        console.warn('[DataEntry] ⚠️ Không tải được danh sách biểu mẫu:', err?.message);
+      },
+    });
   }
 
   togglePanelJsonTest(): void {
@@ -596,6 +635,13 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   // ===================================
 
   private khoiTaoGrid(): void {
+    // Tạo HyperFormula instance (phải là instance, không phải class)
+    const hfInstance = HyperFormula.buildEmpty({
+      licenseKey: 'internal-use-in-handsontable',
+      functionArgSeparator: ';',  // Dùng ";" như Form Designer
+      decimalSeparator: '.',
+    });
+
     this.hot = new Handsontable(this.hotEl.nativeElement, {
       data: [],
       colHeaders: true,
@@ -613,7 +659,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
       autoWrapCol: true,
       fixedColumnsStart: 3,
       className: 'htMiddle',
-      formulas: { engine: HyperFormula },
+      formulas: { engine: hfInstance },
 
       afterChange: (changes: any, source: string) => {
         if (source === 'loadData' || !changes) return;
