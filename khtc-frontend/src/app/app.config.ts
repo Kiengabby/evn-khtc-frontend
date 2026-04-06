@@ -8,9 +8,9 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 import { routes } from './app.routes';
-import { authInterceptor } from './core/interceptors/auth.interceptor';
-import { errorInterceptor } from './core/interceptors/error.interceptor';
-import { ConfigService } from './core/services/config.service';
+import { authInterceptor } from './interceptors/auth.interceptor';
+import { errorInterceptor } from './interceptors/error.interceptor';
+import { ConfigService } from './core/app-config.service';
 
 /** Initialize config before app starts */
 function initializeApp(configService: ConfigService) {

@@ -2,14 +2,14 @@
 // App Routes — Top-level routing configuration
 // ============================================
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard } from './guards/auth.guard';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 
 export const routes: Routes = [
     // Auth routes (no layout)
     {
         path: 'login',
-        loadComponent: () => import('./features/auth/pages/login/login.component').then(m => m.LoginComponent),
+        loadComponent: () => import('./apps/auth/pages/login/login.component').then(m => m.LoginComponent),
     },
 
     // Main app routes (with layout shell)
@@ -23,49 +23,49 @@ export const routes: Routes = [
             // Dashboard
             {
                 path: 'dashboard',
-                loadChildren: () => import('./features/analytics/pages/executive-dashboard/dashboard.component').then(m => m.dashboardRoutes),
+                loadChildren: () => import('./apps/analytics/pages/executive-dashboard/dashboard.component').then(m => m.dashboardRoutes),
             },
 
             // Metadata — Quản trị Dimension
             {
                 path: 'metadata',
-                loadChildren: () => import('./features/metadata/metadata.routes').then(m => m.metadataRoutes),
+                loadChildren: () => import('./apps/metadata/metadata.routes').then(m => m.metadataRoutes),
             },
 
             // Form Designer — Thiết kế Form
             {
                 path: 'form-designer',
-                loadChildren: () => import('./features/feature-routes').then(m => m.formDesignerRoutes),
+                loadChildren: () => import('./apps/form-designer/form-designer.routes').then(m => m.formDesignerRoutes),
             },
 
             // Data Entry — Nhập liệu
             {
                 path: 'data-entry',
-                loadChildren: () => import('./features/data-entry/data-entry.routes').then(m => m.dataEntryRoutes),
+                loadChildren: () => import('./apps/data-entry/data-entry.routes').then(m => m.dataEntryRoutes),
             },
 
             // Workflow — Phê duyệt
             {
                 path: 'workflow',
-                loadChildren: () => import('./features/feature-routes').then(m => m.workflowRoutes),
+                loadChildren: () => import('./apps/workflow/workflow.routes').then(m => m.workflowRoutes),
             },
 
             // Analytics — Báo cáo
             {
                 path: 'analytics',
-                loadChildren: () => import('./features/feature-routes').then(m => m.analyticsRoutes),
+                loadChildren: () => import('./apps/analytics/analytics.routes').then(m => m.analyticsRoutes),
             },
 
             // Report Wizard — Tạo mẫu báo cáo
             {
                 path: 'report-wizard',
-                loadComponent: () => import('./features/report-wizard/pages/tao-bao-cao-wizard.component').then(m => m.TaoBaoCaoWizardComponent),
+                loadComponent: () => import('./apps/report-wizard/pages/tao-bao-cao-wizard.component').then(m => m.TaoBaoCaoWizardComponent),
             },
 
             // System Admin — Quản trị hệ thống
             {
                 path: 'admin',
-                loadChildren: () => import('./features/feature-routes').then(m => m.systemAdminRoutes),
+                loadChildren: () => import('./apps/system-admin/system-admin.routes').then(m => m.systemAdminRoutes),
             },
         ],
     },

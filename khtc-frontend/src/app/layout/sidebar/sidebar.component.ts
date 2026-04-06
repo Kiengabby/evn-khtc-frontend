@@ -6,7 +6,7 @@
 import { Component, signal, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService } from '../../apps/service/auth.service';
 
 interface NavItem {
   label: string;

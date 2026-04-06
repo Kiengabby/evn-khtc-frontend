@@ -4,7 +4,7 @@
 import { Component, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService } from '../../apps/service/auth.service';
 
 @Component({
   selector: 'app-topbar',
