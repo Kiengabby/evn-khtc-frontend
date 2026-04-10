@@ -403,9 +403,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
         this.v2VisibleCols,
         cfg.formulaCellSet,
       ),
-      rowHeaders: hdrCount > 0
-        ? ((index: number) => index < hdrCount ? '' : String(index - hdrCount + 1)) as any
-        : true,
+      rowHeaders: false,
     });
     this.hot.render();
     this.xoaThayDoi();
@@ -777,8 +775,8 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
 
     this.hot = new Handsontable(this.hotEl.nativeElement, {
       data: [],
-      colHeaders: true,
-      rowHeaders: true,
+      colHeaders: false,
+      rowHeaders: false,
       stretchH: 'none',
       height: 600,
       width: '100%',

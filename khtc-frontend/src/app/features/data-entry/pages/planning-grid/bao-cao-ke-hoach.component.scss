@@ -900,15 +900,37 @@ $radius-lg:      12px;
     }
   }
 
-  // Row number headers
-  .handsontable th.ht_clone_top_inline_start_corner,
-  .handsontable .ht_clone_inline_start thead th {
-    background: $surface-2 !important;
-    color: $ink-muted !important;
-    font-size: 10px !important;
-    font-weight: 500 !important;
-    text-align: center !important;
-    border-color: $border-1 !important;
+  // Row number headers — ẩn hoàn toàn cột số thứ tự hàng
+  // rowHeaderWidth: 0 (JS) ẩn space allocation; CSS là backup đảm bảo visual
+  .handsontable .ht_clone_top_left_corner thead th:first-child,
+  .handsontable .ht_clone_top_left_corner tbody th,
+  .handsontable .ht_clone_top_inline_start_corner thead th:first-child,
+  .handsontable .ht_clone_top_inline_start_corner tbody th,
+  .handsontable .ht_clone_inline_start thead th,
+  .handsontable .ht_clone_inline_start tbody th,
+  .handsontable .ht_master thead th:first-child,
+  .handsontable .ht_master tbody th,
+  .handsontable .ht_clone_top thead th:first-child {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    padding: 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-top: 0 !important;
+    border-bottom: 0 !important;
+    overflow: hidden !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    visibility: hidden;
+  }
+  // Handsontable dùng colgroup/col để set column widths — phải override cả đây
+  .handsontable .ht_clone_top_left_corner colgroup col:first-child,
+  .handsontable .ht_clone_top_inline_start_corner colgroup col:first-child,
+  .handsontable .ht_clone_inline_start colgroup col:first-child,
+  .handsontable .ht_master colgroup col:first-child,
+  .handsontable .ht_clone_top colgroup col:first-child {
+    width: 0 !important;
   }
 
   // Column headers
@@ -995,15 +1017,37 @@ $radius-lg:      12px;
     color: $ink !important;
   }
 
-  // ── CURRENT CELL ──
-  .handsontable td.current,
-  .handsontable td.ht__highlight,
-  .handsontable td.ht__active_highlight {
+  // ── Header data rows (frozen at top — pattern "data-as-header") ──
+  // Các hàng header nằm trong tbody dưới dạng data rows với class cell-header
+  .handsontable td.cell-header {
+    background: $surface-2 !important;
+    color: $ink-secondary !important;
+    font-weight: 700 !important;
+    font-size: 11.5px !important;
+    border-color: $border-2 !important;
+    cursor: default !important;
+    user-select: none !important;
+  }
+
+  // ── CURRENT CELL — chỉ áp dụng cho data cells, KHÔNG áp dụng cho header cells ──
+  .handsontable td.current:not(.cell-header),
+  .handsontable td.ht__highlight:not(.cell-header),
+  .handsontable td.ht__active_highlight:not(.cell-header) {
     background: #fff !important;
     outline: 2px solid $accent !important;
     outline-offset: -1px !important;
     position: relative;
     z-index: 5;
+  }
+
+  // Header cells nếu bị click/chọn → giữ nguyên kiểu header (không đổi màu)
+  .handsontable td.cell-header.current,
+  .handsontable td.cell-header.ht__highlight,
+  .handsontable td.cell-header.ht__active_highlight,
+  .handsontable td.cell-header.area {
+    background: $surface-2 !important;
+    outline: none !important;
+    box-shadow: none !important;
   }
 
   // Selection area background (multi-cell drag)
