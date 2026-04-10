@@ -1,4 +1,4 @@
-import {
+﻿import {
   Component, inject, signal, OnInit, AfterViewInit, OnDestroy,
   ViewChild, ElementRef, HostListener,
 } from '@angular/core';
@@ -39,9 +39,9 @@ interface PreviewGroup {
 }
 
 /**
- * JSON chuáº©n gá»­i xuá»‘ng Backend.
- * Khá»›p vá»›i: SYS_FORM_TEMPLATE + SYS_FORM_VERSION.
- * mappings náº±m bÃªn trong version.layoutJSON.mappings (khá»›p LayoutJSON interface).
+ * JSON chuẩn gửi xu�ng Backend.
+ * Kh�:p v�:i: SYS_FORM_TEMPLATE + SYS_FORM_VERSION.
+ * mappings nằm bên trong version.layoutJSON.mappings (kh�:p LayoutJSON interface).
  */
 interface ExportedTemplate {
   formId: string;
@@ -61,7 +61,7 @@ interface ExportedTemplate {
   };
 }
 
-/** Khá»›p LayoutJSON (layout-template.model.ts) */
+/** Kh�:p LayoutJSON (layout-template.model.ts) */
 interface ExportedLayoutJSON {
   columns: ColumnConfig[];
   headerRows: HeaderRow[];
@@ -72,7 +72,7 @@ interface ExportedLayoutJSON {
   mappings?: FormMappingExport[];
 }
 
-/** Khá»›p LayoutCellMapping (layout-template.model.ts) â€” dÃ¹ng rowCodeÃ—colCode lÃ m key duy nháº¥t */
+/** Kh�:p LayoutCellMapping (layout-template.model.ts) � dùng rowCode�colCode làm key duy nhất */
 interface FormMappingExport {
   rowKey: string;
   colKey: string;
@@ -90,18 +90,18 @@ interface FormulaHint {
 }
 
 const FORMULA_HINTS: FormulaHint[] = [
-  { name: 'SUM', syntax: 'SUM(giÃ¡_trá»‹1; giÃ¡_trá»‹2; ...)', description: 'Tá»•ng cÃ¡c giÃ¡ trá»‹' },
-  { name: 'AVERAGE', syntax: 'AVERAGE(giÃ¡_trá»‹1; giÃ¡_trá»‹2; ...)', description: 'Trung bÃ¬nh cá»™ng' },
-  { name: 'MIN', syntax: 'MIN(giÃ¡_trá»‹1; giÃ¡_trá»‹2; ...)', description: 'GiÃ¡ trá»‹ nhá» nháº¥t' },
-  { name: 'MAX', syntax: 'MAX(giÃ¡_trá»‹1; giÃ¡_trá»‹2; ...)', description: 'GiÃ¡ trá»‹ lá»›n nháº¥t' },
-  { name: 'COUNT', syntax: 'COUNT(giÃ¡_trá»‹1; giÃ¡_trá»‹2; ...)', description: 'Äáº¿m sá»‘ Ã´ cÃ³ sá»‘' },
-  { name: 'COUNTA', syntax: 'COUNTA(giÃ¡_trá»‹1; giÃ¡_trá»‹2; ...)', description: 'Äáº¿m Ã´ khÃ´ng trá»‘ng' },
-  { name: 'IF', syntax: 'IF(Ä‘iá»u_kiá»‡n; giÃ¡_trá»‹_Ä‘Ãºng; giÃ¡_trá»‹_sai)', description: 'Äiá»u kiá»‡n' },
-  { name: 'ROUND', syntax: 'ROUND(sá»‘; sá»‘_chá»¯_sá»‘)', description: 'LÃ m trÃ²n' },
-  { name: 'ABS', syntax: 'ABS(sá»‘)', description: 'GiÃ¡ trá»‹ tuyá»‡t Ä‘á»‘i' },
-  { name: 'SUMIF', syntax: 'SUMIF(vÃ¹ng_kiá»ƒm; tiÃªu_chÃ­; [vÃ¹ng_tá»•ng])', description: 'Tá»•ng cÃ³ Ä‘iá»u kiá»‡n' },
-  { name: 'VLOOKUP', syntax: 'VLOOKUP(giÃ¡_trá»‹; báº£ng; cá»™t; [kiá»ƒu])', description: 'TÃ¬m kiáº¿m dá»c' },
-  { name: 'CONCATENATE', syntax: 'CONCATENATE(chuá»—i1; chuá»—i2; ...)', description: 'Ná»‘i chuá»—i' },
+  { name: 'SUM', syntax: 'SUM(gia_tri1; gia_tri2; ...)', description: 'Tong cac gia tri' },
+  { name: 'AVERAGE', syntax: 'AVERAGE(gia_tri1; gia_tri2; ...)', description: 'Trung binh cong' },
+  { name: 'MIN', syntax: 'MIN(gia_tri1; gia_tri2; ...)', description: 'Gia tri nho nhat' },
+  { name: 'MAX', syntax: 'MAX(gia_tri1; gia_tri2; ...)', description: 'Gia tri lon nhat' },
+  { name: 'COUNT', syntax: 'COUNT(gia_tri1; gia_tri2; ...)', description: 'Dem so o co so' },
+  { name: 'COUNTA', syntax: 'COUNTA(gia_tri1; gia_tri2; ...)', description: 'Dem o khong trong' },
+  { name: 'IF', syntax: 'IF(dieu_kien; gia_tri_dung; gia_tri_sai)', description: 'Dieu kien' },
+  { name: 'ROUND', syntax: 'ROUND(so; so_chu_so)', description: 'Lam tron' },
+  { name: 'ABS', syntax: 'ABS(so)', description: 'Gia tri tuyet doi' },
+  { name: 'SUMIF', syntax: 'SUMIF(vung_kiem; tieu_chi; [vung_tong])', description: 'Tong co dieu kien' },
+  { name: 'VLOOKUP', syntax: 'VLOOKUP(gia_tri; bang; cot; [kieu])', description: 'Tim kiem doc' },
+  { name: 'CONCATENATE', syntax: 'CONCATENATE(chuoi1; chuoi2; ...)', description: 'Noi chuoi' },
 ];
 
 const REF_COLORS = [
@@ -131,14 +131,14 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   dangLuu = signal(false);
   thongBao = signal<{ noiDung: string; loai: 'success' | 'error' } | null>(null);
 
-  /** UUID cá»§a biá»ƒu máº«u trÃªn BE â€” dÃ¹ng Ä‘á»ƒ UPDATE thay vÃ¬ CREATE khi lÆ°u láº¡i */
+  /** UUID của biỒu mẫu trên BE � dùng �Ồ UPDATE thay vì CREATE khi lưu lại */
   existingFormUUID: string | null = null;
 
   /**
-   * Promise coordination: resolve khi HOT Ä‘Ã£ Ä‘Æ°á»£c khá»Ÿi táº¡o.
-   * loadTemplate() á»Ÿ Ä‘Ã¢y sau khi láº¥y xong data. Náº¿u HOT chÆ°a xong â†’ chá».
-   * Náº¿u HOT Ä‘Ã£ xong trÆ°á»›c â†’ rebuildFromExportedTemplate cháº¡y ngay láº­p tá»©c.
-   * â†’ Loáº¡i bá» hoÃ n toÃ n setTimeout nhÃ¢n táº¡o (100ms + 200ms).
+   * Promise coordination: resolve khi HOT �ã �ược kh�xi tạo.
+   * loadTemplate() �x �ây sau khi lấy xong data. Nếu HOT chưa xong �  chờ.
+   * Nếu HOT �ã xong trư�:c �  rebuildFromExportedTemplate chạy ngay lập tức.
+   * �  Loại bỏ hoàn toàn setTimeout nhân tạo (100ms + 200ms).
    */
   private _hotReady!: Promise<void>;
   private _hotReadyResolve!: () => void;
@@ -185,16 +185,16 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   showInfoDialog = signal(false);
   templateInfo = { templateId: '', templateName: '', version: '2026', isActive: true };
 
-  // Danh sÃ¡ch Ä‘Æ¡n vá»‹ Ã¡p dá»¥ng â€” khá»›p vá»›i BE appliedEntities
+  // Danh sách �ơn v�9 áp dụng � kh�:p v�:i BE appliedEntities
   entValues: string[] = ['EVN', 'EVNHCMC', 'EVNHANOI'];
 
-  // === Indicator Code (MÃ£ chá»‰ tiÃªu) ===
+  // === Indicator Code (Mã ch�0 tiêu) ===
   colIndicators = signal<IndicatorGroup[]>([]);
   rowIndicators = signal<IndicatorGroup[]>([]);
-  columnCodeMap = new Map<number, string>();   // colIndex â†’ assigned code
-  rowCodeMap = new Map<number, string>();       // rowIndex â†’ assigned code
-  columnCodeNameMap = new Map<number, string>(); // colIndex â†’ indicator name
-  rowCodeNameMap = new Map<number, string>();     // rowIndex â†’ indicator name
+  columnCodeMap = new Map<number, string>();   // colIndex �  assigned code
+  rowCodeMap = new Map<number, string>();       // rowIndex �  assigned code
+  columnCodeNameMap = new Map<number, string>(); // colIndex �  indicator name
+  rowCodeNameMap = new Map<number, string>();     // rowIndex �  indicator name
 
   // === Indicator Selection Dialog ===
   showRowIndicatorDialog = signal(false);
@@ -215,18 +215,18 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   // === Lifecycle ===
 
   ngOnInit(): void {
-    // Táº¡o hotReady Promise NGAY Ä‘áº§u (trÆ°á»›c cáº£ API call)
+    // Tạo hotReady Promise NGAY �ầu (trư�:c cả API call)
     this._hotReady = new Promise<void>(resolve => (this._hotReadyResolve = resolve));
 
     this.formId = this.route.snapshot.paramMap.get('id') || '';
     if (this.formId) {
-      // KHAI Há»ŠA: KHÃ”NG await â†’ cháº¡y song song vá»›i ngAfterViewInit/initDesigner
-      // loadTemplate() sáº½ tá»± Ä‘á»£i this._hotReady trÆ°á»›c khi rebuildFromExportedTemplate
+      // KHAI H�`A: KH�NG await �  chạy song song v�:i ngAfterViewInit/initDesigner
+      // loadTemplate() sẽ tự �ợi this._hotReady trư�:c khi rebuildFromExportedTemplate
       this.loadTemplate();
     } else {
       this.showInfoDialog.set(true);
     }
-    // Load indicator codes (parallel, khÃ´ng block báº¥t ká»³ thá»© gÃ¬)
+    // Load indicator codes (parallel, không block bất kỳ thứ gì)
     this.loadIndicatorCodes();
   }
 
@@ -257,7 +257,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       );
 
       if (result && result.layoutJSON) {
-        console.log('[FormDesigner] âœ… API data ready:', result.formCode, 'UUID:', result.formUUID);
+        console.log('[FormDesigner] �S& API data ready:', result.formCode, 'UUID:', result.formUUID);
         this.templateInfo.templateId = result.formCode;
         this.templateInfo.templateName = result.formName;
         this.templateInfo.version = String(result.year);
@@ -278,15 +278,15 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         return;
       }
 
-      console.warn('[FormDesigner] âš ï¸ API khÃ´ng tráº£ layout, thá»­ mock store...');
+      console.warn('[FormDesigner] �a�️ API không trả layout, thử mock store...');
     } catch (apiErr: any) {
-      console.warn('[FormDesigner] âš ï¸ API error, fallback to mock store:', apiErr?.message || apiErr);
+      console.warn('[FormDesigner] �a�️ API error, fallback to mock store:', apiErr?.message || apiErr);
     }
 
     try {
       const layoutRes = await this.bieuMauService.layTemplateLayout(this.formId);
       if (layoutRes.trangThai && layoutRes.duLieu) {
-        console.log('[FormDesigner] ðŸ“¥ Load layout tá»« mock store:', layoutRes.duLieu.formId);
+        console.log('[FormDesigner] �x� Load layout từ mock store:', layoutRes.duLieu.formId);
         this.templateInfo.templateId = layoutRes.duLieu.formId;
         this.templateInfo.templateName = layoutRes.duLieu.formName;
         if (layoutRes.duLieu.version?.year) this.templateInfo.version = String(layoutRes.duLieu.version.year);
@@ -304,10 +304,10 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         this.templateInfo.templateId = kq.duLieu.formId;
         this.templateInfo.templateName = kq.duLieu.formName;
       } else {
-        this.notify('Biá»ƒu máº«u chÆ°a cÃ³ layout â€” báº¯t Ä‘áº§u thiáº¿t káº¿ má»›i', 'success');
+        this.notify('Biểu mẫu chưa có layout, bắt đầu thiết kế mới', 'success');
       }
     } catch {
-      this.notify('KhÃ´ng táº£i Ä‘Æ°á»£c biá»ƒu máº«u', 'error');
+      this.notify('Không tải được biểu mẫu', 'error');
     }
     this.dangTai.set(false);
   }
@@ -317,8 +317,8 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   // ==========================================
 
   /**
-   * Khá»Ÿi táº¡o Handsontable vá»›i lÆ°á»›i trá»‘ng.
-   * Data sáº½ Ä‘Æ°á»£c apply qua rebuildFromExportedTemplate() khi _hotReady resolve.
+   * Kh�xi tạo Handsontable v�:i lư�:i tr�ng.
+   * Data sẽ �ược apply qua rebuildFromExportedTemplate() khi _hotReady resolve.
    */
   private initDesigner(): void {
     if (!this.hotDesignerRef?.nativeElement) return;
@@ -466,7 +466,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     return this.isFormula(src) ? String(src) : null;
   }
 
-  /** Read formula directly from HyperFormula engine â€” guaranteed correct */
+  /** Read formula directly from HyperFormula engine � guaranteed correct */
   private getHyperFormulaCellFormula(row: number, col: number): string | null {
     try {
       const plugin = this.hot?.getPlugin('formulas') as any;
@@ -795,7 +795,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   // ==========================================
-  // Visual Feedback â€” Highlight referenced cells
+  // Visual Feedback � Highlight referenced cells
   // ==========================================
 
   private parseAndHighlightReferences(formula: string): void {
@@ -960,9 +960,9 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       for (let c = 0; c < this.gridCols; c++) {
         if (r === 0) {
           if (c === 0) row.push('STT');
-          else if (c === 1) row.push('Chá»‰ tiÃªu');
-          else if (c === 2) row.push('ÄÆ¡n vá»‹ tÃ­nh');
-          else row.push(`Cá»™t ${c - 2}`);
+          else if (c === 1) row.push('Chỉ tiêu');
+          else if (c === 2) row.push('Đơn vị tính');
+          else row.push(`Cột ${c - 2}`);
         } else if (r === 1) {
           row.push('');
         } else {
@@ -1076,7 +1076,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       }
     }
     this.hot?.render();
-    this.notify('ÄÃ£ Ã¡p dá»¥ng thuá»™c tÃ­nh Ã´', 'success');
+    this.notify('Đã áp dụng thuộc tính ô', 'success');
   }
 
   onCellRoleChange(): void { this.applyCellProps(); }
@@ -1104,50 +1104,50 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     this.dangLuu.set(true);
     const exported = this.exportToJson();
 
-    // â˜… Gáº¯n UUID hiá»‡n táº¡i vÃ o exported Ä‘á»ƒ saveTemplateAndConfig gá»­i lÃªn BE dÆ°á»›i dáº¡ng UPDATE
-    // Náº¿u existingFormUUID = null â†’ BE sáº½ táº¡o má»›i (form chÆ°a cÃ³ trÃªn server)
+    // ��& Gắn UUID hi�!n tại vào exported �Ồ saveTemplateAndConfig gửi lên BE dư�:i dạng UPDATE
+    // Nếu existingFormUUID = null �  BE sẽ tạo m�:i (form chưa có trên server)
     (exported as any).existingFormUUID = this.existingFormUUID;
-    console.log('[FormDesigner] ðŸ“¤ JSON gá»­i lÃªn BE (formUUID:', this.existingFormUUID, '):', JSON.stringify(exported, null, 2));
+    console.log('[FormDesigner] �x� JSON gửi lên BE (formUUID:', this.existingFormUUID, '):', JSON.stringify(exported, null, 2));
 
-    // â”€â”€ 1. LÆ°u vÃ o mock store (giá»¯ hoáº¡t Ä‘á»™ng offline) â”€â”€
+    // ���� 1. Lưu vào mock store (giữ hoạt ��"ng offline) ����
     try {
       const res = await this.bieuMauService.luuTemplate(exported);
       if (res.trangThai) {
-        console.log('[FormDesigner] âœ… Mock store: lÆ°u thÃ nh cÃ´ng');
+        console.log('[FormDesigner] �S& Mock store: lưu thành công');
       }
     } catch (err) {
-      console.warn('[FormDesigner] âš ï¸ Mock store lá»—i:', err);
+      console.warn('[FormDesigner] �a�️ Mock store l�i:', err);
     }
 
-    // â”€â”€ 2. Gá»i API tháº­t: Step 1 (save-form) â†’ Step 2 (save-form-config) â”€â”€
+    // ���� 2. Gọi API thật: Step 1 (save-form) �  Step 2 (save-form-config) ����
     this.formConfigApi.saveTemplateAndConfig(exported).subscribe({
       next: (response) => {
         this.dangLuu.set(false);
         if (response.succeeded) {
-          console.log('[FormDesigner] âœ… API tháº­t: lÆ°u thÃ nh cÃ´ng', response);
+          console.log('[FormDesigner] �S& API thật: lưu thành công', response);
 
-          // â˜… FIX: LÆ°u UUID tá»« response Ä‘á»ƒ láº§n lÆ°u tiáº¿p theo sáº½ UPDATE thay vÃ¬ INSERT má»›i
+          // ��& FIX: Lưu UUID từ response �Ồ lần lưu tiếp theo sẽ UPDATE thay vì INSERT m�:i
           if (response.data && typeof response.data === 'string' && !this.existingFormUUID) {
             this.existingFormUUID = response.data;
-            console.log('[FormDesigner] ðŸ”‘ UUID má»›i Ä‘Æ°á»£c lÆ°u:', this.existingFormUUID);
+            console.log('[FormDesigner] �x UUID m�:i �ược lưu:', this.existingFormUUID);
           }
 
-          this.notify(response.message || 'ÄÃ£ lÆ°u biá»ƒu máº«u lÃªn server thÃ nh cÃ´ng!', 'success');
+          this.notify(response.message || 'Đã lưu biểu mẫu lên server thành công!', 'success');
         } else {
-          console.error('[FormDesigner] âŒ API tháº­t: lá»—i', response);
-          const errMsg = response.errors?.join(', ') || response.message || 'LÆ°u tháº¥t báº¡i';
-          this.notify(`Lá»—i tá»« server: ${errMsg}`, 'error');
+          console.error('[FormDesigner] �R API thật: l�i', response);
+          const errMsg = response.errors?.join(', ') || response.message || 'Lưu thất bại';
+          this.notify(`Lỗi từ server: ${errMsg}`, 'error');
         }
       },
       error: (err) => {
         this.dangLuu.set(false);
-        console.error('[FormDesigner] âŒ API tháº­t: HTTP error', err);
+        console.error('[FormDesigner] �R API thật: HTTP error', err);
         // Handle both PascalCase (.NET) and camelCase error bodies
         const errBody = err.error;
         const serverErrors = errBody?.Errors?.join(', ') || errBody?.errors?.join(', ') || '';
         const serverMsg = errBody?.Message || errBody?.message || '';
-        const detail = serverErrors || serverMsg || err.message || 'Lá»—i khÃ´ng xÃ¡c Ä‘á»‹nh';
-        this.notify(`Lá»—i káº¿t ná»‘i server: ${detail}`, 'error');
+        const detail = serverErrors || serverMsg || err.message || 'Lỗi không xác định';
+        this.notify(`Lỗi kết nối server: ${detail}`, 'error');
       },
     });
   }
@@ -1224,7 +1224,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     
     const { headerRows, autoMerges } = this.buildHeaderRows(sourceData, headerRowCount, colCount, shiftedMergeCells);
     
-    // Add any dynamically inferred merge cells (like Ghi chÃº spanning 2 rows because it's empty below)
+    // Add any dynamically inferred merge cells (like Ghi chú spanning 2 rows because it's empty below)
     if (autoMerges && autoMerges.length > 0) {
       shiftedMergeCells.push(...autoMerges);
     }
@@ -1232,9 +1232,9 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     // --- 5. Build LayoutRows (the list of grid rows) ---
     const rows = this.buildLayoutRows(sourceData, headerRowCount, rowCount, colCount);
 
-    // --- 6. Build mappings â€” khá»›p LayoutCellMapping (layout-template.model.ts) ---
-    // Má»—i mapping = 1 Ã´ body: rowCodeÃ—colCode lÃ  key duy nháº¥t cho BE lÆ°u xuá»‘ng DB.
-    // KhÃ´ng chá»©a accountCode hay cellValue â€” BE tá»± derive tá»« rowCode+colCode.
+    // --- 6. Build mappings � kh�:p LayoutCellMapping (layout-template.model.ts) ---
+    // M�i mapping = 1 ô body: rowCode�colCode là key duy nhất cho BE lưu xu�ng DB.
+    // Không chứa accountCode hay cellValue � BE tự derive từ rowCode+colCode.
     const mappings: FormMappingExport[] = [];
     for (let r = headerRowCount; r < rowCount; r++) {
       const rowKey = `R${r + 1}`;
@@ -1243,13 +1243,13 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
       for (let c = 0; c < colCount; c++) {
         const colKey = this.colIndexToKey(c);
-        const colCode = columns[c + 1].colCode || `COL_${c + 1}`; // +1 vÃ¬ columns[0] = METADATA_ROW
+        const colCode = columns[c + 1].colCode || `COL_${c + 1}`; // +1 vì columns[0] = METADATA_ROW
 
         const meta = this.cellMetadata.get(`${r},${c}`);
         const hfFormula = this.getHyperFormulaCellFormula(r, c);
         const formula = hfFormula || meta?.formula || null;
 
-        // XÃ¡c Ä‘á»‹nh role: Æ°u tiÃªn meta > formula > vá»‹ trÃ­ cá»™t > default 'data'
+        // Xác ��9nh role: ưu tiên meta > formula > v�9 trí c�"t > default 'data'
         let cellRole: CellRole;
         if (meta?.role && meta.role !== 'data') {
           cellRole = meta.role;
@@ -1261,7 +1261,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
           cellRole = 'data';
         }
 
-        // isReadOnly: forced true cho formula/header/text, hoáº·c column readOnly, hoáº·c user set
+        // isReadOnly: forced true cho formula/header/text, hoặc column readOnly, hoặc user set
         const isColumnReadOnly = columns[c + 1].readOnly;
         const isReadOnly = cellRole === 'formula'
           || cellRole === 'header'
@@ -1284,7 +1284,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       }
     }
 
-    // --- 7. Assemble â€” layoutJSON khá»›p LayoutJSON interface (layout-template.model.ts) ---
+    // --- 7. Assemble � layoutJSON kh�:p LayoutJSON interface (layout-template.model.ts) ---
     const freezeColumns = (this.fixedCols > 0 ? this.fixedCols : 0) + 1;
     const fixedRowsTop = this.fixedRows > 0 ? this.fixedRows : (headerRowCount > 0 ? headerRowCount : 1);
 
@@ -1295,12 +1295,12 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       mergeCells: shiftedMergeCells.length > 0 ? shiftedMergeCells : undefined,
       fixedRowsTop,
       freezeColumns,
-      mappings,  // â† náº±m BÃŠN TRONG layoutJSON, khÃ´ng pháº£i top-level
+      mappings,  // � � nằm B�`N TRONG layoutJSON, không phải top-level
     };
 
     return {
       formId: this.templateInfo.templateId || this.formId || 'NEW_TEMPLATE',
-      formName: this.templateInfo.templateName || 'Biá»ƒu máº«u má»›i',
+      formName: this.templateInfo.templateName || 'Biểu mẫu mới',
       isActive: this.templateInfo.isActive ?? true,
       orgList: this.entValues.map(v => v.trim()).filter(Boolean),
       isDynamicRow: false,
@@ -1309,7 +1309,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         allowDynamicRows: false,
         freezeColumns,
         hiddenColumns: {
-          columns: [0], // áº¨n cá»™t METADATA_ROW
+          columns: [0], // Ẩn c�"t METADATA_ROW
           indicators: false,
         },
       },
@@ -1344,17 +1344,17 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   private generateColCode(fullTitle: string, index: number): string {
     const t = fullTitle.trim().toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[Ä‘Ä]/g, 'd');
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd');
     
     let baseCode = '';
     
-    // ---- Nháº­n diá»‡n cá»™t Ä‘áº·c biá»‡t ----
+    // ---- Nhận di�!n c�"t �ặc bi�!t ----
     if (index === 0 && (t.includes('stt') || t === '' || /so\s+thu\s+tu/.test(t) || /thu\s+tu/.test(t))) baseCode = 'STT';
     else if (index === 1 && (t.includes('chi tieu') || t.includes('ten chi tieu') || t.includes('noi dung'))) baseCode = 'CHITIEU_NAME';
     else if (t.includes('don vi') || t.includes('dvt')) baseCode = 'UNIT';
     else if (t.includes('ghi chu') || t.includes('note')) baseCode = 'NOTE';
     else {
-      // ---- Auto infer dá»±a trÃªn tá»« khÃ³a phá»• biáº¿n ----
+      // ---- Auto infer dựa trên từ khóa ph�" biến ----
       let prefix = 'COL';
       if (t.includes('thuc hien')) prefix = 'ACTUAL';
       else if (t.includes('ke hoach') || t.includes('kh')) prefix = 'PLAN';
@@ -1405,13 +1405,13 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       const leadingSpacesMatch = textTitle.match(/^(\s+)/);
       const level = leadingSpacesMatch ? Math.floor(leadingSpacesMatch[1].length / 2) : 0;
       
-      // Determine rowCode â€” prioritize user-assigned code from rowCodeMap
+      // Determine rowCode � prioritize user-assigned code from rowCodeMap
       let rowCode = '';
       const assignedRowCode = this.rowCodeMap.get(r);
       if (assignedRowCode) {
         rowCode = assignedRowCode;
         chitieuCounter++;
-      } else if (title.toUpperCase().startsWith('Tá»”NG') || title.toUpperCase().startsWith('TONG')) {
+      } else if (title.toUpperCase().startsWith('TỔNG') || title.toUpperCase().startsWith('TONG')) {
         rowCode = `TONG_CONG_${chitieuCounter++}`;
       } else if (title) {
         rowCode = `CHITIEU_${String(chitieuCounter++).padStart(2, '0')}`;
@@ -1450,7 +1450,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private detectHeaderRowCount(_data: any[][], _colCount: number, mergeCells?: MergeCell[]): number {
-    // Primary: use merge cells that span multiple rows â€” header rows always have merges
+    // Primary: use merge cells that span multiple rows � header rows always have merges
     const merges = mergeCells ?? this.collectMergeCells();
     let maxMergeEnd = 0;
     for (const mc of merges) {
@@ -1469,12 +1469,12 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     }
     if (maxMergeRow >= 0) return maxMergeRow + 1;
 
-    // No merges at all â†’ default 1 header row
+    // No merges at all �  default 1 header row
     return 1;
   }
 
   private resolveColumnTitle(data: any[][], col: number, headerRowCount: number): string {
-    // Láº¥y tá»« dÃ²ng cuá»‘i header (bottom-most) â€” tiÃªu Ä‘á» con cá»¥ thá»ƒ hÆ¡n
+    // Lấy từ dòng cu�i header (bottom-most) � tiêu �ề con cụ thỒ hơn
     for (let r = headerRowCount - 1; r >= 0; r--) {
       const val = data[r]?.[col];
       if (val !== null && val !== undefined && val !== '') return String(val);
@@ -1483,17 +1483,17 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private inferColumnType(data: any[][], col: number, startRow: number, rowCount: number): 'text' | 'numeric' {
-    // Cá»™t cá»‘ Ä‘á»‹nh (STT, Chá»‰ tiÃªu) â†’ luÃ´n lÃ  text
+    // C�"t c� ��9nh (STT, Ch�0 tiêu) �  luôn là text
     if (col < this.fixedCols) return 'text';
 
-    // Kiá»ƒm tra giÃ¡ trá»‹ thá»±c táº¿ trong cÃ¡c dÃ²ng data
+    // KiỒm tra giá tr�9 thực tế trong các dòng data
     let hasText = false;
     let hasNumeric = false;
     for (let r = startRow; r < Math.min(rowCount, startRow + 20); r++) {
       const val = data[r]?.[col];
       if (val === null || val === undefined || val === '') continue;
 
-      // Formula â†’ cá»™t chá»©a káº¿t quáº£ tÃ­nh toÃ¡n â†’ numeric
+      // Formula �  c�"t chứa kết quả tính toán �  numeric
       if (typeof val === 'string' && val.startsWith('=')) { hasNumeric = true; continue; }
 
       if (typeof val === 'number') { hasNumeric = true; continue; }
@@ -1508,12 +1508,12 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       }
     }
 
-    // Náº¿u cÃ³ giÃ¡ trá»‹ text thá»±c sá»± (khÃ´ng pháº£i sá»‘) â†’ cá»™t text
+    // Nếu có giá tr�9 text thực sự (không phải s�) �  c�"t text
     if (hasText && !hasNumeric) return 'text';
-    // CÃ³ giÃ¡ trá»‹ numeric â†’ cá»™t numeric
+    // Có giá tr�9 numeric �  c�"t numeric
     if (hasNumeric) return 'numeric';
 
-    // KhÃ´ng cÃ³ data â†’ cá»™t sau fixedCols thÆ°á»ng lÃ  numeric (Ã´ nháº­p sá»‘ liá»‡u)
+    // Không có data �  c�"t sau fixedCols thường là numeric (ô nhập s� li�!u)
     if (this.fixedCols > 0 && col >= this.fixedCols) return 'numeric';
 
     return 'text';
@@ -1530,7 +1530,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       result.push({ row, col, rowspan, colspan });
     };
 
-    // Nguá»“n 1: MergeCells plugin (mergedCellsCollection.mergedCells)
+    // Ngu�n 1: MergeCells plugin (mergedCellsCollection.mergedCells)
     const mergePlugin = this.hot!.getPlugin('mergeCells') as any;
     const pluginMerges = mergePlugin?.mergedCellsCollection?.mergedCells ?? mergePlugin?.mergedCells ?? [];
     for (const mc of pluginMerges) {
@@ -1541,7 +1541,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       }
     }
 
-    // Nguá»“n 2: mergedCells ná»™i bá»™ (sync tá»« afterMergeCells / load template)
+    // Ngu�n 2: mergedCells n�"i b�" (sync từ afterMergeCells / load template)
     for (const m of this.mergedCells) {
       add(m.row, m.col, m.rowspan, m.colspan);
     }
@@ -1563,7 +1563,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   private sanitizeCode(label: string): string {
     return label
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // strip diacritics
-      .replace(/[Ä‘Ä]/g, 'D')
+      .replace(/[đĐ]/g, 'D')
       .replace(/\s+/g, '_')
       .replace(/[^A-Za-z0-9_]/g, '')
       .toUpperCase()
@@ -1600,7 +1600,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         const mc = mergeOwner.get(key);
 
         if (mc && (mc.row !== r || mc.col !== shiftedCol)) {
-          // This cell is part of a merge but not the top-left â†’ skip
+          // This cell is part of a merge but not the top-left �  skip
           continue;
         }
 
@@ -1637,7 +1637,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   exportJsonToClipboard(): void {
     navigator.clipboard.writeText(JSON.stringify(this.exportToJson(), null, 2)).then(() => {
-      this.notify('ÄÃ£ copy JSON vÃ o clipboard!', 'success');
+      this.notify('Đã copy JSON vào clipboard!', 'success');
     });
   }
 
@@ -1803,7 +1803,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     this.selectedColIndicators = [];
 
     this.hot.render();
-    console.log('[FormDesigner] âœ… Grid rebuilt from ExportedTemplate:', {
+    console.log('[FormDesigner] �S& Grid rebuilt from ExportedTemplate:', {
       rows: data.length, cols: totalCols, merges: mergeCells.length,
       headerRows: headerRowCount, bodyRows: bodyRows.length,
     });
@@ -1873,7 +1873,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     }
     this.cellMetadata = newMeta;
 
-    // 3) Shift mergedCells â€” remove ones inside deleted range, shift others
+    // 3) Shift mergedCells � remove ones inside deleted range, shift others
     this.mergedCells = this.mergedCells
       .filter(mc => !(mc.row >= index && mc.row < index + amount))
       .map(mc => ({
@@ -1961,40 +1961,40 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   removeEntValue(i: number): void { if (this.entValues.length > 1) this.entValues.splice(i, 1); }
 
   // ==========================================
-  // Indicator Code (MÃ£ chá»‰ tiÃªu) Management
+  // Indicator Code (Mã ch�0 tiêu) Management
   // ==========================================
 
   private async loadIndicatorCodes(): Promise<void> {
-    // === Row Indicators: gá»i API tháº­t DimAccount/get-tree ===
+    // === Row Indicators: gọi API thật DimAccount/get-tree ===
     this.dimAccountApi.loadAccountTree().subscribe({
       next: (groups) => {
         if (groups.length > 0) {
           this.rowIndicators.set(groups);
-          console.log('[FormDesigner] âœ… Row indicators loaded from API:', groups.length, 'groups');
+          console.log('[FormDesigner] �S& Row indicators loaded from API:', groups.length, 'groups');
         } else {
-          console.warn('[FormDesigner] âš ï¸ API tráº£ 0 groups, fallback mock');
+          console.warn('[FormDesigner] �a�️ API trả 0 groups, fallback mock');
           this.loadRowIndicatorsFromMock();
         }
       },
       error: () => {
-        console.warn('[FormDesigner] âŒ API DimAccount failed, fallback mock');
+        console.warn('[FormDesigner] �R API DimAccount failed, fallback mock');
         this.loadRowIndicatorsFromMock();
       },
     });
 
-    // === Column Indicators: váº«n dÃ¹ng mock (cá»™t thá»i gian, ká»³ bÃ¡o cÃ¡o) ===
+    // === Column Indicators: vẫn dùng mock (c�"t thời gian, kỳ báo cáo) ===
     try {
       const res = await this.bieuMauService.layDanhMucMaChiTieu();
       if (res.trangThai && res.duLieu?.columnIndicators) {
         this.colIndicators.set(res.duLieu.columnIndicators);
-        console.log('[FormDesigner] âœ… Column indicators loaded from mock');
+        console.log('[FormDesigner] �S& Column indicators loaded from mock');
       }
     } catch {
-      console.warn('[FormDesigner] âš ï¸ KhÃ´ng load Ä‘Æ°á»£c column indicators mock');
+      console.warn('[FormDesigner] �a�️ Không load �ược column indicators mock');
     }
   }
 
-  /** Fallback: load row indicators tá»« mock JSON náº¿u API fail */
+  /** Fallback: load row indicators từ mock JSON nếu API fail */
   private async loadRowIndicatorsFromMock(): Promise<void> {
     try {
       const res = await this.bieuMauService.layDanhMucMaChiTieu();
@@ -2002,7 +2002,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         this.rowIndicators.set(res.duLieu.rowIndicators);
       }
     } catch {
-      console.warn('[FormDesigner] âš ï¸ Cáº£ API vÃ  mock Ä‘á»u fail');
+      console.warn('[FormDesigner] �a�️ Cả API và mock �ều fail');
     }
   }
 
@@ -2037,11 +2037,11 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     const colCount = this.hot.countCols();
     const titleCol = colCount > 1 ? 1 : 0;
     const val = this.hot.getDataAtCell(sel.row, titleCol);
-    return val ? String(val).trim() : `DÃ²ng ${sel.row + 1}`;
+    return val ? String(val).trim() : `Dòng ${sel.row + 1}`;
   }
 
   // ==========================================
-  // Indicator Selection Dialog â€” ROW
+  // Indicator Selection Dialog � ROW
   // ==========================================
 
   openRowIndicatorDialog(): void {
@@ -2060,11 +2060,11 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
   toggleTempRowIndicator(item: IndicatorItem): void {
     if (this.tempRowSelection.has(item.code)) {
-      // Uncheck â†’ remove from selection and ordered list
+      // Uncheck �  remove from selection and ordered list
       this.tempRowSelection.delete(item.code);
       this.tempRowOrderedList = this.tempRowOrderedList.filter(i => i.code !== item.code);
     } else {
-      // Check â†’ insert at the correct hierarchical position
+      // Check �  insert at the correct hierarchical position
       this.tempRowSelection.add(item.code);
       const level = item.level || 0;
 
@@ -2090,7 +2090,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
             return;
           }
         }
-        // Parent not in list â†’ add as standalone
+        // Parent not in list �  add as standalone
         this.tempRowOrderedList.push({ ...item });
       }
     }
@@ -2193,7 +2193,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   selectAllRowIndicators(): void {
-    // Add all items in catalog order â€” maintains correct hierarchy
+    // Add all items in catalog order � maintains correct hierarchy
     this.tempRowSelection.clear();
     this.tempRowOrderedList = [];
     for (const group of this.rowIndicators()) {
@@ -2419,7 +2419,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     this.hot.render();
 
     this.showRowIndicatorDialog.set(false);
-    this.notify(`ÄÃ£ Ã¡p dá»¥ng ${selected.length} chá»‰ tiÃªu dÃ²ng lÃªn lÆ°á»›i`, 'success');
+    this.notify(`Đã áp dụng ${selected.length} chỉ tiêu dòng lên lưới`, 'success');
   }
 
   /** Write row indicator body data to the grid at the correct offset below headers.
@@ -2449,7 +2449,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
     this.rowCodeMap.clear();
     this.rowCodeNameMap.clear();
 
-    // Populate rows â€” in user's chosen order
+    // Populate rows � in user's chosen order
     const changes: [number, number, any][] = [];
     let parentCounter = 0;
     for (let i = 0; i < selected.length; i++) {
@@ -2462,7 +2462,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       const sttLabel = level === 0 ? String(parentCounter) : '';
       changes.push([rowIdx, 0, sttLabel]);
 
-      // Col 1 = TÃªn chá»‰ tiÃªu (with indent)
+      // Col 1 = Tên ch�0 tiêu (with indent)
       const indent = level > 0 ? '  '.repeat(level) : '';
       const prefix = level >= 2 ? '- ' : '';
       changes.push([rowIdx, 1, indent + prefix + item.name]);
@@ -2476,7 +2476,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       this.rowCodeMap.set(rowIdx, item.code);
       this.rowCodeNameMap.set(rowIdx, item.name);
 
-      // Mark STT + Chá»‰ tiÃªu columns as read-only
+      // Mark STT + Ch�0 tiêu columns as read-only
       this.cellMetadata.set(`${rowIdx},0`, { role: 'text', readOnly: true });
       this.cellMetadata.set(`${rowIdx},1`, { role: 'text', readOnly: true });
     }
@@ -2485,7 +2485,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   // ==========================================
-  // Indicator Selection Dialog â€” COLUMN
+  // Indicator Selection Dialog � COLUMN
   // ==========================================
 
   openColIndicatorDialog(): void {
@@ -2536,7 +2536,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
           const childCount = this.autoSelectColChildren(item);
           this.regroupColOrphans(item);
           if (childCount > 0) {
-            this.notify(`ÄÃ£ thÃªm "${item.name}" + ${childCount} cá»™t con`, 'success');
+            this.notify(`Đã thêm "${item.name}" + ${childCount} cột con`, 'success');
           }
         }
       } else {
@@ -2822,11 +2822,11 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   applyColIndicators(): void {
     if (!this.hot) return;
 
-    // Build leaf columns (skip group headers â€” they only create colspan)
+    // Build leaf columns (skip group headers � they only create colspan)
     const leafCols = this.tempColOrderedList.filter(i => !i.isGroupHeader);
     this.selectedColIndicators = [...this.tempColOrderedList]; // store full ordered list
 
-    const fixedColCount = 3; // STT, Chá»‰ tiÃªu, ÄVT
+    const fixedColCount = 3; // STT, Chỉ tiêu, ĐVT
     const requiredCols = fixedColCount + leafCols.length;
     const currentCols = this.hot.countCols();
 
@@ -2855,19 +2855,19 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
     // Fixed column headers
     changes.push([0, 0, 'STT']);
-    changes.push([0, 1, 'Chá»‰ tiÃªu']);
-    changes.push([0, 2, 'ÄÆ¡n vá»‹ tÃ­nh']);
+    changes.push([0, 1, 'Chỉ tiêu']);
+    changes.push([0, 2, 'Đơn vị tính']);
     if (hasGroupHeaders) {
       changes.push([1, 0, '']);
       changes.push([1, 1, '']);
       changes.push([1, 2, '']);
     }
     this.columnCodeMap.set(0, 'STT');
-    this.columnCodeNameMap.set(0, 'Sá»‘ thá»© tá»±');
+    this.columnCodeNameMap.set(0, 'Số thứ tự');
     this.columnCodeMap.set(1, 'CHITIEU_NAME');
-    this.columnCodeNameMap.set(1, 'TÃªn chá»‰ tiÃªu');
+    this.columnCodeNameMap.set(1, 'Tên chỉ tiêu');
     this.columnCodeMap.set(2, 'UNIT');
-    this.columnCodeNameMap.set(2, 'ÄÆ¡n vá»‹ tÃ­nh');
+    this.columnCodeNameMap.set(2, 'Đơn vị tính');
 
     // Build column groups from ordered list
     const groups = this.getColPreviewGroups();
@@ -2938,7 +2938,7 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
 
     this.hot.render();
     this.showColIndicatorDialog.set(false);
-    this.notify(`ÄÃ£ Ã¡p dá»¥ng ${leafCols.length} chá»‰ tiÃªu cá»™t lÃªn lÆ°á»›i`, 'success');
+    this.notify(`Đã áp dụng ${leafCols.length} chỉ tiêu cột lên lưới`, 'success');
   }
 
   // --- Filtered indicators for dialog search ---
@@ -2981,3 +2981,4 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
 }
+

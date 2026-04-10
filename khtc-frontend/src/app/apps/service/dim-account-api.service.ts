@@ -1,11 +1,11 @@
 // ============================================
 // DimAccountApiService
-// Gá»i API tháº­t: POST /api/v2/DimAccount/get-tree
+// Gọi API thật: POST /api/v2/DimAccount/get-tree
 //
-// Transform cÃ¢y chá»‰ tiÃªu tá»« BE â†’ IndicatorGroup[]
-// dÃ¹ng cho dialog chá»n chá»‰ tiÃªu trong Form Designer.
+// Transform cây ch�0 tiêu từ BE �  IndicatorGroup[]
+// dùng cho dialog chọn ch�0 tiêu trong Form Designer.
 //
-// Response BE (.NET PascalCase Ä‘Ã£ lowercase sáºµn):
+// Response BE (.NET PascalCase �ã lowercase sẵn):
 //   { succeeded, data: AccountNode[], statusCode }
 //
 // AccountNode:
@@ -17,7 +17,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, map, catchError, tap, shareReplay } from 'rxjs';
 import { ConfigService } from '../../core/app-config.service';
 
-// â”€â”€ BE Response Interfaces â”€â”€
+// ���� BE Response Interfaces ����
 
 export interface AccountNode {
   accountId: string;
@@ -36,7 +36,7 @@ interface DimAccountApiResponse {
   errorCode: number;
 }
 
-// â”€â”€ FE Indicator Interfaces (khá»›p vá»›i thiet-ke-bieu-mau.component.ts) â”€â”€
+// ���� FE Indicator Interfaces (kh�:p v�:i thiet-ke-bieu-mau.component.ts) ����
 
 export interface IndicatorItem {
   code: string;
@@ -44,7 +44,7 @@ export interface IndicatorItem {
   type?: string;
   level?: number;
   isGroupHeader?: boolean;
-  /** UUID tá»« BE â€” dÃ¹ng cho mapping chÃ­nh xÃ¡c */
+  /** UUID từ BE � dùng cho mapping chính xác */
   accountId?: string;
 }
 
@@ -59,7 +59,7 @@ export class DimAccountApiService {
   private http = inject(HttpClient);
   private configService = inject(ConfigService);
 
-  /** Cache Observable â€” trÃ¡nh gá»i API nhiá»u láº§n */
+  /** Cache Observable � tránh gọi API nhiều lần */
   private cache$: Observable<IndicatorGroup[]> | null = null;
 
   private get apiBase(): string {
@@ -67,40 +67,40 @@ export class DimAccountApiService {
   }
 
   // ================================================================
-  //  PUBLIC: Láº¥y cÃ¢y chá»‰ tiÃªu dÆ°á»›i dáº¡ng IndicatorGroup[]
+  //  PUBLIC: Lấy cây ch�0 tiêu dư�:i dạng IndicatorGroup[]
   // ================================================================
 
   /**
-   * Gá»i API GET-TREE vÃ  transform thÃ nh IndicatorGroup[].
-   * Káº¿t quáº£ Ä‘Æ°á»£c cache (shareReplay) â€” chá»‰ gá»i API 1 láº§n.
+   * Gọi API GET-TREE và transform thành IndicatorGroup[].
+   * Kết quả �ược cache (shareReplay) � ch�0 gọi API 1 lần.
    *
-   * Má»—i root account â†’ 1 IndicatorGroup
-   *   group = accountName (VD: "Tá»”NG DOANH THU")
+   * M�i root account �  1 IndicatorGroup
+   *   group = accountName (VD: "T�NG DOANH THU")
    *   items = [root(level=0), child1(level=1), child2(level=1), grandchild(level=2), ...]
    */
   loadAccountTree(): Observable<IndicatorGroup[]> {
     if (this.cache$) return this.cache$;
 
     const url = `${this.apiBase}/api/v2/DimAccount/get-tree`;
-    console.log('[DimAccountApi] ðŸŒ POST:', url);
+    console.log('[DimAccountApi] �xR� POST:', url);
 
     this.cache$ = this.http.post<DimAccountApiResponse>(url, {}).pipe(
       map(response => {
         if (!response.succeeded || !response.data) {
-          console.warn('[DimAccountApi] âš ï¸ API returned succeeded=false');
+          console.warn('[DimAccountApi] �a�️ API returned succeeded=false');
           return [];
         }
 
-        console.log('[DimAccountApi] âœ… Received', response.data.length, 'root accounts');
+        console.log('[DimAccountApi] �S& Received', response.data.length, 'root accounts');
         return this.transformToIndicatorGroups(response.data);
       }),
       tap(groups => {
         const totalItems = groups.reduce((sum, g) => sum + g.items.length, 0);
-        console.log('[DimAccountApi] ðŸ“‹ Transformed:', groups.length, 'groups,', totalItems, 'items total');
+        console.log('[DimAccountApi] �x9 Transformed:', groups.length, 'groups,', totalItems, 'items total');
       }),
       catchError(err => {
-        console.error('[DimAccountApi] âŒ API error:', err);
-        this.cache$ = null; // Cho phÃ©p retry láº§n sau
+        console.error('[DimAccountApi] �R API error:', err);
+        this.cache$ = null; // Cho phép retry lần sau
         return of([]);
       }),
       shareReplay(1),
@@ -110,15 +110,15 @@ export class DimAccountApiService {
   }
 
   /**
-   * XÃ³a cache â€” dÃ¹ng khi cáº§n reload dá»¯ liá»‡u má»›i tá»« BE.
+   * Xóa cache � dùng khi cần reload dữ li�!u m�:i từ BE.
    */
   clearCache(): void {
     this.cache$ = null;
   }
 
   /**
-   * Láº¥y flat list táº¥t cáº£ AccountNode (khÃ´ng phÃ¢n cáº¥p).
-   * Há»¯u Ã­ch cho lookup nhanh theo accountCode.
+   * Lấy flat list tất cả AccountNode (không phân cấp).
+   * Hữu ích cho lookup nhanh theo accountCode.
    */
   loadFlatList(): Observable<AccountNode[]> {
     const url = `${this.apiBase}/api/v2/DimAccount/get-tree`;
@@ -136,17 +136,17 @@ export class DimAccountApiService {
   // ================================================================
 
   /**
-   * Chuyá»ƒn Ä‘á»•i AccountNode[] (tree) â†’ IndicatorGroup[] (flat groups).
+   * ChuyỒn ��"i AccountNode[] (tree) �  IndicatorGroup[] (flat groups).
    *
    * VD:
-   *   AccountNode: { code: "DT", name: "Tá»”NG DOANH THU", children: [DT_BH, DT_TC] }
-   *   â†’
+   *   AccountNode: { code: "DT", name: "T�NG DOANH THU", children: [DT_BH, DT_TC] }
+   *   � 
    *   IndicatorGroup: {
-   *     group: "Tá»”NG DOANH THU",
+   *     group: "T�NG DOANH THU",
    *     items: [
-   *       { code: "DT", name: "Tá»”NG DOANH THU", level: 0 },
-   *       { code: "DT_BH", name: "Doanh thu bÃ¡n hÃ ng...", level: 1 },
-   *       { code: "DT_TC", name: "Doanh thu hoáº¡t Ä‘á»™ng tÃ i chÃ­nh", level: 1 },
+   *       { code: "DT", name: "T�NG DOANH THU", level: 0 },
+   *       { code: "DT_BH", name: "Doanh thu bán hàng...", level: 1 },
+   *       { code: "DT_TC", name: "Doanh thu hoạt ��"ng tài chính", level: 1 },
    *     ]
    *   }
    */
@@ -169,8 +169,8 @@ export class DimAccountApiService {
   }
 
   /**
-   * Flatten 1 AccountNode + children thÃ nh máº£ng IndicatorItem[].
-   * Pre-order traversal: parent trÆ°á»›c, children sau.
+   * Flatten 1 AccountNode + children thành mảng IndicatorItem[].
+   * Pre-order traversal: parent trư�:c, children sau.
    */
   private flattenNode(node: AccountNode, level: number, items: IndicatorItem[]): void {
     items.push({
@@ -188,7 +188,7 @@ export class DimAccountApiService {
   }
 
   /**
-   * Flatten toÃ n bá»™ tree thÃ nh flat list.
+   * Flatten toàn b�" tree thành flat list.
    */
   private flattenTree(nodes: AccountNode[]): AccountNode[] {
     const result: AccountNode[] = [];

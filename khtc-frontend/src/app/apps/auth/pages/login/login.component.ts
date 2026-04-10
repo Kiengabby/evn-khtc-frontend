@@ -1,5 +1,5 @@
 // ============================================
-// Login Page â€” EVN Workflow Style (Blue)
+// Login Page � EVN Workflow Style (Blue)
 // ============================================
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -26,7 +26,7 @@ export class LoginComponent {
 
     async onLogin(): Promise<void> {
         if (!this.username || !this.password) {
-            this.errorMessage = 'Vui lÃ²ng nháº­p Ä‘áº§y Ä‘á»§ thÃ´ng tin';
+            this.errorMessage = 'Vui lòng nhập �ầy �ủ thông tin';
             return;
         }
         this.loading = true;
@@ -35,7 +35,7 @@ export class LoginComponent {
             await this.authService.login({ username: this.username, password: this.password });
             this.router.navigate(['/app']);
         } catch (err: any) {
-            this.errorMessage = err?.error?.message || 'ÄÄƒng nháº­p tháº¥t báº¡i. Vui lÃ²ng kiá»ƒm tra láº¡i.';
+            this.errorMessage = err?.error?.message || 'ĐĒng nhập thất bại. Vui lòng kiỒm tra lại.';
         } finally {
             this.loading = false;
         }

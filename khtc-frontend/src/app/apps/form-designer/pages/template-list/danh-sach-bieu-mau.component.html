@@ -18,7 +18,7 @@
       <div class="search-box">
         <i class="pi pi-search"></i>
         <input type="text"
-               placeholder="Tìm kiếm theo mã, tên biểu mẫu..."
+               placeholder="Tìm kiếm theo mã, tên biểu mẫu, đơn vị..."
                [(ngModel)]="tuKhoa"
                (input)="onTimKiem()">
         @if (tuKhoa) {
@@ -43,6 +43,17 @@
           Ngừng sử dụng
         </button>
       </div>
+      <!-- Filter by Entity Code (mã danh mục) -->
+      @if (danhSachDonVi().length > 0) {
+        <select class="filter-entity"
+                [(ngModel)]="boLocDonVi"
+                (change)="locDanhSach()">
+          <option value="">Tất cả đơn vị</option>
+          @for (donVi of danhSachDonVi(); track donVi) {
+            <option [value]="donVi">{{ donVi }}</option>
+          }
+        </select>
+      }
     </div>
     <div class="toolbar-right">
       <div class="view-toggle">
@@ -160,24 +171,22 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th class="col-code">Mã biểu mẫu</th>
-            <th class="col-name">Tên biểu mẫu</th>
-            <th class="col-version">Phiên bản</th>
-            <th class="col-year">Năm áp dụng</th>
+            <th class="col-report">Tên báo cáo</th>
+            <th class="col-entity">Đơn vị</th>
+            <th class="col-period">Kỳ báo cáo</th>
             <th class="col-status">Trạng thái</th>
-            <th class="col-date">Ngày tạo</th>
-            <th class="col-actions">Thao tác</th>
+            <th class="col-created">Ngày tạo</th>
+            <th class="col-updated">Ngày cập nhật</th>
+            <th class="col-actions">Hành động</th>
           </tr>
         </thead>
         <tbody>
           @for (bm of danhSachHienThi(); track bm.formCode; let i = $index) {
             <tr [class.inactive-row]="bm.isActive === false"
                 [style.animation-delay]="(i * 30) + 'ms'">
-              <td class="col-code">
-                <span class="code-badge">{{ bm.formCode }}</span>
-              </td>
-              <td class="col-name">
-                <div class="name-cell">
+              <td class="col-report">
+                <div class="report-cell">
+                  <span class="code-badge">{{ bm.formCode }}</span>
                   <div>
                     <span class="cell-name">{{ bm.formName }}</span>
                     @if (bm.description) {
@@ -186,10 +195,25 @@
                   </div>
                 </div>
               </td>
-              <td class="col-version">
-                <span class="version-text">{{ bm.currentVersion || '—' }}</span>
+              <td class="col-entity">
+                @if (bm.entityCode && bm.entityName) {
+                  <div class="entity-cell">
+                    <span class="entity-code">{{ bm.entityCode }}</span>
+                    <span class="entity-name">{{ bm.entityName }}</span>
+                  </div>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
               </td>
-              <td class="col-year">{{ bm.applyYear || '—' }}</td>
+              <td class="col-period">
+                @if (bm.period && bm.applyYear) {
+                  <span class="period-text">{{ bm.period }}/{{ bm.applyYear }}</span>
+                } @else if (bm.applyYear) {
+                  <span class="period-text">Năm {{ bm.applyYear }}</span>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
               <td class="col-status">
                 @if (bm.isActive !== false) {
                   <span class="status-pill pill-active">Hoạt động</span>
@@ -197,14 +221,15 @@
                   <span class="status-pill pill-inactive">Ngừng</span>
                 }
               </td>
-              <td class="col-date">{{ formatDate(bm.createdAt) }}</td>
+              <td class="col-created">{{ formatDate(bm.createdAt) }}</td>
+              <td class="col-updated">{{ formatDate(bm.updatedAt) }}</td>
               <td class="col-actions">
                 <div class="table-actions">
+                  <button class="btn-table-action primary" (click)="moThietKe(bm.formCode)" title="Xem biểu mẫu">
+                    <i class="pi pi-eye"></i>
+                  </button>
                   <button class="btn-table-action primary" (click)="moThietKe(bm.formCode)" title="Sửa biểu mẫu">
                     <i class="pi pi-pencil"></i>
-                  </button>
-                  <button class="btn-table-action danger" title="Xóa biểu mẫu">
-                    <i class="pi pi-trash"></i>
                   </button>
                 </div>
               </td>

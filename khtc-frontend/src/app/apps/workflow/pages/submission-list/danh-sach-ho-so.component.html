@@ -1,93 +1,157 @@
 <div class="page-wrapper">
+  <!-- Page Header -->
   <div class="page-header">
-    <div>
-      <h1>Hồ sơ đã nộp</h1>
-      <p>Quản lý trạng thái hồ sơ kế hoạch tài chính</p>
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="pi pi-send"></i>
+      </div>
+      <div class="header-text">
+        <h1 class="page-title">Hồ sơ đã nộp</h1>
+      </div>
     </div>
     <div class="header-stats">
       <span class="stat-pill">
-        <i class="pi pi-file"></i> {{ danhSach().length }} hồ sơ
+        <i class="pi pi-file"></i> {{ danhSachHienThi().length }}/{{ danhSach().length }} hồ sơ
       </span>
     </div>
   </div>
 
-  <!-- Bộ lọc -->
-  <div class="filter-bar">
-    <div class="search-box">
-      <i class="pi pi-search"></i>
-      <input type="text" placeholder="Tìm mã hồ sơ, nội dung, đơn vị..."
-             [(ngModel)]="tuKhoa" (input)="taiDuLieu()">
+  <!-- Toolbar -->
+  <div class="toolbar-section">
+    <div class="toolbar-left">
+      <div class="search-box">
+        <i class="pi pi-search"></i>
+        <input type="text"
+               placeholder="Tìm kiếm mã, tên báo cáo, đơn vị..."
+               [(ngModel)]="tuKhoa"
+               (input)="locDanhSach()">
+        @if (tuKhoa) {
+          <button class="search-clear" (click)="tuKhoa = ''; locDanhSach()">
+            <i class="pi pi-times"></i>
+          </button>
+        }
+      </div>
+
+      <!-- Filter by status -->
+      <select class="filter-select"
+              [(ngModel)]="trangThaiLoc"
+              (change)="locDanhSach()">
+        <option value="">Tất cả trạng thái</option>
+        <option value="nhap">Nháp</option>
+        <option value="cho_duyet">Chờ duyệt</option>
+        <option value="da_duyet">Đã duyệt</option>
+        <option value="tu_choi">Từ chối</option>
+        <option value="tra_lai">Trả lại</option>
+      </select>
+
+      <!-- Filter by Entity Code (mã danh mục) -->
+      @if (danhSachDonVi().length > 0) {
+        <select class="filter-select"
+                [(ngModel)]="boLocDonVi"
+                (change)="locDanhSach()">
+          <option value="">Tất cả đơn vị</option>
+          @for (donVi of danhSachDonVi(); track donVi) {
+            <option [value]="donVi">{{ donVi }}</option>
+          }
+        </select>
+      }
     </div>
-    <select [(ngModel)]="trangThaiLoc" (change)="taiDuLieu()">
-      <option value="">Tất cả trạng thái</option>
-      <option value="nhap">Nháp</option>
-      <option value="cho_duyet">Chờ duyệt</option>
-      <option value="da_duyet">Đã duyệt</option>
-      <option value="tu_choi">Từ chối</option>
-      <option value="tra_lai">Trả lại</option>
-    </select>
+
+    <div class="toolbar-right">
+      <button class="btn-refresh" (click)="taiDuLieu()" [disabled]="dangTai()">
+        <i class="pi" [class.pi-refresh]="!dangTai()" [class.pi-spin]="dangTai()" [class.pi-spinner]="dangTai()"></i>
+        Tải lại
+      </button>
+    </div>
   </div>
 
+  <!-- Loading -->
   @if (dangTai()) {
     <div class="loading-state">
-      <i class="pi pi-spin pi-spinner"></i> Đang tải...
+      <div class="loading-spinner">
+        <div class="spinner-ring"></div>
+      </div>
+      <p>Đang tải dữ liệu từ hệ thống...</p>
     </div>
-  } @else if (danhSach().length === 0) {
-    <div class="empty-state">
-      <i class="pi pi-inbox"></i>
-      <p>Không tìm thấy hồ sơ nào</p>
-    </div>
-  } @else {
-    <div class="table-card">
-      <table class="ho-so-table">
-        <thead>
-          <tr>
-            <th style="width: 50px">STT</th>
-            <th style="width: 150px">Mã hồ sơ</th>
-            <th>Tiêu đề</th>
-            <th style="width: 140px">Đơn vị</th>
-            <th style="width: 110px">Trạng thái</th>
-            <th style="width: 110px">Ngày tạo</th>
-            <th style="width: 120px">Người tạo</th>
-            <th style="width: 140px">Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (hs of danhSach(); track hs.id; let i = $index) {
+  }
+
+  <!-- Table -->
+  @if (!dangTai()) {
+    @if (danhSachHienThi().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-inbox"></i>
+        <h3>Không tìm thấy hồ sơ nào</h3>
+        <p>Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc</p>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
             <tr>
-              <td class="center">{{ i + 1 }}</td>
-              <td><span class="ma-code">{{ hs.maHoSo }}</span></td>
-              <td>{{ hs.tieuDe }}</td>
-              <td>{{ hs.tenDonVi }}</td>
-              <td>
-                <span class="status-badge" [class]="classTrangThai(hs.trangThai)">
-                  {{ tenTrangThai(hs.trangThai) }}
-                </span>
-              </td>
-              <td>{{ hs.ngayTao | date:'dd/MM/yyyy' }}</td>
-              <td>{{ hs.nguoiTao }}</td>
-              <td class="actions">
-                @if (hs.trangThai === 'nhap' || hs.trangThai === 'tra_lai') {
-                  <button class="btn-sm primary" (click)="nopHoSo(hs)" title="Nộp hồ sơ">
-                    <i class="pi pi-send"></i> Nộp
-                  </button>
-                }
-                @if (hs.trangThai === 'cho_duyet') {
-                  <button class="btn-sm outline" (click)="rutHoSo(hs)" title="Rút hồ sơ">
-                    <i class="pi pi-undo"></i> Rút
-                  </button>
-                }
-                @if (hs.trangThai === 'da_duyet' || hs.trangThai === 'tu_choi') {
-                  <span class="action-info">
-                    @if (hs.nguoiDuyet) { {{ hs.nguoiDuyet }} }
-                  </span>
-                }
-              </td>
+              <th class="col-report">Tên báo cáo</th>
+              <th class="col-entity">Đơn vị</th>
+              <th class="col-period">Kỳ báo cáo</th>
+              <th class="col-status">Trạng thái</th>
+              <th class="col-created">Ngày tạo</th>
+              <th class="col-updated">Ngày cập nhật</th>
+              <th class="col-actions">Hành động</th>
             </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            @for (hs of danhSachHienThi(); track hs.id; let i = $index) {
+              <tr [class.inactive-row]="hs.trangThai === 'tu_choi' || hs.trangThai === 'nhap'"
+                  [style.animation-delay]="(i * 30) + 'ms'">
+                <!-- Tên báo cáo -->
+                <td class="col-report">
+                  <span class="cell-name">{{ hs.formName || hs.tieuDe }}</span>
+                </td>
+
+                <!-- Đơn vị -->
+                <td class="col-entity">
+                  @if (hs.entityName) {
+                    <span class="entity-name">{{ hs.entityName }}</span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+
+                <!-- Kỳ báo cáo (period/year) -->
+                <td class="col-period">
+                  <span class="period-text">{{ formatPeriod(hs.period, hs.year) }}</span>
+                </td>
+
+                <!-- Trạng thái -->
+                <td class="col-status">
+                  <span class="status-pill" [class]="'pill-' + classTrangThai(hs.trangThai)">
+                    {{ tenTrangThai(hs.trangThai) }}
+                  </span>
+                </td>
+
+                <!-- Ngày tạo -->
+                <td class="col-created">{{ formatDate(hs.ngayTao) }}</td>
+
+                <!-- Ngày cập nhật -->
+                <td class="col-updated">{{ formatDate(hs.updatedAt) }}</td>
+
+                <!-- Hành động (Xem, Sửa) -->
+                <td class="col-actions">
+                  <div class="table-actions">
+                    <button class="btn-table-action primary" title="Xem hồ sơ">
+                      <i class="pi pi-eye"></i>
+                    </button>
+                    <button class="btn-table-action primary"
+                            (click)="editHoSo(hs)"
+                            title="Sửa hồ sơ">
+                      <i class="pi pi-pencil"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
   }
 
   <!-- Toast -->

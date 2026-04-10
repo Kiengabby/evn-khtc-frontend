@@ -1,17 +1,17 @@
 // ============================================
 // LayoutGridRendererService
-// ChuyỒn ��"i LayoutJSON (format V2 từ Form Designer)
+// Chuyển đổi LayoutJSON (format V2 từ Form Designer)
 // thành cấu hình Handsontable cho Data Entry module.
 //
 // Sử dụng data-row headers + mergeCells (thay vì nestedHeaders)
-// �Ồ h� trợ �ầy �ủ rowspan/colspan cho header phức tạp.
+// để hỗ trợ đầy đủ rowspan/colspan cho header phức tạp.
 // ============================================
 
 import { Injectable } from '@angular/core';
 import {
   LayoutJSON, LayoutColumnDef, LayoutRowDef,
   LayoutHeaderRow, GridCellData, MergeCellDef,
-} from '../../config/models/layout-template.model';
+} from '../../../config/models/layout-template.model';
 
 // Import custom numeric editor
 import './formatted-numeric-editor';
@@ -21,7 +21,7 @@ import './formatted-numeric-editor';
 // ============================================
 
 export interface RenderedGridConfig {
-  /** data[row][col] � Handsontable data matrix (headers + body) */
+  /** data[row][col] — Handsontable data matrix (headers + body) */
   data: any[][];
   /** Column widths */
   colWidths: number[];
@@ -41,7 +41,7 @@ export interface RenderedGridConfig {
   colMeta: RenderedColMeta[];
   /**
    * Set of "row,col" keys whose cells contain formulas.
-   * Dùng trong buildCellCallback �Ồ apply class + readOnly �úng.
+   * Dùng trong buildCellCallback để apply class + readOnly đúng.
    */
   formulaCellSet: Set<string>;
 }
@@ -72,7 +72,7 @@ export interface RenderedColMeta {
 export class LayoutGridRendererService {
 
   // ==========================================================
-  // Main entry: LayoutJSON + dbData �  Handsontable config
+  // Main entry: LayoutJSON + dbData → Handsontable config
   // ==========================================================
 
   render(layout: LayoutJSON, dbData: GridCellData[] = []): RenderedGridConfig {
@@ -85,7 +85,7 @@ export class LayoutGridRendererService {
     const headerRowCount = layout.fixedRowsTop || layout.headerRows?.length || 0;
     const bodyRows = layout.rows || [];
 
-    // ���� Build header rows as data rows ����
+    // ── Build header rows as data rows ──
     const headerData = this.buildHeaderDataRows(layout.headerRows, visibleCols);
     const headerRowMeta: RenderedRowMeta[] = headerData.map((_, i) => ({
       rowCode: `__HEADER_${i}__`,
@@ -95,34 +95,34 @@ export class LayoutGridRendererService {
       isHeader: true,
     }));
 
-    // ���� Build body data rows ����
+    // ── Build body data rows ──
     const { data: bodyData, rowMeta: bodyRowMeta } = this.buildDataRows(visibleCols, bodyRows);
 
-    // ���� Combine header + body ����
+    // ── Combine header + body ──
     const data = [...headerData, ...bodyData];
     const rowMeta = [...headerRowMeta, ...bodyRowMeta];
 
-    // ���� Other config ����
+    // ── Other config ──
     const colWidths = visibleCols.map(c => c.width || 120);
     const columns = this.buildColumns(visibleCols);
     const mergeCells = this.buildMergeCells(layout.mergeCells, metadataColIdx);
     const colMeta = this.buildColMeta(visibleCols);
 
-    // ���� Build colKey/rowKey lookup maps cho formula injection ����
-    const colKeyToCode = new Map<string, string>(); // colKey �  colCode
+    // ── Build colKey/rowKey lookup maps cho formula injection ──
+    const colKeyToCode = new Map<string, string>(); // colKey → colCode
     for (const col of allCols) {
       if (col.key) colKeyToCode.set(col.key, col.colCode);
     }
-    const rowKeyToCode = new Map<string, string>(); // rowKey �  rowCode
+    const rowKeyToCode = new Map<string, string>(); // rowKey → rowCode
     for (const row of bodyRows) {
       if (row.rowKey) rowKeyToCode.set(row.rowKey, row.rowCode);
     }
 
-    // ���� Populate fact data ����
+    // ── Populate fact data ──
     this.populateDbData(data, rowMeta, colMeta, dbData);
 
-    // ���� Apply formulas từ layoutJSON.mappings ����
-    // QUAN TR�RNG: Phải chạy SAU populateDbData �Ồ công thức không b�9 ghi �è b�xi dbData
+    // ── Apply formulas từ layoutJSON.mappings ──
+    // QUAN TRỌNG: Phải chạy SAU populateDbData để công thức không bị ghi đè bởi dbData
     const formulaCellSet = this.applyFormulas(data, rowMeta, colMeta, layout, headerRowCount);
 
     return {
@@ -152,7 +152,7 @@ export class LayoutGridRendererService {
       return [visibleCols.map(c => c.title)];
     }
 
-    // Build colKey �  visible column index lookup
+    // Build colKey → visible column index lookup
     const colKeyToIdx = new Map<string, number>();
     for (let i = 0; i < visibleCols.length; i++) {
       colKeyToIdx.set(visibleCols[i].key, i);
@@ -196,7 +196,7 @@ export class LayoutGridRendererService {
     for (const rowDef of bodyRows) {
       const row = new Array(visibleCols.length).fill(null);
 
-      // STT column � hierarchical numbering (1, 2, 2.1, 2.2, 2.2.1, ...)
+      // STT column — hierarchical numbering (1, 2, 2.1, 2.2, 2.2.1, ...)
       if (sttIdx >= 0 && !rowDef.isReadOnly) {
         const level = rowDef.level;
         // Increment counter at this level
@@ -241,7 +241,7 @@ export class LayoutGridRendererService {
       const base: any = { data: idx, width: col.width || 120 };
       const colCode = col.colCode?.toUpperCase();
 
-      // STT should always be text (displays 1, 2, 3 � not 1.00, 2.00)
+      // STT should always be text (displays 1, 2, 3 — not 1.00, 2.00)
       if (colCode === 'STT' || colCode === 'MA_CHITIEU') {
         base.type = 'text';
       } else if (col.type === 'numeric') {
@@ -272,7 +272,7 @@ export class LayoutGridRendererService {
 
   // ==========================================================
   // Merge cells (adjust for hidden METADATA_ROW column)
-  // Headers are now data rows �  include header merges
+  // Headers are now data rows → include header merges
   // ==========================================================
 
   private buildMergeCells(
@@ -311,8 +311,8 @@ export class LayoutGridRendererService {
 
   /**
    * Đọc layout.mappings, tìm các ô có cellRole="formula",
-   * inject chu�i "=formula" vào data matrix.
-   * Trả về Set các key "row,col" �Ồ buildCellCallback nhận biết ô formula.
+   * inject chuỗi "=formula" vào data matrix.
+   * Trả về Set các key "row,col" để buildCellCallback nhận biết ô formula.
    */
   private applyFormulas(
     data: any[][],
@@ -324,7 +324,7 @@ export class LayoutGridRendererService {
     const formulaCellSet = new Set<string>();
     const mappings = layout.mappings;
 
-    // ��& DIAGNOSTIC: log �Ồ xác nhận mappings �ược nhận �úng
+    // ★ DIAGNOSTIC: log để xác nhận mappings được nhận đúng
     console.log('[Renderer] applyFormulas called:', {
       hasMappings: !!mappings,
       mappingsCount: mappings?.length ?? 0,
@@ -334,7 +334,7 @@ export class LayoutGridRendererService {
 
     if (!mappings || mappings.length === 0) return formulaCellSet;
 
-    // Build lookup: rowCode �  data array index (body rows only)
+    // Build lookup: rowCode → data array index (body rows only)
     const rowCodeToIdx = new Map<string, number>();
     for (let i = 0; i < rowMeta.length; i++) {
       if (!rowMeta[i].isHeader) {
@@ -342,14 +342,14 @@ export class LayoutGridRendererService {
       }
     }
 
-    // Build lookup: colCode �  visible column index
+    // Build lookup: colCode → visible column index
     const colCodeToIdx = new Map<string, number>();
     for (let i = 0; i < colMeta.length; i++) {
       colCodeToIdx.set(colMeta[i].colCode, i);
     }
 
     for (const mapping of mappings) {
-      // ��& Log từng mapping �Ồ debug
+      // ★ Log từng mapping để debug
       if (mapping.cellRole === 'formula') {
         console.log('[Renderer] Formula mapping found:', {
           rowCode: mapping.rowCode, colCode: mapping.colCode,
@@ -363,11 +363,11 @@ export class LayoutGridRendererService {
       const rowIdx = rowCodeToIdx.get(mapping.rowCode);
       const colIdx = colCodeToIdx.get(mapping.colCode);
       if (rowIdx === undefined || colIdx === undefined) {
-        console.warn('[Renderer] �a�️ Formula mapping - rowCode/colCode không tìm thấy trong grid:', mapping.rowCode, mapping.colCode);
+        console.warn('[Renderer] ⚠️ Formula mapping - rowCode/colCode không tìm thấy trong grid:', mapping.rowCode, mapping.colCode);
         continue;
       }
 
-      // Normalize formula: �ảm bảo bắt �ầu bằng "="
+      // Normalize formula: đảm bảo bắt đầu bằng "="
       const formula = mapping.formula.startsWith('=')
         ? mapping.formula
         : `=${mapping.formula}`;
@@ -377,7 +377,7 @@ export class LayoutGridRendererService {
 
       data[rowIdx][colIdx] = hfFormula;
       formulaCellSet.add(`${rowIdx},${colIdx}`);
-      console.log(`[Renderer] �S& Formula injected [${rowIdx},${colIdx}] (${mapping.rowCode}/${mapping.colCode}): ${hfFormula}`);
+      console.log(`[Renderer] ✅ Formula injected [${rowIdx},${colIdx}] (${mapping.rowCode}/${mapping.colCode}): ${hfFormula}`);
     }
 
     return formulaCellSet;
@@ -396,14 +396,14 @@ export class LayoutGridRendererService {
   ): void {
     if (!dbData || dbData.length === 0) return;
 
-    // Các c�"t label không �ược ghi �è từ dbData
+    // Các cột label không được ghi đè từ dbData
     const labelColCodes = new Set([
       'STT', 'CHITIEU_NAME', 'NOI_DUNG', 'UNIT', 'DVT',
       'MA_CHITIEU', 'TEN_CHITIEU', 'DON_VI',
     ]);
 
-    // Build lookup: rowCode �  row index in data array
-    // Header rows have rowCode "__HEADER_*__" �  won't match any dbData �  naturally skipped
+    // Build lookup: rowCode → row index in data array
+    // Header rows have rowCode "__HEADER_*__" → won't match any dbData → naturally skipped
     const rowLookup = new Map<string, number>();
     for (let i = 0; i < rowMeta.length; i++) {
       if (!rowMeta[i].isHeader) {
@@ -411,7 +411,7 @@ export class LayoutGridRendererService {
       }
     }
 
-    // Build lookup: colCode �  visible column index
+    // Build lookup: colCode → visible column index
     const colLookup = new Map<string, number>();
     for (const cm of colMeta) {
       colLookup.set(cm.colCode, cm.visibleIndex);
@@ -444,7 +444,7 @@ export class LayoutGridRendererService {
       const cm = visibleCols[col] as any;
       if (!rm || !cm) return cell;
 
-      // ���� � công thức ���� (ưu tiên cao nhất, check trư�:c header)
+      // ── Ô công thức ── (ưu tiên cao nhất, check trước header)
       const isFormula = formulaCellSet?.has(`${row},${col}`);
       if (isFormula) {
         cell.readOnly = true;
@@ -452,14 +452,14 @@ export class LayoutGridRendererService {
         return cell;
       }
 
-      // ���� Header rows (frozen at top) ����
+      // ── Header rows (frozen at top) ──
       if (rm.isHeader) {
         cell.readOnly = true;
         cell.className = 'htCenter htMiddle cell-header';
         return cell;
       }
 
-      // ���� ReadOnly rows (totals, formula rows) ����
+      // ── ReadOnly rows (totals, formula rows) ──
       if (rm.isReadOnly) {
         cell.readOnly = true;
         if (cm.type === 'numeric') {
@@ -470,7 +470,7 @@ export class LayoutGridRendererService {
         return cell;
       }
 
-      // ���� ReadOnly columns (STT, chi tiêu name, DVT) ����
+      // ── ReadOnly columns (STT, chi tiêu name, DVT) ──
       const isColReadOnly = cm.isReadOnly ?? cm.readOnly ?? false;
       if (isColReadOnly) {
         cell.readOnly = true;
@@ -483,7 +483,7 @@ export class LayoutGridRendererService {
         return cell;
       }
 
-      // ���� Editable data cells ����
+      // ── Editable data cells ──
       cell.readOnly = false;
       cell.className = 'htRight htMiddle cell-editable';
       return cell;
@@ -524,12 +524,12 @@ export class LayoutGridRendererService {
   // ==========================================================
 
   /**
-   * Trích xuất toàn b�" dữ li�!u từ grid (không ch�0 cells thay ��"i).
-   * Dùng �Ồ gửi tất cả dữ li�!u lên API save-submission.
+   * Trích xuất toàn bộ dữ liệu từ grid (không chỉ cells thay đổi).
+   * Dùng để gửi tất cả dữ liệu lên API save-submission.
    *
    * Bỏ qua:
    *   - Header rows
-   *   - ReadOnly rows (dòng t�"ng)
+   *   - ReadOnly rows (dòng tổng)
    *   - Label columns (STT, CHITIEU_NAME, UNIT)
    */
   extractAllDataCells(
@@ -539,7 +539,7 @@ export class LayoutGridRendererService {
   ): GridCellData[] {
     const result: GridCellData[] = [];
 
-    // Các c�"t label không �ược gửi lên BE
+    // Các cột label không được gửi lên BE
     const labelColCodes = new Set([
       'STT', 'CHITIEU_NAME', 'NOI_DUNG', 'UNIT', 'DVT',
       'MA_CHITIEU', 'TEN_CHITIEU', 'DON_VI', 'METADATA_ROW',
@@ -558,7 +558,7 @@ export class LayoutGridRendererService {
 
         const value = hotInstance.getDataAtCell(row, col);
 
-        // Luôn gửi giá tr�9 (kỒ cả 0, null) �Ồ BE lưu �úng trạng thái
+        // Luôn gửi giá trị (kể cả 0, null) để BE lưu đúng trạng thái
         result.push({
           rowCode: rm.rowCode,
           colCode: cm.colCode,

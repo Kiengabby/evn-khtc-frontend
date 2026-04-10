@@ -1,5 +1,5 @@
 // ============================================
-// Service: Role Management â€” Quáº£n lÃ½ vai trÃ²
+// Service: Role Management � Quản lý vai trò
 // Thin wrapper around MockApiService for role operations
 // ============================================
 

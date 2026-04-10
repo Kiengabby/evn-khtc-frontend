@@ -1,5 +1,5 @@
 // ============================================
-// Component: Quáº£n lÃ½ Vai trÃ² â€” Role Management CRUD
+// Component: Quản lý Vai trò � Role Management CRUD
 // ============================================
 
 import { Component, OnInit, signal } from '@angular/core';
@@ -69,7 +69,7 @@ export class QuanLyVaiTroComponent implements OnInit {
                 this.hienThongBao(ketQua.thongBao, 'error');
             }
         } catch (error) {
-            this.hienThongBao('KhÃ´ng thá»ƒ táº£i danh sÃ¡ch vai trÃ²', 'error');
+            this.hienThongBao('Không thỒ tải danh sách vai trò', 'error');
         } finally {
             this.dangTai.set(false);
         }
@@ -82,7 +82,7 @@ export class QuanLyVaiTroComponent implements OnInit {
                 this.menus.set(ketQua.duLieu);
             }
         } catch (error) {
-            console.warn('KhÃ´ng thá»ƒ táº£i menu:', error);
+            console.warn('Không thỒ tải menu:', error);
         }
     }
 
@@ -158,7 +158,7 @@ export class QuanLyVaiTroComponent implements OnInit {
                 this.hienThongBao(ketQua.thongBao, 'error');
             }
         } catch (error) {
-            this.hienThongBao('CÃ³ lá»—i xáº£y ra khi lÆ°u', 'error');
+            this.hienThongBao('Có l�i xảy ra khi lưu', 'error');
         } finally {
             this.dangTai.set(false);
         }
@@ -166,11 +166,11 @@ export class QuanLyVaiTroComponent implements OnInit {
 
     async xoaRole(role: RoleAdmin): Promise<void> {
         if (role.isSystemRole) {
-            this.hienThongBao('KhÃ´ng thá»ƒ xÃ³a vai trÃ² há»‡ thá»‘ng', 'error');
+            this.hienThongBao('Không thỒ xóa vai trò h�! th�ng', 'error');
             return;
         }
 
-        if (!confirm(`XÃ¡c nháº­n xÃ³a vai trÃ² "${role.roleName}"?`)) return;
+        if (!confirm(`Xác nhận xóa vai trò "${role.roleName}"?`)) return;
 
         try {
             const ketQua = await this.roleService.xoa(role.roleId);
@@ -181,7 +181,7 @@ export class QuanLyVaiTroComponent implements OnInit {
                 this.hienThongBao(ketQua.thongBao, 'error');
             }
         } catch (error) {
-            this.hienThongBao('CÃ³ lá»—i xáº£y ra khi xÃ³a', 'error');
+            this.hienThongBao('Có l�i xảy ra khi xóa', 'error');
         }
     }
 

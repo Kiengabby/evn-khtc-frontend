@@ -1,11 +1,11 @@
 // ============================================
-// Page: Wizard Táº¡o BÃ¡o CÃ¡o (Report Template Wizard)
+// Page: Wizard Tạo Báo Cáo (Report Template Wizard)
 // ============================================
-// Giao diá»‡n dáº¡ng stepper 5 bÆ°á»›c, giá»‘ng CMIS:
-// 1. ThÃ´ng tin chung  2. ÄÆ¡n vá»‹ bÃ¡o cÃ¡o  3. Thiáº¿t káº¿ cá»™t  4. PhÃ¢n quyá»n  5. HoÃ n thÃ nh
+// Giao di�!n dạng stepper 5 bư�:c, gi�ng CMIS:
+// 1. Thông tin chung  2. Đơn v�9 báo cáo  3. Thiết kế c�"t  4. Phân quyền  5. Hoàn thành
 //
-// === LUá»’NG ===
-// Wizard â†’ MockApiService â†’ Táº¡o FormTemplate + phÃ¢n quyá»n
+// === LU�NG ===
+// Wizard �  MockApiService �  Tạo FormTemplate + phân quyền
 // ============================================
 
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
@@ -40,11 +40,11 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
     thongBao = signal<{ noiDung: string; loai: 'success' | 'error' } | null>(null);
     loi = signal<Record<string, string>>({});
 
-    // Dá»¯ liá»‡u phá»¥ trá»£
+    // Dữ li�!u phụ trợ
     danhSachDonViGoc = signal<DonVi[]>([]);
     tuKhoaDonVi = '';
 
-    // BÆ°á»›c 3 â€” Handsontable grid
+    // Bư�:c 3 � Handsontable grid
     danhSachMauCu = signal<MauBaoCaoCu[]>([]);
     mauDaChon = signal<string>('');
     hotInstance: Handsontable | null = null;
@@ -86,14 +86,14 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
         const buoc = this.buocHienTai();
         if (buoc >= 5) return;
 
-        // Khi rá»i bÆ°á»›c 3: lÆ°u dá»¯ liá»‡u grid vÃ o wizard state
+        // Khi rời bư�:c 3: lưu dữ li�!u grid vào wizard state
         if (buoc === 3) {
             this.luuGridVaoState();
-            // auto táº¡o phÃ¢n quyá»n
+            // auto tạo phân quyền
             this.autoTaoQuyen();
         }
 
-        // Khi rá»i bÆ°á»›c 3: há»§y grid
+        // Khi rời bư�:c 3: hủy grid
         if (buoc === 3) {
             this.huyGrid();
         }
@@ -102,7 +102,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
         this.capNhatTrangThaiBuoc(buoc + 1, 'dang_dien');
         this.buocHienTai.set(buoc + 1);
 
-        // Khi vÃ o bÆ°á»›c 3: init grid sau khi DOM render
+        // Khi vào bư�:c 3: init grid sau khi DOM render
         if (buoc + 1 === 3) {
             this.initGridSauRender();
         }
@@ -112,7 +112,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
         const buoc = this.buocHienTai();
         if (buoc <= 1) return;
 
-        // Khi rá»i bÆ°á»›c 3: lÆ°u + há»§y grid
+        // Khi rời bư�:c 3: lưu + hủy grid
         if (buoc === 3) {
             this.luuGridVaoState();
             this.huyGrid();
@@ -122,7 +122,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
         this.capNhatTrangThaiBuoc(buoc - 1, 'dang_dien');
         this.buocHienTai.set(buoc - 1);
 
-        // Khi vÃ o bÆ°á»›c 3: init grid sau khi DOM render
+        // Khi vào bư�:c 3: init grid sau khi DOM render
         if (buoc - 1 === 3) {
             this.initGridSauRender();
         }
@@ -133,7 +133,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
         const buoc = this.danhSachBuoc().find(b => b.soBuoc === soBuoc);
         if (!buoc || buoc.trangThai === 'chua_dien') return;
 
-        // Khi rá»i bÆ°á»›c 3
+        // Khi rời bư�:c 3
         if (buocCu === 3 && soBuoc !== 3) {
             this.luuGridVaoState();
             this.huyGrid();
@@ -141,7 +141,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
 
         this.buocHienTai.set(soBuoc);
 
-        // Khi vÃ o bÆ°á»›c 3
+        // Khi vào bư�:c 3
         if (soBuoc === 3) {
             this.initGridSauRender();
         }
@@ -168,7 +168,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
     }
 
     // ============================================
-    // VALIDATION â€” Má»—i bÆ°á»›c
+    // VALIDATION � M�i bư�:c
     // ============================================
 
     kiemTraBuoc(): boolean {
@@ -177,21 +177,21 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
 
         switch (this.buocHienTai()) {
             case 1:
-                if (!d.tenBaoCao.trim()) loiMoi['tenBaoCao'] = 'Vui lÃ²ng nháº­p tÃªn bÃ¡o cÃ¡o';
-                if (!d.maBaoCao.trim()) loiMoi['maBaoCao'] = 'Vui lÃ²ng nháº­p mÃ£ bÃ¡o cÃ¡o';
+                if (!d.tenBaoCao.trim()) loiMoi['tenBaoCao'] = 'Vui lòng nhập tên báo cáo';
+                if (!d.maBaoCao.trim()) loiMoi['maBaoCao'] = 'Vui lòng nhập mã báo cáo';
                 break;
             case 2:
                 if (d.danhSachDonVi.filter(dv => dv.daChon).length === 0) {
-                    loiMoi['donVi'] = 'Chá»n Ã­t nháº¥t 1 Ä‘Æ¡n vá»‹ bÃ¡o cÃ¡o';
+                    loiMoi['donVi'] = 'Chọn ít nhất 1 �ơn v�9 báo cáo';
                 }
                 break;
             case 3:
                 if (d.danhSachNhomCot.length === 0) {
-                    loiMoi['nhomCot'] = 'Táº¡o Ã­t nháº¥t 1 nhÃ³m cá»™t';
+                    loiMoi['nhomCot'] = 'Tạo ít nhất 1 nhóm c�"t';
                 }
                 break;
             case 4:
-                // PhÃ¢n quyá»n khÃ´ng báº¯t buá»™c
+                // Phân quyền không bắt bu�"c
                 break;
         }
 
@@ -200,16 +200,16 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
     }
 
     // ============================================
-    // STEP 1: ThÃ´ng tin chung
+    // STEP 1: Thông tin chung
     // ============================================
 
     capNhatField(field: string, event: Event): void {
         const val = (event.target as HTMLInputElement).value;
         this.duLieu.update(d => ({ ...d, [field]: val }));
-        // Auto gen mÃ£
+        // Auto gen mã
         if (field === 'tenBaoCao' && !this.duLieu().maBaoCao) {
             const ma = val.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                .replace(/Ä‘/gi, 'd').replace(/[^a-zA-Z0-9]/g, '_')
+                .replace(/�/gi, 'd').replace(/[^a-zA-Z0-9]/g, '_')
                 .toUpperCase().substring(0, 30);
             this.duLieu.update(d => ({ ...d, maBaoCao: ma }));
         }
@@ -229,7 +229,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
     }
 
     // ============================================
-    // STEP 2: ÄÆ¡n vá»‹ bÃ¡o cÃ¡o
+    // STEP 2: Đơn v�9 báo cáo
     // ============================================
 
     get donViDaLoc(): DonVi[] {
@@ -274,10 +274,10 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
     }
 
     // ============================================
-    // STEP 3: Thiáº¿t káº¿ báº£ng â€” Handsontable Grid
+    // STEP 3: Thiết kế bảng � Handsontable Grid
     // ============================================
 
-    /** Load máº«u cÅ© vÃ o grid */
+    /** Load mẫu cũ vào grid */
     chonMauCu(event: Event): void {
         const maTemplate = (event.target as HTMLSelectElement).value;
         this.mauDaChon.set(maTemplate);
@@ -286,10 +286,10 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
         const mau = this.danhSachMauCu().find(m => m.maTemplate === maTemplate);
         if (!mau) return;
 
-        // Build nestedHeaders + data tá»« template
+        // Build nestedHeaders + data từ template
         const { nestedHeaders, data, colWidths, cotCoDinh, mergeCells } = this.buildGridFromTemplate(mau);
 
-        // LÆ°u vÃ o wizard state
+        // Lưu vào wizard state
         this.duLieu.update(d => ({
             ...d,
             gridNestedHeaders: nestedHeaders,
@@ -304,14 +304,14 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
         this.initGridSauRender();
     }
 
-    /** ThÃªm hÃ ng má»›i vÃ o grid */
+    /** Thêm hàng m�:i vào grid */
     themHangGrid(): void {
         if (!this.hotInstance) return;
         const rowCount = this.hotInstance.countRows();
         this.hotInstance.alter('insert_row_below', rowCount, 1);
     }
 
-    /** ThÃªm cá»™t má»›i vÃ o grid */
+    /** Thêm c�"t m�:i vào grid */
     themCotGrid(): void {
         if (!this.hotInstance) return;
         const colCount = this.hotInstance.countCols();
@@ -403,7 +403,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
             mergeCells: d.gridMergeCells && d.gridMergeCells.length > 0 ? d.gridMergeCells : false,
             cells: (row: number, col: number) => {
                 const cellProperties: any = {};
-                // First 2 columns (STT + Ná»™i dung) are text
+                // First 2 columns (STT + N�"i dung) are text
                 if (col <= 1) {
                     cellProperties.type = 'text';
                 }
@@ -412,7 +412,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
                     cellProperties.readOnly = true;
                     cellProperties.className = 'hot-formula-cell';
                 }
-                // Row 0 (Tá»•ng cá»™ng) gets bold styling
+                // Row 0 (T�"ng c�"ng) gets bold styling
                 if (row === 0) {
                     cellProperties.className = (cellProperties.className || '') + ' hot-total-row';
                 }
@@ -421,16 +421,16 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** Default grid náº¿u chÆ°a chá»n máº«u */
+    /** Default grid nếu chưa chọn mẫu */
     private buildDefaultGridData(): any[][] {
         const d = this.duLieu();
         const donViChon = d.danhSachDonVi.filter(dv => dv.daChon);
         const thang = d.thangBaoCao || new Date().getMonth() + 1;
 
         const rows: any[][] = [];
-        // HÃ ng tá»•ng cá»™ng
-        rows.push(['', 'Tá»•ng cá»™ng', null, null, '=D1/C1', null, null, '=G1/F1']);
-        // HÃ ng Ä‘Æ¡n vá»‹
+        // Hàng t�"ng c�"ng
+        rows.push(['', 'T�"ng c�"ng', null, null, '=D1/C1', null, null, '=G1/F1']);
+        // Hàng �ơn v�9
         donViChon.forEach((dv, i) => {
             const r = i + 2; // 1-based row
             rows.push([this.soLaMa(i + 1), dv.tenDonVi, null, null, `=D${r}/C${r}`, null, null, `=G${r}/F${r}`]);
@@ -443,8 +443,8 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
         const d = this.duLieu();
         const thang = d.thangBaoCao || new Date().getMonth() + 1;
         return [
-            ['STT', 'Ná»™i dung', { label: `Thá»±c hiá»‡n ThÃ¡ng ${thang}`, colspan: 3 }, { label: 'LÅ©y káº¿ tá»« Ä‘áº§u nÄƒm', colspan: 3 }],
-            ['', '', 'CÃ´ng suáº¥t (MW)', 'Sáº£n lÆ°á»£ng (MWh)', 'Sá»‘ giá» (h)', 'CÃ´ng suáº¥t (MW)', 'Sáº£n lÆ°á»£ng (MWh)', 'Sá»‘ giá» (h)'],
+            ['STT', 'N�"i dung', { label: `Thực hi�!n Tháng ${thang}`, colspan: 3 }, { label: 'Lũy kế từ �ầu nĒm', colspan: 3 }],
+            ['', '', 'Công suất (MW)', 'Sản lượng (MWh)', 'S� giờ (h)', 'Công suất (MW)', 'Sản lượng (MWh)', 'S� giờ (h)'],
         ];
     }
 
@@ -453,7 +453,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
         return vals[n - 1] || String(n);
     }
 
-    /** LÆ°u dá»¯ liá»‡u tá»« grid vÃ o wizard state */
+    /** Lưu dữ li�!u từ grid vào wizard state */
     private luuGridVaoState(): void {
         if (!this.hotInstance) return;
         const data = this.hotInstance.getData();
@@ -468,11 +468,11 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
             gridColWidths: colWidths,
         }));
 
-        // CÅ©ng cáº­p nháº­t danhSachNhomCot cho bÆ°á»›c 5 summary
+        // Cũng cập nhật danhSachNhomCot cho bư�:c 5 summary
         this.capNhatNhomCotTuGrid();
     }
 
-    /** Parse grid headers thÃ nh NhomCot cho summary */
+    /** Parse grid headers thành NhomCot cho summary */
     private capNhatNhomCotTuGrid(): void {
         const d = this.duLieu();
         const headers = d.gridNestedHeaders;
@@ -492,7 +492,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
             const nhom: NhomCot = { tenNhom: item.label, danhSachCot: [] };
             const span = item.colspan || 1;
             for (let c = 0; c < span; c++) {
-                const colName = row1 ? (typeof row1[colIdx] === 'string' ? row1[colIdx] : '') : `Cá»™t ${c + 1}`;
+                const colName = row1 ? (typeof row1[colIdx] === 'string' ? row1[colIdx] : '') : `C�"t ${c + 1}`;
                 nhom.danhSachCot.push({
                     id: `col_${colIdx}`,
                     tenCot: colName,
@@ -525,7 +525,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
     }
 
     // ============================================
-    // STEP 4: PhÃ¢n quyá»n
+    // STEP 4: Phân quyền
     // ============================================
 
     private autoTaoQuyen(): void {
@@ -554,14 +554,14 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
     }
 
     // ============================================
-    // STEP 5: HoÃ n thÃ nh â€” Submit
+    // STEP 5: Hoàn thành � Submit
     // ============================================
 
     get previewCots(): { nhom: string; cot: string; loai: string }[] {
         const result: { nhom: string; cot: string; loai: string }[] = [];
         for (const nhom of this.duLieu().danhSachNhomCot) {
             for (const cot of nhom.danhSachCot) {
-                result.push({ nhom: nhom.tenNhom, cot: cot.tenCot, loai: cot.loai === 'cong_thuc' ? `CÃ´ng thá»©c: ${cot.congThuc}` : 'Nháº­p liá»‡u' });
+                result.push({ nhom: nhom.tenNhom, cot: cot.tenCot, loai: cot.loai === 'cong_thuc' ? `Công thức: ${cot.congThuc}` : 'Nhập li�!u' });
             }
         }
         return result;
@@ -572,7 +572,7 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
         try {
             const d = this.duLieu();
 
-            // Táº¡o FormTemplate thÃ´ng qua MockApiService
+            // Tạo FormTemplate thông qua MockApiService
             await this.api.taoBieuMau({
                 formId: d.maBaoCao,
                 formName: d.tenBaoCao,
@@ -585,14 +585,14 @@ export class TaoBaoCaoWizardComponent implements OnInit, OnDestroy {
                 },
             });
 
-            this.hienThongBao(`Táº¡o bÃ¡o cÃ¡o "${d.tenBaoCao}" thÃ nh cÃ´ng!`, 'success');
+            this.hienThongBao(`Tạo báo cáo "${d.tenBaoCao}" thành công!`, 'success');
 
-            // Chuyá»ƒn vá» trang danh sÃ¡ch sau 1.5s
+            // ChuyỒn về trang danh sách sau 1.5s
             setTimeout(() => {
                 this.router.navigate(['/app/form-designer/templates']);
             }, 1500);
         } catch {
-            this.hienThongBao('CÃ³ lá»—i xáº£y ra khi táº¡o bÃ¡o cÃ¡o', 'error');
+            this.hienThongBao('Có l�i xảy ra khi tạo báo cáo', 'error');
         } finally {
             this.dangLuu.set(false);
         }

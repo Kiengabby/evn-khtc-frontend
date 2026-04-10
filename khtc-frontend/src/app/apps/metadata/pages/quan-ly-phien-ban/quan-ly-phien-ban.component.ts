@@ -1,14 +1,14 @@
 // ============================================
-// Page: Quáº£n lÃ½ PhiÃªn báº£n (Version Management)
+// Page: Quản lý Phiên bản (Version Management)
 // ============================================
-// Hiá»ƒn thá»‹ danh sÃ¡ch phiÃªn báº£n káº¿ hoáº¡ch: Budget, Forecast, Actual.
-// Cho phÃ©p: thÃªm/sá»­a/xÃ³a, khÃ³a/má»Ÿ phiÃªn báº£n, Ä‘áº·t máº·c Ä‘á»‹nh.
+// HiỒn th�9 danh sách phiên bản kế hoạch: Budget, Forecast, Actual.
+// Cho phép: thêm/sửa/xóa, khóa/m�x phiên bản, �ặt mặc ��9nh.
 //
-// === API (cho BE tham kháº£o) ===
-// GET  /api/danh-muc/phien-ban       â†’ KetQuaApi<PhienBan[]>
-// POST /api/danh-muc/phien-ban       â†’ KetQuaApi<PhienBan>
-// PUT  /api/danh-muc/phien-ban/:id   â†’ KetQuaApi<PhienBan>
-// DELETE /api/danh-muc/phien-ban/:id â†’ KetQuaApi<null>
+// === API (cho BE tham khảo) ===
+// GET  /api/danh-muc/phien-ban       �  KetQuaApi<PhienBan[]>
+// POST /api/danh-muc/phien-ban       �  KetQuaApi<PhienBan>
+// PUT  /api/danh-muc/phien-ban/:id   �  KetQuaApi<PhienBan>
+// DELETE /api/danh-muc/phien-ban/:id �  KetQuaApi<null>
 // ============================================
 
 import { Component, inject, signal, OnInit } from '@angular/core';
@@ -66,7 +66,7 @@ export class QuanLyPhienBanComponent implements OnInit {
         this.timerTimKiem = setTimeout(() => this.taiDuLieu(), 300);
     }
 
-    // === THÃŠM / Sá»¬A ===
+    // === TH�`M / SỬA ===
     moFormThemMoi(): void {
         this.form = this.formMacDinh();
         this.idDangSua = null;
@@ -84,8 +84,8 @@ export class QuanLyPhienBanComponent implements OnInit {
     }
 
     async luuPhienBan(): Promise<void> {
-        if (!this.form.maPhienBan?.trim()) { this.loiForm.set('Vui lÃ²ng nháº­p mÃ£ phiÃªn báº£n'); return; }
-        if (!this.form.tenPhienBan?.trim()) { this.loiForm.set('Vui lÃ²ng nháº­p tÃªn phiÃªn báº£n'); return; }
+        if (!this.form.maPhienBan?.trim()) { this.loiForm.set('Vui lòng nhập mã phiên bản'); return; }
+        if (!this.form.tenPhienBan?.trim()) { this.loiForm.set('Vui lòng nhập tên phiên bản'); return; }
 
         this.dangLuu.set(true);
 
@@ -102,12 +102,12 @@ export class QuanLyPhienBanComponent implements OnInit {
             await this.taiDuLieu();
             this.dongDialog();
         } catch {
-            this.loiForm.set('ÄÃ£ xáº£y ra lá»—i há»‡ thá»‘ng');
+            this.loiForm.set('Đã xảy ra l�i h�! th�ng');
         }
         this.dangLuu.set(false);
     }
 
-    // === KHÃ“A / Má»ž ===
+    // === KH�A / M�~ ===
     async toggleKhoa(pb: PhienBan): Promise<void> {
         const kq = await this.phienBanService.khoaMo(pb.id);
         if (kq.trangThai) {
@@ -118,9 +118,9 @@ export class QuanLyPhienBanComponent implements OnInit {
         }
     }
 
-    // === XÃ“A ===
+    // === X�A ===
     async xacNhanXoa(pb: PhienBan): Promise<void> {
-        if (!confirm(`XÃ³a phiÃªn báº£n "${pb.tenPhienBan}"?`)) return;
+        if (!confirm(`Xóa phiên bản "${pb.tenPhienBan}"?`)) return;
 
         const kq = await this.phienBanService.xoa(pb.id);
         if (kq.trangThai) {
@@ -135,7 +135,7 @@ export class QuanLyPhienBanComponent implements OnInit {
     dongDialog(): void { this.hienDialog.set(false); this.loiForm.set(null); }
 
     tenLoai(loai: LoaiPhienBan): string {
-        return { 'KE_HOACH': 'Káº¿ hoáº¡ch', 'DU_BAO': 'Dá»± bÃ¡o', 'THUC_HIEN': 'Thá»±c hiá»‡n' }[loai] || loai;
+        return { 'KE_HOACH': 'Kế hoạch', 'DU_BAO': 'Dự báo', 'THUC_HIEN': 'Thực hi�!n' }[loai] || loai;
     }
 
     private formMacDinh() {

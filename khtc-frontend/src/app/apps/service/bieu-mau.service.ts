@@ -1,7 +1,7 @@
 // ============================================
-// Service: Quáº£n lÃ½ Biá»ƒu máº«u (Form Template Service)
+// Service: Quản lý BiỒu mẫu (Form Template Service)
 // ============================================
-// Thin wrapper â†’ MockApiService (sau nÃ y Ä‘á»•i sang API tháº­t)
+// Thin wrapper �  MockApiService (sau này ��"i sang API thật)
 // ============================================
 
 import { Injectable, inject } from '@angular/core';

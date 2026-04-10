@@ -18,15 +18,7 @@
           <span>{{ soOThayDoi() }} ô thay đổi</span>
         </span>
       }
-      <!-- Session history button -->
-      @if (lichSuLuu().length > 0) {
-        <button class="btn-session-history" (click)="toggleLichSu()" [class.active]="hienLichSu()">
-          <i class="pi pi-history"></i>
-          <span class="session-count">{{ lichSuLuu().length }}</span>
-          <span>Phiên nhập</span>
-          <i class="pi pi-chevron-down" [class.rotated]="hienLichSu()"></i>
-        </button>
-      }
+      <!-- Session history button removed -->
       <div class="header-actions">
         <button class="btn-action btn-excel" (click)="xuatExcel()"><i class="pi pi-file-excel"></i> Xuất Excel</button>
         <button class="btn-save" (click)="luuDuLieu()" [disabled]="(!isV2Mode && soOThayDoi() === 0) || dangLuu()">
@@ -80,7 +72,7 @@
         <div class="select-wrap">
           <select [(ngModel)]="entityCode" class="filter-select">
             @for (dv of danhSachDonVi; track dv.maDonVi) {
-              <option [value]="dv.maDonVi">{{ dv.maDonVi }} — {{ dv.tenDonVi }}</option>
+              <option [value]="dv.maDonVi">{{ dv.maDonVi }}</option>
             }
           </select>
           <i class="pi pi-chevron-down select-arrow"></i>
@@ -142,20 +134,10 @@
           <i class="pi pi-chevron-down select-arrow"></i>
         </div>
       </div>
+      
+      
     </div>
-
-    <!-- Test Get Submission -->
-    <div class="filter-test-submission">
-      <input type="text"
-             [(ngModel)]="submissionIdTest"
-             placeholder="Nhập Submission ID"
-             class="filter-input-test">
-      <button type="button"
-              class="btn-test-submission"
-              (click)="loadSubmissionTest()">
-        <i class="pi pi-download"></i> Tải dữ liệu
-      </button>
-    </div>
+  </section>
 
   <!-- ===== TEST JSON PANEL ===== -->
   @if (panelJsonTestMo()) {
@@ -258,126 +240,6 @@
     </div>
   }
 
-  <!-- ===== SESSION HISTORY PANEL ===== -->
-  @if (hienLichSu() && lichSuLuu().length > 0) {
-    <div class="session-panel-overlay" (click)="hienLichSu.set(false)"></div>
-    <div class="session-panel">
-      <div class="session-panel-header">
-        <div class="sph-left">
-          <i class="pi pi-history"></i>
-          <span>Lịch sử nhập trong phiên</span>
-        </div>
-        <button class="sph-close" (click)="hienLichSu.set(false)">
-          <i class="pi pi-times"></i>
-        </button>
-      </div>
-      <div class="session-panel-body">
-        <p class="session-hint">Nhấn vào một bản ghi để quay lại nhập liệu cho biểu mẫu / kỳ đó.</p>
-        @for (rec of lichSuLuu(); track rec.savedAt) {
-          <button class="session-rec" (click)="nhapLaiTuLichSu(rec)">
-            <div class="srec-icon"><i class="pi pi-check-circle"></i></div>
-            <div class="srec-info">
-              <span class="srec-form">{{ rec.formCode }}</span>
-              <span class="srec-name">{{ rec.formName }}</span>
-              <span class="srec-meta">Kỳ: <strong>{{ rec.period }}</strong> &nbsp;&bull;&nbsp; Năm: <strong>{{ rec.nam }}</strong> &nbsp;&bull;&nbsp; {{ rec.savedCount }} ô</span>
-            </div>
-            <div class="srec-time">
-              {{ rec.savedAt | date:'HH:mm' }}
-            </div>
-          </button>
-        }
-      </div>
-    </div>
-  }
-
-  <!-- ===== POST-SAVE NEXT-ACTION DIALOG ===== -->
-  @if (hienDialogTiepTheo() && luuVuaRoi()) {
-    <div class="next-action-backdrop" (click)="dongDialogTiepTheo()"></div>
-    <div class="next-action-dialog" role="dialog" aria-modal="true">
-
-      <!-- Header -->
-      <div class="nad-header">
-        <div class="nad-success-icon">
-          <i class="pi pi-check"></i>
-        </div>
-        <div class="nad-title-group">
-          <h2 class="nad-title">Lưu thành công!</h2>
-          <p class="nad-subtitle">
-            Đã lưu <strong>{{ luuVuaRoi()!.savedCount }} ô</strong> cho biểu mẫu
-            <strong>{{ luuVuaRoi()!.formCode }}</strong> &mdash; <em>Kỳ {{ luuVuaRoi()!.period }}</em>
-          </p>
-        </div>
-        <button class="nad-close" (click)="dongDialogTiepTheo()" title="Đóng">
-          <i class="pi pi-times"></i>
-        </button>
-      </div>
-
-      <!-- Body: action cards -->
-      <div class="nad-body">
-        <p class="nad-question">Tiếp theo bạn muốn làm gì?</p>
-        <div class="nad-actions">
-
-          <!-- Option 1: Continue same form / same period -->
-          <button class="nad-card" (click)="tiepTucNhapHienTai()">
-            <div class="nadc-icon nadc-icon--continue">
-              <i class="pi pi-refresh"></i>
-            </div>
-            <div class="nadc-content">
-              <span class="nadc-label">Tiếp tục nhập</span>
-              <span class="nadc-desc">Biểu mẫu <strong>{{ luuVuaRoi()!.formCode }}</strong><br>
-                Kỳ <strong>{{ luuVuaRoi()!.period }}</strong> &mdash; Năm {{ nam }}</span>
-            </div>
-            <i class="pi pi-arrow-right nadc-arrow"></i>
-          </button>
-
-          <!-- Option 2: Next period -->
-          @if (kyTiepTheo) {
-            <button class="nad-card" (click)="nhapKyTiepTheo()">
-              <div class="nadc-icon nadc-icon--period">
-                <i class="pi pi-calendar-plus"></i>
-              </div>
-              <div class="nadc-content">
-                <span class="nadc-label">Nhập kỳ tiếp theo</span>
-                <span class="nadc-desc">Chuyển sang kỳ <strong>{{ kyTiepTheo }}</strong><br>
-                  Biểu mẫu <strong>{{ luuVuaRoi()!.formCode }}</strong></span>
-              </div>
-              <i class="pi pi-arrow-right nadc-arrow"></i>
-            </button>
-          }
-
-          <!-- Option 3: Next form in list -->
-          @if (coBieuMauTiepTheo) {
-            <button class="nad-card" (click)="nhapBieuMauTiepTheo()">
-              <div class="nadc-icon nadc-icon--form">
-                <i class="pi pi-file-edit"></i>
-              </div>
-              <div class="nadc-content">
-                <span class="nadc-label">Biểu mẫu tiếp theo</span>
-                <span class="nadc-desc">
-                  <strong>{{ bieuMauTiepTheo?.formCode }}</strong><br>
-                  {{ bieuMauTiepTheo?.formName }}
-                </span>
-              </div>
-              <i class="pi pi-arrow-right nadc-arrow"></i>
-            </button>
-          }
-
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="nad-footer">
-        <button class="nad-dismiss" (click)="dongDialogTiepTheo()">
-          <i class="pi pi-times-circle"></i> Ở lại trang hiện tại
-        </button>
-        @if (lichSuLuu().length > 1) {
-          <span class="nad-session-info">
-            <i class="pi pi-check-circle"></i>
-            Đã hoàn thành {{ lichSuLuu().length }} phiếu trong phiên này
-          </span>
-        }
-      </div>
-    </div>
-  }
+  <!-- ===== NEXT-ACTION DIALOG AND SESSION HISTORY PANEL REMOVED ===== -->
 
 </div>

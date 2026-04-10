@@ -1,10 +1,10 @@
 // ============================================
-// Page: Quáº£n lÃ½ Biá»ƒu máº«u (Template List) â€” Redesigned
+// Page: Quản lý BiỒu mẫu (Template List) � Redesigned
 // ============================================
-// Hiá»ƒn thá»‹ danh sÃ¡ch form template tá»« API tháº­t vá»›i giao diá»‡n enterprise.
+// HiỒn th�9 danh sách form template từ API thật v�:i giao di�!n enterprise.
 //
-// === LUá»’NG Dá»® LIá»†U ===
-// Component â†’ FormConfigApiService â†’ GET /api/v2/FormTemplate/get-list
+// === LU�NG DỮ LI� U ===
+// Component �  FormConfigApiService �  GET /api/v2/FormTemplate/get-list
 // ============================================
 
 import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { FormConfigApiService } from '../../../service/form-config-api.service';
 
-/** Item hiá»ƒn thá»‹ trÃªn UI â€” map tá»« API response */
+/** Item hiỒn th�9 trên UI � map từ API response */
 export interface FormTemplateItem {
     id: number;
     formCode: string;
@@ -22,8 +22,13 @@ export interface FormTemplateItem {
     description?: string;
     isActive?: boolean;
     createdAt?: string;
+    updatedAt?: string;
     currentVersion?: string | null;
     applyYear?: number | null;
+    // Thông tin đơn vị & kỳ báo cáo
+    entityCode?: string;
+    entityName?: string;
+    period?: string;  // Q1, Q2, ..., Tháng 01, ..., Năm
 }
 
 @Component({
@@ -45,6 +50,7 @@ export class DanhSachBieuMauComponent implements OnInit, OnDestroy {
 
     tuKhoa = '';
     boLoc: 'all' | 'active' | 'inactive' = 'all';
+    boLocDonVi = '';  // Filter by entityCode (mã danh mục)
     viewMode: 'grid' | 'table' = 'grid';
 
     private timerTimKiem: any;
@@ -54,6 +60,17 @@ export class DanhSachBieuMauComponent implements OnInit, OnDestroy {
     soLuongActive = computed(() =>
         this.danhSach().filter(bm => bm.isActive !== false).length
     );
+
+    // Danh sách các đơn vị (entityCode) có sẵn
+    danhSachDonVi = computed(() => {
+        const donVi = new Set<string>();
+        this.danhSach().forEach(bm => {
+            if (bm.entityCode) {
+                donVi.add(bm.entityCode);
+            }
+        });
+        return Array.from(donVi).sort();
+    });
 
     ngOnInit(): void {
         this.taiDuLieu();
@@ -71,17 +88,17 @@ export class DanhSachBieuMauComponent implements OnInit, OnDestroy {
 
         this.sub = this.formConfigApi.getFormTemplateList().subscribe({
             next: (items) => {
-                console.log('[DanhSachBieuMau] âœ… Loaded', items.length, 'templates from API');
+                console.log('[DanhSachBieuMau] �S& Loaded', items.length, 'templates from API');
                 this.danhSach.set(items);
                 this.locDanhSach();
                 this.dangTai.set(false);
             },
             error: (err) => {
-                console.error('[DanhSachBieuMau] âŒ API error:', err);
+                console.error('[DanhSachBieuMau] �R API error:', err);
                 this.danhSach.set([]);
                 this.danhSachHienThi.set([]);
                 this.dangTai.set(false);
-                this.hienThongBao('KhÃ´ng thá»ƒ táº£i danh sÃ¡ch biá»ƒu máº«u tá»« server', 'error');
+                this.hienThongBao('Không thể tải danh sách biểu mẫu từ server', 'error');
             },
         });
     }
@@ -91,24 +108,31 @@ export class DanhSachBieuMauComponent implements OnInit, OnDestroy {
         this.timerTimKiem = setTimeout(() => this.locDanhSach(), 300);
     }
 
-    /** Lá»c danh sÃ¡ch theo tá»« khÃ³a + bá»™ lá»c tráº¡ng thÃ¡i */
+    /** Lọc danh sách theo từ khóa + bộ lọc trạng thái + mã danh mục */
     locDanhSach(): void {
         let ds = this.danhSach();
 
-        // Lá»c theo tráº¡ng thÃ¡i
+        // Lọc theo trạng thái
         if (this.boLoc === 'active') {
             ds = ds.filter(bm => bm.isActive !== false);
         } else if (this.boLoc === 'inactive') {
             ds = ds.filter(bm => bm.isActive === false);
         }
 
-        // Lá»c theo tá»« khÃ³a
+        // Lọc theo mã danh mục (entityCode)
+        if (this.boLocDonVi?.trim()) {
+            ds = ds.filter(bm => bm.entityCode === this.boLocDonVi);
+        }
+
+        // Lọc theo từ khóa
         if (this.tuKhoa?.trim()) {
             const tk = this.tuKhoa.toLowerCase();
             ds = ds.filter(bm =>
                 bm.formCode.toLowerCase().includes(tk) ||
                 bm.formName.toLowerCase().includes(tk) ||
-                (bm.description || '').toLowerCase().includes(tk)
+                (bm.description || '').toLowerCase().includes(tk) ||
+                (bm.entityCode || '').toLowerCase().includes(tk) ||
+                (bm.entityName || '').toLowerCase().includes(tk)
             );
         }
 
@@ -126,7 +150,7 @@ export class DanhSachBieuMauComponent implements OnInit, OnDestroy {
 
     // === UI HELPERS ===
 
-    /** Accent gradient cho icon card dá»±a trÃªn index */
+    /** Accent gradient cho icon card dựa trên index */
     getCardAccent(index: number): string {
         const accents = [
             'linear-gradient(135deg, #3B82F6, #1D4ED8)',   // Blue
@@ -141,34 +165,34 @@ export class DanhSachBieuMauComponent implements OnInit, OnDestroy {
         return accents[index % accents.length];
     }
 
-    /** Icon dá»±a trÃªn tÃªn biá»ƒu máº«u */
+    /** Icon dựa trên tên biỒu mẫu */
     getFormIcon(formName: string): string {
         const name = (formName || '').toLowerCase();
-        if (name.includes('tÃ i chÃ­nh') || name.includes('tai chinh')) return 'pi-wallet';
-        if (name.includes('sáº£n xuáº¥t') || name.includes('san xuat')) return 'pi-cog';
+        if (name.includes('tài chính') || name.includes('tai chinh')) return 'pi-wallet';
+        if (name.includes('sản xuất') || name.includes('san xuat')) return 'pi-cog';
         if (name.includes('kinh doanh') || name.includes('kd')) return 'pi-chart-bar';
-        if (name.includes('bÃ¡o cÃ¡o') || name.includes('bao cao')) return 'pi-file';
-        if (name.includes('káº¿ hoáº¡ch') || name.includes('ke hoach')) return 'pi-calendar';
+        if (name.includes('báo cáo') || name.includes('bao cao')) return 'pi-file';
+        if (name.includes('kế hoạch') || name.includes('ke hoach')) return 'pi-calendar';
         return 'pi-file-edit';
     }
 
     /** Format date string */
     formatDate(dateStr?: string): string {
-        if (!dateStr) return 'ChÆ°a cáº­p nháº­t';
-        // Kiá»ƒm tra date máº·c Ä‘á»‹nh tá»« .NET (0001-01-01)
+        if (!dateStr) return 'Chưa cập nhật';
+        // KiỒm tra date mặc ��9nh từ .NET (0001-01-01)
         if (dateStr.startsWith('0001-01-01') || dateStr.startsWith('1970-01-01')) {
-            return 'ChÆ°a cáº­p nháº­t';
+            return 'Chưa cập nhật';
         }
         try {
             const d = new Date(dateStr);
-            if (isNaN(d.getTime())) return 'ChÆ°a cáº­p nháº­t';
+            if (isNaN(d.getTime())) return 'Chưa cập nhật';
             return d.toLocaleDateString('vi-VN', {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric',
             });
         } catch {
-            return 'ChÆ°a cáº­p nháº­t';
+            return 'Chưa cập nhật';
         }
     }
 

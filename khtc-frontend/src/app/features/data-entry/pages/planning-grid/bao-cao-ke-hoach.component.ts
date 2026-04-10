@@ -3,44 +3,33 @@ import {
   OnInit, AfterViewInit, OnDestroy,
   signal, inject,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import Handsontable from 'handsontable';
 import { HyperFormula } from 'hyperformula';
 import {
   TemplateParserService, TemplateJson, DimMetadata,
   ParsedGridConfig, PovSelection, FactDataPoint,
-} from '../../../service/template-parser.service';
+} from '../../../../apps/service/template-parser.service';
 import {
-  PlanningApiService, TemplateListItem, PlanningScenarioItem, CellChangePayload, FormTemplateListItem,
-} from '../../../service/planning-api.service';
+  PlanningApiService, TemplateListItem, PlanningScenarioItem, CellChangePayload, FormTemplateListItem
+} from '../../services/planning-api.service';
 import {
   LayoutGridRendererService, RenderedGridConfig, RenderedRowMeta, RenderedColMeta,
-} from '../../../service/layout-grid-renderer.service';
+} from '../../services/layout-grid-renderer.service';
 import {
   LayoutJSON, GridCellData, LayoutColumnDef,
 } from '../../../../config/models/layout-template.model';
-import { FormRegistryService } from '../../../service/form-registry.service';
+import { FormRegistryService } from '../../../../apps/service/form-registry.service';
 // Import custom numeric editor for formatted number input
-import '../../../service/formatted-numeric-editor';
+import '../../services/formatted-numeric-editor';
 
 interface PovDropdown {
   dimKey: string;
   label: string;
   members: { key: string; name: string }[];
   selected: string;
-}
-
-/** Bản ghi một lần lưu thành công trong phiên làm việc */
-interface SessionRecord {
-  formCode: string;
-  formName: string;
-  period: string;
-  nam: number;
-  savedAt: Date;
-  savedCount: number;
 }
 
 interface TrackedChange {
@@ -51,6 +40,16 @@ interface TrackedChange {
   rowDimensions: Record<string, string>;
   colDimensions: Record<string, string>;
 }
+
+
+
+/** Danh sách kỳ theo thứ tự để điều hướng nhanh */
+const PERIOD_ORDER = [
+  'T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12',
+  'Q1','Q2','Q3','Q4',
+  'Kỳ 1','Kỳ 2',
+  'Năm',
+];
 
 @Component({
   standalone: true,
@@ -76,7 +75,6 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   private http   = inject(HttpClient);
   private v2Renderer = inject(LayoutGridRendererService);
   private formRegistry = inject(FormRegistryService);
-  private route = inject(ActivatedRoute);
 
   // === Template & Data ===
   template   = signal<TemplateJson | null>(null);
@@ -209,46 +207,19 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   zoomLevel       = 100;
   private trackedChanges: TrackedChange[] = [];
 
-   /** Panel test: nạp mẫu từ JSON (dán hoặc file) — chỉ dùng khi kiểm thử */
+  /**
+   * V2 change tracking: Map<"rowCode:colCode", GridCellData>
+   * Dùng Map để tự động ghi đè khi user sửa cùng 1 ô nhiều lần.
+   */
+  private v2ChangedCells = new Map<string, { rowCode: string; colCode: string; value: any }>();
+
+
+
+  /** Panel test: nạp mẫu từ JSON (dán hoặc file) — chỉ dùng khi kiểm thử */
   panelJsonTestMo = signal(false);
   noiDungJsonTest = '';
 
-  /** Test submission ID input — for loading submission data */
-  submissionIdTest = '';
 
-  /** Hiện thị dialog "Tiếp theo bạn muốn làm gì?" */
-  hienDialogTiepTheo = signal(false);
-  /** Thông tin lần lưu vừa rồi (để hiện thị trong dialog) */
-  luuVuaRoi = signal<{ formCode: string; formName: string; period: string; savedCount: number } | null>(null);
-
-  /** Danh sách các biểu mẫu đã lưu trong phiên này */
-  lichSuLuu = signal<SessionRecord[]>([]);
-  /** Hiện panel lịch sử */
-  hienLichSu = signal(false);
-
-  /** Có biểu mẫu tiếp theo trong danh sách không? */
-  get coBieuMauTiepTheo(): boolean {
-    const list = this.danhSachBieuMauV2();
-    const curIdx = list.findIndex(f => f.id === this.selectedFormTemplateId());
-    return curIdx >= 0 && curIdx < list.length - 1;
-  }
-
-  /** Biểu mẫu tiếp theo trong danh sách (formCode + formName) */
-  get kyTiepTheo(): string | null {
-    const list = this.danhSachBieuMauV2();
-    const curIdx = list.findIndex(f => f.id === this.selectedFormTemplateId());
-    if (curIdx < 0 || curIdx >= list.length - 1) return null;
-    const next = list[curIdx + 1];
-    return next.formCode;
-  }
-
-  /** Biểu mẫu tiếp theo (full object) */
-  get bieuMauTiepTheo(): FormTemplateListItem | null {
-    const list = this.danhSachBieuMauV2();
-    const curIdx = list.findIndex(f => f.id === this.selectedFormTemplateId());
-    if (curIdx < 0 || curIdx >= list.length - 1) return null;
-    return list[curIdx + 1];
-  }
 
   // ===================================
   // Lifecycle
@@ -256,26 +227,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngOnInit(): void {
     document.addEventListener('keydown', this.xuLyPhimTat);
-
-    // Parse query params từ URL (khi gọi từ workflow/submissions)
-    this.route.queryParams.subscribe(params => {
-      if (params['submissionId']) {
-        // Load submission data automatically — không load danh sách biểu mẫu
-        console.log('[DataEntry] Loading submission:', params['submissionId']);
-        this.loadTaiSubmission(params['submissionId']);
-        return;
-      }
-
-      // Nếu không có submissionId, mới load danh sách biểu mẫu
-      this.taiDanhSachBieuMau();
-
-      if (params['formCode']) {
-        this.formId = params['formCode'];
-        this.entityCode = params['entityCode'] || '';
-        this.period = params['period'] || '';
-        this.nam = parseInt(params['year'] || new Date().getFullYear().toString());
-      }
-    });
+    this.taiDanhSachBieuMau();
   }
 
   ngAfterViewInit(): void {
@@ -326,46 +278,6 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
         console.error('[DataEntry] ❌ V2 load error:', err);
         const errMsg = err?.message || err?.error?.message || JSON.stringify(err);
         this.hienThiThongBao('Lỗi tải biểu mẫu: ' + errMsg, 'error');
-        this.dangTai.set(false);
-      },
-    });
-  }
-
-  /**
-   * Load submission data từ API khi người dùng click "Sửa" từ danh sách submissions
-   * API: GET /api/v2/PlanningData/get-submission/{submissionId}
-   */
-  loadTaiSubmission(submissionId: string): void {
-    if (!submissionId?.trim()) {
-      this.hienThiThongBao('Submission ID không hợp lệ', 'error');
-      return;
-    }
-
-    this.dangTai.set(true);
-    this.xoaThayDoi();
-
-    this.isV2Mode = true;
-    console.log('[DataEntry] 🔍 Loading submission:', submissionId);
-
-    this.api.getSubmissionData(submissionId).subscribe({
-      next: (res) => {
-        console.log('[DataEntry] 📥 Submission loaded:', res.template.formId, res.template.formName);
-        const layout = res.template.version.layoutJSON;
-        this.v2LayoutJSON = layout;
-        this.v2VisibleCols = layout.columns.filter(c => c.colCode !== 'METADATA_ROW');
-        this.v2GridConfig = this.v2Renderer.render(layout, res.dbData);
-
-        // Set form info từ submission
-        this.formId = res.template.formId;
-
-        this.renderV2Grid();
-        this.dangTai.set(false);
-        this.hienThiThongBao(`Đã tải bản nháp "${res.template.formName}"`, 'success');
-      },
-      error: (err) => {
-        console.error('[DataEntry] ❌ Submission load error:', err);
-        const errMsg = err?.message || err?.error?.message || JSON.stringify(err);
-        this.hienThiThongBao('Lỗi tải bản nháp: ' + errMsg, 'error');
         this.dangTai.set(false);
       },
     });
@@ -637,24 +549,6 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     );
   }
 
-  /** Load submission data by submissionId for testing */
-  loadSubmissionTest(): void {
-    if (!this.submissionIdTest?.trim()) {
-      this.hienThiThongBao('Vui lòng nhập Submission ID', 'error');
-      return;
-    }
-
-    this.dangTai.set(true);
-    const submissionId = this.submissionIdTest.trim();
-
-    console.log('[Test Submission] Loading submissionId:', submissionId);
-
-    // TODO: Call actual API to fetch submission data
-    // For now, just show a message
-    this.hienThiThongBao(`Tải dữ liệu submission: ${submissionId}`, 'success');
-    this.dangTai.set(false);
-  }
-
   onKichBanChange(): void {
     const tpl = this.template();
     const meta = this.dimMeta();
@@ -679,34 +573,31 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
       });
   }
 
+
+
   // ===================================
   // 6. Save
   // ===================================
 
   luuDuLieu(): void {
-    // V2 save: collect ALL data cells from grid (not just changes)
+    // V2 save: chỉ gửi các ô đã thay đổi (không phải toàn bộ grid)
     if (this.isV2Mode && this.v2GridConfig && this.hot) {
-      this.dangLuu.set(true);
-      
-      // Extract ALL editable cells from the current grid
-      const allCells = this.v2Renderer.extractAllDataCells(
-        this.hot,
-        this.v2GridConfig.rowMeta,
-        this.v2GridConfig.colMeta,
-      );
+      const changedCells = Array.from(this.v2ChangedCells.values());
 
-      if (allCells.length === 0) {
-        this.hienThiThongBao('Không có dữ liệu để lưu', 'error');
-        this.dangLuu.set(false);
+      if (changedCells.length === 0) {
+        this.hienThiThongBao('Chưa có thay đổi nào để lưu', 'error');
         return;
       }
 
-      console.log('[DataEntry] 💾 Saving V2:', {
+      this.dangLuu.set(true);
+
+      console.log('[DataEntry] 💾 Saving V2 (only changed):', {
         formId: this.formId,
         year: this.nam,
         period: this.period,
         scenario: this.scenario,
-        cellCount: allCells.length,
+        changedCount: changedCells.length,
+        cells: changedCells,
       });
 
       this.api.saveFormV2({
@@ -715,12 +606,12 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
         orgId: this.entityCode,
         period: this.period,
         scenario: this.scenario,
-        data: allCells,
+        data: changedCells,
       }).subscribe({
         next: (result) => {
           this.dangLuu.set(false);
           if (result.success) {
-            this.hienThiThongBao(result.message ?? `Đã lưu ${result.savedCount} ô dữ liệu!`, 'success');
+            this.hienThiThongBao(`Đã lưu ${changedCells.length} ô thay đổi!`, 'success');
             this.xoaThayDoi();
           } else {
             this.hienThiThongBao(result.message ?? 'Lưu thất bại', 'error');
@@ -806,6 +697,24 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
         if (source === 'loadData' || !changes) return;
         for (const [row, col, oldVal, newVal] of changes) {
           if (oldVal === newVal) continue;
+
+          // ── V2 mode: track bằng rowMeta/colMeta ──
+          if (this.isV2Mode && this.v2GridConfig) {
+            const rm = this.v2GridConfig.rowMeta[row];
+            const cm = this.v2GridConfig.colMeta[col];
+            if (!rm || !cm || rm.isHeader || rm.isReadOnly || cm.isReadOnly) continue;
+
+            const key = `${rm.rowCode}:${cm.colCode}`;
+            const numVal = typeof newVal === 'number' ? newVal : (parseFloat(String(newVal)) || 0);
+            this.v2ChangedCells.set(key, {
+              rowCode: rm.rowCode,
+              colCode: cm.colCode,
+              value: numVal,
+            });
+            continue;
+          }
+
+          // ── V1 mode: track bằng physicalCols/rowMeta cũ ──
           const pc = this.gridConfig?.physicalCols[col];
           const rm = this.gridConfig?.rowMeta[row];
           if (!pc || !rm) continue;
@@ -831,7 +740,10 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
             colDimensions: colDims,
           });
         }
-        this.soOThayDoi.set(this.trackedChanges.length);
+        // Cập nhật số ô thay đổi hiển thị trên UI
+        this.soOThayDoi.set(
+          this.isV2Mode ? this.v2ChangedCells.size : this.trackedChanges.length
+        );
       },
 
       afterSelection: (r: number, c: number) => {
@@ -869,6 +781,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private xoaThayDoi(): void {
     this.trackedChanges = [];
+    this.v2ChangedCells.clear();
     this.soOThayDoi.set(0);
   }
 
@@ -876,6 +789,8 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     this.thongBao.set({ noiDung, loai });
     setTimeout(() => this.thongBao.set(null), 3000);
   }
+
+
 
   private xuLyPhimTat = (e: KeyboardEvent) => {
     if (e.ctrlKey && e.key === 's') {
@@ -907,59 +822,5 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     } else {
       this.tongGiaTri.set(null);
     }
-  }
-
-  // ===================================
-  // Session tracking & Next-action dialog
-  // ===================================
-
-  /** Đóng dialog "Tiếp theo?" */
-  dongDialogTiepTheo(): void {
-    this.hienDialogTiepTheo.set(false);
-    this.luuVuaRoi.set(null);
-  }
-
-  /** Tiếp tục nhập trên cùng biểu mẫu + kỳ (đóng dialog, load lại dữ liệu mới) */
-  tiepTucNhapHienTai(): void {
-    this.dongDialogTiepTheo();
-    // Reload dữ liệu hiện tại
-    this.taiForm();
-  }
-
-  /** Chuyển sang biểu mẫu tiếp theo trong danh sách */
-  nhapKyTiepTheo(): void {
-    const next = this.kyTiepTheo;
-    if (!next) return;
-    this.dongDialogTiepTheo();
-
-    const list = this.danhSachBieuMauV2();
-    const curIdx = list.findIndex(f => f.id === this.selectedFormTemplateId());
-    if (curIdx >= 0 && curIdx < list.length - 1) {
-      const nextItem = list[curIdx + 1];
-      this.dongDialogTiepTheo();
-      this.selectedFormTemplateId.set(nextItem.id);
-      this.onFormTemplateChange(nextItem.formCode);
-    }
-  }
-
-  /** Toggle panel lịch sử phiên */
-  toggleLichSu(): void {
-    this.hienLichSu.update(v => !v);
-  }
-
-  /** Nhập lại một bản ghi trong lịch sử (chuyển params và load) */
-  nhapLaiTuLichSu(rec: SessionRecord): void {
-    const found = this.danhSachBieuMauV2().find(f => f.formCode === rec.formCode);
-    if (found) {
-      this.selectedFormTemplateId.set(found.id);
-      this.period = rec.period;
-      this.hienLichSu.set(false);
-      this.onFormTemplateChange(found.formCode);
-    }
-  }
-
-  /** Chuyển sang biểu mẫu tiếp theo (gọi từ dialog next-action) */
-  nhapBieuMauTiepTheo(): void {
-    this.nhapKyTiepTheo();
   }
 }

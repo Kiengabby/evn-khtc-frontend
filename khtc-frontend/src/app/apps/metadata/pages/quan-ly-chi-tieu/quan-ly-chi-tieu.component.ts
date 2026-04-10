@@ -1,14 +1,14 @@
 // ============================================
-// Page: Quáº£n lÃ½ Chá»‰ tiÃªu (Account Management)
+// Page: Quản lý Ch�0 tiêu (Account Management)
 // ============================================
-// Trang nÃ y hiá»ƒn thá»‹ danh sÃ¡ch chá»‰ tiÃªu tÃ i chÃ­nh dÆ°á»›i dáº¡ng DataTable.
-// Chá»©c nÄƒng: TÃ¬m kiáº¿m, lá»c, thÃªm má»›i, sá»­a, xÃ³a, phÃ¢n trang.
+// Trang này hiỒn th�9 danh sách ch�0 tiêu tài chính dư�:i dạng DataTable.
+// Chức nĒng: Tìm kiếm, lọc, thêm m�:i, sửa, xóa, phân trang.
 //
-// === LUá»’NG Dá»® LIá»†U ===
-// 1. Component gá»i ChiTieuService.layDanhSach(boLoc)
-// 2. Service gá»i MockApiService (hoáº·c API tháº­t)
-// 3. Káº¿t quáº£ tráº£ vá» KetQuaApi<ChiTieu[]>
-// 4. Component hiá»ƒn thá»‹ vÃ o DataTable
+// === LU�NG DỮ LI� U ===
+// 1. Component gọi ChiTieuService.layDanhSach(boLoc)
+// 2. Service gọi MockApiService (hoặc API thật)
+// 3. Kết quả trả về KetQuaApi<ChiTieu[]>
+// 4. Component hiỒn th�9 vào DataTable
 // ============================================
 
 import { Component, inject, signal, OnInit } from '@angular/core';
@@ -57,7 +57,7 @@ export class QuanLyChiTieuComponent implements OnInit {
   async ngOnInit(): Promise<void> { await this.taiDuLieu(); }
 
   // ============================================
-  // LOAD Dá»® LIá»†U
+  // LOAD DỮ LI� U
   // ============================================
 
   async taiDuLieu(): Promise<void> {
@@ -82,7 +82,7 @@ export class QuanLyChiTieuComponent implements OnInit {
   }
 
   // ============================================
-  // TÃŒM KIáº¾M
+  // T�RM KIẾM
   // ============================================
 
   onTimKiem(): void {
@@ -91,10 +91,10 @@ export class QuanLyChiTieuComponent implements OnInit {
   }
 
   // ============================================
-  // THÃŠM / Sá»¬A
+  // TH�`M / SỬA
   // ============================================
 
-  /** Má»Ÿ dialog thÃªm má»›i */
+  /** M�x dialog thêm m�:i */
   moFormThemMoi(): void {
     this.form = this.formMacDinh();
     this.idDangSua = null;
@@ -103,7 +103,7 @@ export class QuanLyChiTieuComponent implements OnInit {
     this.hienDialog.set(true);
   }
 
-  /** Má»Ÿ dialog sá»­a */
+  /** M�x dialog sửa */
   moFormSua(ct: ChiTieu): void {
     this.form = {
       maChiTieu: ct.maChiTieu,
@@ -121,10 +121,10 @@ export class QuanLyChiTieuComponent implements OnInit {
     this.hienDialog.set(true);
   }
 
-  /** LÆ°u (táº¡o má»›i hoáº·c cáº­p nháº­t) */
+  /** Lưu (tạo m�:i hoặc cập nhật) */
   async luuChiTieu(): Promise<void> {
-    if (!this.form.maChiTieu?.trim()) { this.loiForm.set('Vui lÃ²ng nháº­p mÃ£ chá»‰ tiÃªu'); return; }
-    if (!this.form.tenChiTieu?.trim()) { this.loiForm.set('Vui lÃ²ng nháº­p tÃªn chá»‰ tiÃªu'); return; }
+    if (!this.form.maChiTieu?.trim()) { this.loiForm.set('Vui lòng nhập mã ch�0 tiêu'); return; }
+    if (!this.form.tenChiTieu?.trim()) { this.loiForm.set('Vui lòng nhập tên ch�0 tiêu'); return; }
 
     this.dangLuu.set(true);
 
@@ -141,17 +141,17 @@ export class QuanLyChiTieuComponent implements OnInit {
       await this.taiDuLieu();
       this.dongDialog();
     } catch {
-      this.loiForm.set('ÄÃ£ xáº£y ra lá»—i há»‡ thá»‘ng');
+      this.loiForm.set('Đã xảy ra l�i h�! th�ng');
     }
     this.dangLuu.set(false);
   }
 
   // ============================================
-  // XÃ“A
+  // X�A
   // ============================================
 
   async xacNhanXoa(ct: ChiTieu): Promise<void> {
-    if (!confirm(`Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a chá»‰ tiÃªu "${ct.tenChiTieu}"?`)) return;
+    if (!confirm(`Bạn có chắc mu�n xóa ch�0 tiêu "${ct.tenChiTieu}"?`)) return;
 
     const kq = await this.chiTieuService.xoa(ct.id);
     if (kq.trangThai) {
@@ -163,7 +163,7 @@ export class QuanLyChiTieuComponent implements OnInit {
   }
 
   // ============================================
-  // XEM CHI TIáº¾T
+  // XEM CHI TIẾT
   // ============================================
 
   xemChiTiet(ct: ChiTieu): void {
@@ -180,17 +180,17 @@ export class QuanLyChiTieuComponent implements OnInit {
 
   dongDialog(): void { this.hienDialog.set(false); this.loiForm.set(null); }
 
-  /** TÃªn tiáº¿ng Viá»‡t cho loáº¡i lÆ°u trá»¯ */
+  /** Tên tiếng Vi�!t cho loại lưu trữ */
   tenLoaiLuuTru(loai: LoaiLuuTru): string {
     const map: Record<LoaiLuuTru, string> = {
-      'STORE': 'LÆ°u trá»¯',
-      'DYNAMIC_CALC': 'TÃ­nh toÃ¡n',
-      'LABEL_ONLY': 'NhÃ£n',
+      'STORE': 'Lưu trữ',
+      'DYNAMIC_CALC': 'Tính toán',
+      'LABEL_ONLY': 'Nhãn',
     };
     return map[loai] || loai;
   }
 
-  /** Form máº·c Ä‘á»‹nh khi thÃªm má»›i */
+  /** Form mặc ��9nh khi thêm m�:i */
   private formMacDinh() {
     return {
       maChiTieu: '',
@@ -198,13 +198,13 @@ export class QuanLyChiTieuComponent implements OnInit {
       maChiTieuCha: null as string | null,
       loaiLuuTru: 'STORE' as LoaiLuuTru,
       phuongThucTongHop: 'SUM' as PhuongThucTongHop,
-      donViTinh: 'Tá»· Ä‘á»“ng',
+      donViTinh: 'Tỷ ��ng',
       congThuc: '',
       ghiChu: '',
     };
   }
 
-  /** Hiá»ƒn thá»‹ toast thÃ´ng bÃ¡o (tá»± áº©n sau 3 giÃ¢y) */
+  /** HiỒn th�9 toast thông báo (tự ẩn sau 3 giây) */
   private hienThongBao(noiDung: string, loai: 'success' | 'error'): void {
     this.thongBao.set({ noiDung, loai });
     setTimeout(() => this.thongBao.set(null), 3000);

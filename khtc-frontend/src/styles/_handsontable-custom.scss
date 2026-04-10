@@ -83,4 +83,51 @@
         text-align: center !important;
         vertical-align: middle !important;
     }
+
+    // ============================================
+    // Formatted Numeric Editor Styles
+    // ============================================
+    
+    // Style cho input editor khi đang nhập số
+    .handsontableInputHolder {
+        .formatted-numeric-input,
+        .handsontableInput {
+            text-align: right !important;
+            font-family: $font-family !important;
+            font-size: $font-size-sm !important;
+            padding: 4px 8px !important;
+            border: 2px solid $primary !important;
+            outline: none !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+            
+            // Disable IME (Input Method Editor) for numeric input
+            ime-mode: disabled;
+            
+            &:focus {
+                border-color: $primary !important;
+                box-shadow: 0 2px 12px rgba(var(--primary-rgb), 0.25) !important;
+            }
+        }
+    }
+
+    // Visual feedback khi ô số nhận focus
+    td.cell-editable {
+        cursor: text;
+        
+        &:focus,
+        &.current {
+            background-color: color.adjust($primary, $lightness: 45%) !important;
+        }
+    }
+
+    // Style cho các ô số đã có giá trị
+    td.htNumeric:not(.htDimmed) {
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
+    }
+
+    // Highlight ô đang edit
+    td.htSelected {
+        background-color: color.adjust($primary, $lightness: 40%) !important;
+    }
 }

@@ -1,5 +1,5 @@
 // ============================================
-// Dashboard â€” EVN KHTC Executive Overview
+// Dashboard � EVN KHTC Executive Overview
 // ============================================
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -28,7 +28,7 @@ export class DashboardPageComponent implements OnInit {
         this.thongKe.set(kq.duLieu);
       }
     } catch {
-      // silent â€” hiá»ƒn thá»‹ tráº¡ng thÃ¡i trá»‘ng
+      // silent � hiỒn th�9 trạng thái tr�ng
     }
     this.dangTai.set(false);
   }
@@ -43,8 +43,8 @@ export class DashboardPageComponent implements OnInit {
 
   tenTrangThai(tt: string): string {
     const map: Record<string, string> = {
-      nhap: 'NhÃ¡p', cho_duyet: 'Chá» duyá»‡t', da_duyet: 'ÄÃ£ duyá»‡t',
-      tu_choi: 'Tá»« chá»‘i', tra_lai: 'Tráº£ láº¡i',
+      nhap: 'Nháp', cho_duyet: 'Chờ duy�!t', da_duyet: 'Đã duy�!t',
+      tu_choi: 'Từ ch�i', tra_lai: 'Trả lại',
     };
     return map[tt] || tt;
   }

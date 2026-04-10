@@ -1,11 +1,11 @@
 // ============================================
 // GridDataMappingService
-// Lá»›p Ã¡nh xáº¡ dá»¯ liá»‡u giá»¯a Handsontable grid
-// vÃ  Backend API sá»­ dá»¥ng format colCode/rowCode.
+// L�:p ánh xạ dữ li�!u giữa Handsontable grid
+// và Backend API sử dụng format colCode/rowCode.
 //
-// 2 luá»“ng chÃ­nh:
-//   â€¢ extractGridData() â€” Save: Grid â†’ API
-//   â€¢ buildGridData()   â€” Load: API â†’ Grid
+// 2 lu�ng chính:
+//   ⬢ extractGridData() � Save: Grid �  API
+//   ⬢ buildGridData()   � Load: API �  Grid
 // ============================================
 
 import { Injectable } from '@angular/core';
@@ -14,23 +14,23 @@ import {
     LayoutHeaderRow, GridCellData,
 } from '../../config/models/layout-template.model';
 
-/** Káº¿t quáº£ tráº£ vá» khi build grid config cho Handsontable */
+/** Kết quả trả về khi build grid config cho Handsontable */
 export interface GridRenderConfig {
-    /** Máº£ng 2D dá»¯ liá»‡u cho Handsontable */
+    /** Mảng 2D dữ li�!u cho Handsontable */
     data: any[][];
     /** nestedHeaders cho Handsontable */
     nestedHeaders: any[][];
-    /** Cáº¥u hÃ¬nh columns cho Handsontable */
+    /** Cấu hình columns cho Handsontable */
     columns: any[];
-    /** Máº£ng Ä‘á»™ rá»™ng cá»™t */
+    /** Mảng ��" r�"ng c�"t */
     colWidths: number[];
-    /** Sá»‘ cá»™t cá»‘ Ä‘á»‹nh bÃªn trÃ¡i */
+    /** S� c�"t c� ��9nh bên trái */
     fixedColumnsStart: number;
-    /** Sá»‘ dÃ²ng header cá»‘ Ä‘á»‹nh trÃªn cÃ¹ng */
+    /** S� dòng header c� ��9nh trên cùng */
     fixedRowsTop: number;
-    /** Cáº¥u hÃ¬nh áº©n cá»™t (cá»™t METADATA_ROW) */
+    /** Cấu hình ẩn c�"t (c�"t METADATA_ROW) */
     hiddenColumns: { columns: number[]; indicators: boolean };
-    /** Cáº¥u hÃ¬nh merge cells */
+    /** Cấu hình merge cells */
     mergeCells: any[];
 }
 
@@ -42,15 +42,15 @@ export class GridDataMappingService {
     // ==========================================================
 
     /**
-     * Táº¡o map: rowCode â†’ visual row index trong Handsontable.
+     * Tạo map: rowCode �  visual row index trong Handsontable.
      *
-     * VÃ¬ Handsontable dÃ¹ng fixedRowsTop cho header, nÃªn dÃ²ng dá»¯ liá»‡u
-     * Ä‘áº§u tiÃªn báº¯t Ä‘áº§u á»Ÿ index = fixedRowsTop.
+     * Vì Handsontable dùng fixedRowsTop cho header, nên dòng dữ li�!u
+     * �ầu tiên bắt �ầu �x index = fixedRowsTop.
      *
-     * VÃ­ dá»¥ (fixedRowsTop=2):
+     * Ví dụ (fixedRowsTop=2):
      *   Row 0,1 = header
-     *   Row 2   = rows[0] â†’ rowCode "TONG_CONG_F"
-     *   Row 3   = rows[1] â†’ rowCode "CHITIEU_01"
+     *   Row 2   = rows[0] �  rowCode "TONG_CONG_F"
+     *   Row 3   = rows[1] �  rowCode "CHITIEU_01"
      */
     private buildRowCodeToIndexMap(rows: LayoutRowDef[], fixedRowsTop: number): Map<string, number> {
         const map = new Map<string, number>();
@@ -64,8 +64,8 @@ export class GridDataMappingService {
     }
 
     /**
-     * Táº¡o map ngÆ°á»£c: visual row index â†’ rowCode.
-     * DÃ¹ng khi duyá»‡t grid tá»« trÃªn xuá»‘ng Ä‘á»ƒ láº¥y rowCode.
+     * Tạo map ngược: visual row index �  rowCode.
+     * Dùng khi duy�!t grid từ trên xu�ng �Ồ lấy rowCode.
      */
     private buildIndexToRowCodeMap(rows: LayoutRowDef[], fixedRowsTop: number): Map<number, string> {
         const map = new Map<number, string>();
@@ -76,10 +76,10 @@ export class GridDataMappingService {
     }
 
     /**
-     * Táº¡o map: colCode â†’ column index trong Handsontable.
+     * Tạo map: colCode �  column index trong Handsontable.
      *
-     * VÃ­ dá»¥:
-     *   Col 0 = "METADATA_ROW" (áº©n)
+     * Ví dụ:
+     *   Col 0 = "METADATA_ROW" (ẩn)
      *   Col 1 = "STT"
      *   Col 2 = "CHITIEU_NAME"
      *   Col 3 = "ACTUAL_N2"
@@ -93,7 +93,7 @@ export class GridDataMappingService {
     }
 
     /**
-     * Táº¡o map ngÆ°á»£c: column index â†’ colCode.
+     * Tạo map ngược: column index �  colCode.
      */
     private buildIndexToColCodeMap(columns: LayoutColumnDef[]): Map<number, string> {
         const map = new Map<number, string>();
@@ -104,7 +104,7 @@ export class GridDataMappingService {
     }
 
     /**
-     * Lá»c ra danh sÃ¡ch cá»™t cho phÃ©p nháº­p liá»‡u:
+     * Lọc ra danh sách c�"t cho phép nhập li�!u:
      *   - readOnly = false
      *   - colCode !== 'METADATA_ROW'
      */
@@ -121,27 +121,27 @@ export class GridDataMappingService {
 
     // ==========================================================
     // SAVE FLOW: extractGridData()
-    // Grid â†’ { rowCode, colCode, value }[]
+    // Grid �  { rowCode, colCode, value }[]
     // ==========================================================
 
     /**
-     * Láº¥y toÃ n bá»™ dá»¯ liá»‡u Ä‘Ã£ nháº­p tá»« Handsontable grid.
+     * Lấy toàn b�" dữ li�!u �ã nhập từ Handsontable grid.
      *
-     * Quy trÃ¬nh:
-     *   1. XÃ¡c Ä‘á»‹nh danh sÃ¡ch cá»™t editable (readOnly=false, khÃ´ng pháº£i METADATA_ROW)
-     *   2. Duyá»‡t tá»« dÃ²ng fixedRowsTop Ä‘áº¿n háº¿t
-     *   3. Vá»›i má»—i dÃ²ng: láº¥y rowCode tá»« cá»™t 0 (METADATA_ROW)
-     *   4. Vá»›i má»—i cá»™t editable: náº¿u cell cÃ³ giÃ¡ trá»‹ â†’ táº¡o GridCellData
+     * Quy trình:
+     *   1. Xác ��9nh danh sách c�"t editable (readOnly=false, không phải METADATA_ROW)
+     *   2. Duy�!t từ dòng fixedRowsTop �ến hết
+     *   3. V�:i m�i dòng: lấy rowCode từ c�"t 0 (METADATA_ROW)
+     *   4. V�:i m�i c�"t editable: nếu cell có giá tr�9 �  tạo GridCellData
      *
-     * @param hotInstance - Instance Handsontable Ä‘ang hiá»ƒn thá»‹
-     * @param layout      - LayoutJSON tá»« template
-     * @returns Máº£ng GridCellData[] chá»‰ chá»©a cÃ¡c Ã´ cÃ³ dá»¯ liá»‡u & editable
+     * @param hotInstance - Instance Handsontable �ang hiỒn th�9
+     * @param layout      - LayoutJSON từ template
+     * @returns Mảng GridCellData[] ch�0 chứa các ô có dữ li�!u & editable
      */
     extractGridData(hotInstance: any, layout: LayoutJSON): GridCellData[] {
         const results: GridCellData[] = [];
 
         if (!hotInstance || !layout) {
-            console.warn('[GridDataMapping] extractGridData: hotInstance hoáº·c layout bá»‹ null');
+            console.warn('[GridDataMapping] extractGridData: hotInstance hoặc layout b�9 null');
             return results;
         }
 
@@ -149,35 +149,35 @@ export class GridDataMappingService {
         const { fixedRowsTop, columns } = layout;
         const editableCols = this.getEditableColumns(columns);
 
-        // TÃ¬m index cá»™t METADATA_ROW (luÃ´n pháº£i lÃ  cá»™t 0 theo thiáº¿t káº¿)
+        // Tìm index c�"t METADATA_ROW (luôn phải là c�"t 0 theo thiết kế)
         const metadataColIndex = this.findMetadataColIndex(columns);
 
         if (metadataColIndex < 0) {
-            console.warn('[GridDataMapping] extractGridData: KhÃ´ng tÃ¬m tháº¥y cá»™t METADATA_ROW!');
+            console.warn('[GridDataMapping] extractGridData: Không tìm thấy c�"t METADATA_ROW!');
             return results;
         }
 
-        // Duyá»‡t tá»«ng dÃ²ng dá»¯ liá»‡u (bá» qua header rows)
+        // Duy�!t từng dòng dữ li�!u (bỏ qua header rows)
         for (let row = fixedRowsTop; row < totalRows; row++) {
-            // Láº¥y rowCode tá»« cá»™t áº©n METADATA_ROW
+            // Lấy rowCode từ c�"t ẩn METADATA_ROW
             const rowCode = hotInstance.getDataAtCell(row, metadataColIndex);
 
             if (!rowCode) {
-                console.warn(`[GridDataMapping] extractGridData: DÃ²ng ${row} khÃ´ng cÃ³ rowCode, bá» qua`);
+                console.warn(`[GridDataMapping] extractGridData: Dòng ${row} không có rowCode, bỏ qua`);
                 continue;
             }
 
-            // Kiá»ƒm tra dÃ²ng cÃ³ pháº£i readOnly khÃ´ng (dÃ²ng tá»•ng/cÃ´ng thá»©c)
+            // KiỒm tra dòng có phải readOnly không (dòng t�"ng/công thức)
             const rowDef = layout.rows.find(r => r.rowCode === rowCode);
             if (rowDef?.isReadOnly) {
-                continue; // Bá» qua dÃ²ng readOnly (dÃ²ng tá»•ng/cÃ´ng thá»©c)
+                continue; // Bỏ qua dòng readOnly (dòng t�"ng/công thức)
             }
 
-            // Duyá»‡t tá»«ng cá»™t editable
+            // Duy�!t từng c�"t editable
             for (const { colCode, colIndex } of editableCols) {
                 const cellValue = hotInstance.getDataAtCell(row, colIndex);
 
-                // Chá»‰ láº¥y Ã´ cÃ³ dá»¯ liá»‡u (khÃ´ng null, khÃ´ng undefined, khÃ´ng chuá»—i rá»—ng)
+                // Ch�0 lấy ô có dữ li�!u (không null, không undefined, không chu�i r�ng)
                 if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
                     results.push({
                         rowCode,
@@ -189,7 +189,7 @@ export class GridDataMappingService {
         }
 
         console.log(
-            `[GridDataMapping] extractGridData: TrÃ­ch xuáº¥t ${results.length} Ã´ dá»¯ liá»‡u`,
+            `[GridDataMapping] extractGridData: Trích xuất ${results.length} ô dữ li�!u`,
             results,
         );
 
@@ -198,22 +198,22 @@ export class GridDataMappingService {
 
     // ==========================================================
     // LOAD FLOW: buildGridData()
-    // Template + dbData â†’ Handsontable data[][]
+    // Template + dbData �  Handsontable data[][]
     // ==========================================================
 
     /**
-     * XÃ¢y dá»±ng máº£ng 2D dá»¯ liá»‡u cho Handsontable tá»« template + dbData.
+     * Xây dựng mảng 2D dữ li�!u cho Handsontable từ template + dbData.
      *
-     * Quy trÃ¬nh:
-     *   1. Táº¡o máº£ng 2D trá»‘ng (totalRows Ã— totalCols)
-     *   2. Äiá»n rowCode vÃ o cá»™t 0 (METADATA_ROW) â€” ráº¥t quan trá»ng!
-     *   3. Äiá»n static text (STT, tÃªn chá»‰ tiÃªu) tá»« template.rows
-     *   4. Äiá»n cÃ´ng thá»©c tá»« mappings (náº¿u cÃ³)
-     *   5. Ãnh xáº¡ dbData vÃ o Ä‘Ãºng Ã´ [rowIndex][colIndex]
+     * Quy trình:
+     *   1. Tạo mảng 2D tr�ng (totalRows � totalCols)
+     *   2. Điền rowCode vào c�"t 0 (METADATA_ROW) � rất quan trọng!
+     *   3. Điền static text (STT, tên ch�0 tiêu) từ template.rows
+     *   4. Điền công thức từ mappings (nếu có)
+     *   5. Ánh xạ dbData vào �úng ô [rowIndex][colIndex]
      *
-     * @param layout - LayoutJSON tá»« template
-     * @param dbData - Dá»¯ liá»‡u tá»« database
-     * @returns Máº£ng 2D dá»¯ liá»‡u sáºµn sÃ ng load vÃ o Handsontable
+     * @param layout - LayoutJSON từ template
+     * @param dbData - Dữ li�!u từ database
+     * @returns Mảng 2D dữ li�!u sẵn sàng load vào Handsontable
      */
     buildGridData(layout: LayoutJSON, dbData: GridCellData[]): any[][] {
         const { columns, rows, fixedRowsTop } = layout;
@@ -221,10 +221,10 @@ export class GridDataMappingService {
         const totalDataRows = rows.length;
         const totalRows = fixedRowsTop + totalDataRows;
 
-        // â”€â”€ BÆ°á»›c 1: Táº¡o máº£ng 2D trá»‘ng â”€â”€
+        // ���� Bư�:c 1: Tạo mảng 2D tr�ng ����
         const data: any[][] = [];
 
-        // Header rows (sáº½ trá»‘ng, vÃ¬ nestedHeaders xá»­ lÃ½ riÃªng)
+        // Header rows (sẽ tr�ng, vì nestedHeaders xử lý riêng)
         for (let h = 0; h < fixedRowsTop; h++) {
             data.push(new Array(totalCols).fill(null));
         }
@@ -234,14 +234,14 @@ export class GridDataMappingService {
             data.push(new Array(totalCols).fill(null));
         }
 
-        // â”€â”€ BÆ°á»›c 2: Äiá»n rowCode vÃ o cá»™t METADATA_ROW (cá»™t 0) â”€â”€
+        // ���� Bư�:c 2: Điền rowCode vào c�"t METADATA_ROW (c�"t 0) ����
         const metadataColIndex = this.findMetadataColIndex(columns);
 
         if (metadataColIndex < 0) {
-            console.warn('[GridDataMapping] buildGridData: KhÃ´ng tÃ¬m tháº¥y cá»™t METADATA_ROW!');
+            console.warn('[GridDataMapping] buildGridData: Không tìm thấy c�"t METADATA_ROW!');
         }
 
-        // â”€â”€ BÆ°á»›c 3: Äiá»n static text tá»« template.rows â”€â”€
+        // ���� Bư�:c 3: Điền static text từ template.rows ����
         const colCodeToIndex = this.buildColCodeToIndexMap(columns);
         const sttColIndex = colCodeToIndex.get('STT') ?? -1;
         const nameColIndex = colCodeToIndex.get('CHITIEU_NAME') ?? -1;
@@ -250,25 +250,25 @@ export class GridDataMappingService {
             const rowDef = rows[i];
             const rowIdx = i + fixedRowsTop;
 
-            // Äiá»n rowCode vÃ o cá»™t áº©n
+            // Điền rowCode vào c�"t ẩn
             if (metadataColIndex >= 0) {
                 data[rowIdx][metadataColIndex] = rowDef.rowCode;
             }
 
-            // Äiá»n STT (náº¿u cÃ³ cá»™t STT)
+            // Điền STT (nếu có c�"t STT)
             if (sttColIndex >= 0) {
                 data[rowIdx][sttColIndex] = this.generateSTT(rowDef, i, rows);
             }
 
-            // Äiá»n tÃªn chá»‰ tiÃªu (náº¿u cÃ³ cá»™t CHITIEU_NAME)
+            // Điền tên ch�0 tiêu (nếu có c�"t CHITIEU_NAME)
             if (nameColIndex >= 0) {
-                // ThÃªm indent dá»±a trÃªn level
+                // Thêm indent dựa trên level
                 const indent = '  '.repeat(rowDef.level);
                 data[rowIdx][nameColIndex] = indent + rowDef.title;
             }
         }
 
-        // â”€â”€ BÆ°á»›c 4: Äiá»n cÃ´ng thá»©c tá»« mappings (náº¿u cÃ³) â”€â”€
+        // ���� Bư�:c 4: Điền công thức từ mappings (nếu có) ����
         if (layout.mappings) {
             for (const mapping of layout.mappings) {
                 if (mapping.cellRole === 'formula' && mapping.formula) {
@@ -279,7 +279,7 @@ export class GridDataMappingService {
                         data[ri][ci] = mapping.formula;
                     } else {
                         console.warn(
-                            `[GridDataMapping] buildGridData: KhÃ´ng tÃ¬m tháº¥y vá»‹ trÃ­ cho formula mapping`,
+                            `[GridDataMapping] buildGridData: Không tìm thấy v�9 trí cho formula mapping`,
                             { rowCode: mapping.rowCode, colCode: mapping.colCode },
                         );
                     }
@@ -287,7 +287,7 @@ export class GridDataMappingService {
             }
         }
 
-        // â”€â”€ BÆ°á»›c 5: Ãnh xáº¡ dbData vÃ o Ä‘Ãºng Ã´ â”€â”€
+        // ���� Bư�:c 5: Ánh xạ dbData vào �úng ô ����
         const rowCodeToIndex = this.buildRowCodeToIndexMap(rows, fixedRowsTop);
         let populatedCount = 0;
         let skippedCount = 0;
@@ -298,7 +298,7 @@ export class GridDataMappingService {
 
             if (rowIdx === undefined) {
                 console.warn(
-                    `[GridDataMapping] buildGridData: rowCode "${cellData.rowCode}" khÃ´ng tÃ¬m tháº¥y trong template, bá» qua`,
+                    `[GridDataMapping] buildGridData: rowCode "${cellData.rowCode}" không tìm thấy trong template, bỏ qua`,
                 );
                 skippedCount++;
                 continue;
@@ -306,7 +306,7 @@ export class GridDataMappingService {
 
             if (colIdx === undefined) {
                 console.warn(
-                    `[GridDataMapping] buildGridData: colCode "${cellData.colCode}" khÃ´ng tÃ¬m tháº¥y trong template, bá» qua`,
+                    `[GridDataMapping] buildGridData: colCode "${cellData.colCode}" không tìm thấy trong template, bỏ qua`,
                 );
                 skippedCount++;
                 continue;
@@ -317,7 +317,7 @@ export class GridDataMappingService {
         }
 
         console.log(
-            `[GridDataMapping] buildGridData: Äiá»n ${populatedCount} Ã´, bá» qua ${skippedCount} Ã´`,
+            `[GridDataMapping] buildGridData: Điền ${populatedCount} ô, bỏ qua ${skippedCount} ô`,
         );
 
         return data;
@@ -328,8 +328,8 @@ export class GridDataMappingService {
     // ==========================================================
 
     /**
-     * XÃ¢y dá»±ng toÃ n bá»™ config cho Handsontable tá»« layoutJSON + dbData.
-     * Gá»i 1 láº§n khi load/render grid.
+     * Xây dựng toàn b�" config cho Handsontable từ layoutJSON + dbData.
+     * Gọi 1 lần khi load/render grid.
      */
     buildFullGridConfig(layout: LayoutJSON, dbData: GridCellData[]): GridRenderConfig {
         return {
@@ -345,18 +345,18 @@ export class GridDataMappingService {
     }
 
     /**
-     * Chuyá»ƒn headerRows tá»« layoutJSON thÃ nh format nestedHeaders
-     * mÃ  Handsontable hiá»ƒu Ä‘Æ°á»£c.
+     * ChuyỒn headerRows từ layoutJSON thành format nestedHeaders
+     * mà Handsontable hiỒu �ược.
      *
      * Handsontable nestedHeaders format:
-     *   [ ["STT", "Chá»‰ tiÃªu", { label: "NÄƒm N-1", colspan: 2 }, ...],
-     *     ["STT", "Chá»‰ tiÃªu", "Thá»±c hiá»‡n", "Káº¿ hoáº¡ch", ...] ]
+     *   [ ["STT", "Ch�0 tiêu", { label: "NĒm N-1", colspan: 2 }, ...],
+     *     ["STT", "Ch�0 tiêu", "Thực hi�!n", "Kế hoạch", ...] ]
      */
     buildNestedHeaders(layout: LayoutJSON): any[][] {
         const { headerRows, columns } = layout;
 
         if (!headerRows || headerRows.length === 0) {
-            // Fallback: 1 dÃ²ng header Ä‘Æ¡n giáº£n tá»« column titles
+            // Fallback: 1 dòng header �ơn giản từ column titles
             return [columns.map(c => c.title)];
         }
 
@@ -388,9 +388,9 @@ export class GridDataMappingService {
     }
 
     /**
-     * Táº¡o columns config cho Handsontable.
+     * Tạo columns config cho Handsontable.
      *
-     * Má»—i cá»™t tráº£ vá» object:
+     * M�i c�"t trả về object:
      *   { data: colIndex, type: 'text'|'numeric', readOnly: bool, ... }
      */
     buildColumnsConfig(columns: LayoutColumnDef[]): any[] {
@@ -411,8 +411,8 @@ export class GridDataMappingService {
     }
 
     /**
-     * Táº¡o cells callback cho Handsontable.
-     * XÃ¡c Ä‘á»‹nh readOnly, className cho tá»«ng Ã´ dá»±a trÃªn layout.
+     * Tạo cells callback cho Handsontable.
+     * Xác ��9nh readOnly, className cho từng ô dựa trên layout.
      */
     buildCellsCallback(layout: LayoutJSON): (row: number, col: number) => any {
         const { columns, rows, fixedRowsTop } = layout;
@@ -420,7 +420,7 @@ export class GridDataMappingService {
         return (row: number, col: number): any => {
             const cell: any = {};
 
-            // Header rows â€” luÃ´n readOnly
+            // Header rows � luôn readOnly
             if (row < fixedRowsTop) {
                 cell.readOnly = true;
                 cell.className = 'htCenter htMiddle cell-header';
@@ -434,11 +434,11 @@ export class GridDataMappingService {
 
             if (!rowDef || !colDef) return cell;
 
-            // â”€â”€ DÃ²ng readOnly (dÃ²ng tá»•ng/cÃ´ng thá»©c) â”€â”€
+            // ���� Dòng readOnly (dòng t�"ng/công thức) ����
             if (rowDef.isReadOnly) {
                 cell.readOnly = true;
                 if (colDef.colCode === 'METADATA_ROW') {
-                    // Cá»™t áº©n â€” khÃ´ng style
+                    // C�"t ẩn � không style
                 } else if (colDef.type === 'text') {
                     cell.className = 'htCenter htMiddle cell-tong';
                 } else {
@@ -447,13 +447,13 @@ export class GridDataMappingService {
                 return cell;
             }
 
-            // â”€â”€ Cá»™t METADATA_ROW (áº©n) â”€â”€
+            // ���� C�"t METADATA_ROW (ẩn) ����
             if (colDef.colCode === 'METADATA_ROW') {
                 cell.readOnly = true;
                 return cell;
             }
 
-            // â”€â”€ Cá»™t readOnly (STT, tÃªn chá»‰ tiÃªu...) â”€â”€
+            // ���� C�"t readOnly (STT, tên ch�0 tiêu...) ����
             if (colDef.readOnly) {
                 cell.readOnly = true;
                 if (colDef.colCode === 'STT') {
@@ -464,7 +464,7 @@ export class GridDataMappingService {
                 return cell;
             }
 
-            // â”€â”€ Cá»™t editable (data) â”€â”€
+            // ���� C�"t editable (data) ����
             cell.readOnly = false;
             cell.className = 'htRight htMiddle cell-editable';
             return cell;
@@ -472,7 +472,7 @@ export class GridDataMappingService {
     }
 
     /**
-     * XÃ¡c Ä‘á»‹nh cá»™t nÃ o cáº§n áº©n (METADATA_ROW).
+     * Xác ��9nh c�"t nào cần ẩn (METADATA_ROW).
      */
     buildHiddenColumns(columns: LayoutColumnDef[]): { columns: number[]; indicators: boolean } {
         const hidden: number[] = [];
@@ -489,15 +489,15 @@ export class GridDataMappingService {
     // ==========================================================
 
     /**
-     * TÃ¬m index cá»™t METADATA_ROW.
-     * Theo thiáº¿t káº¿ luÃ´n lÃ  cá»™t 0, nhÆ°ng tÃ¬m Ä‘á»ƒ Ä‘áº£m báº£o an toÃ n.
+     * Tìm index c�"t METADATA_ROW.
+     * Theo thiết kế luôn là c�"t 0, nhưng tìm �Ồ �ảm bảo an toàn.
      */
     private findMetadataColIndex(columns: LayoutColumnDef[]): number {
         return columns.findIndex(c => c.colCode === 'METADATA_ROW');
     }
 
     /**
-     * TÃ¬m row index thá»±c trong grid tá»« rowCode.
+     * Tìm row index thực trong grid từ rowCode.
      */
     private findRowIndex(rowCode: string, rows: LayoutRowDef[], fixedRowsTop: number): number {
         const idx = rows.findIndex(r => r.rowCode === rowCode);
@@ -505,23 +505,23 @@ export class GridDataMappingService {
     }
 
     /**
-     * Táº¡o STT tá»± Ä‘á»™ng dá»±a trÃªn level vÃ  vá»‹ trÃ­ trong máº£ng rows.
+     * Tạo STT tự ��"ng dựa trên level và v�9 trí trong mảng rows.
      *
-     * Level 0: 1, 2, 3...  (hoáº·c "I", "II"... cho dÃ²ng tá»•ng)
+     * Level 0: 1, 2, 3...  (hoặc "I", "II"... cho dòng t�"ng)
      * Level 1: 1.1, 1.2, 2.1...
      * Level 2: 1.1.1, 1.1.2...
      *
-     * Náº¿u dÃ²ng lÃ  isReadOnly (dÃ²ng tá»•ng), tráº£ "" vÃ¬
-     * dÃ²ng tá»•ng thÆ°á»ng khÃ´ng cÃ³ STT mÃ  cÃ³ text á»Ÿ cá»™t tÃªn.
+     * Nếu dòng là isReadOnly (dòng t�"ng), trả "" vì
+     * dòng t�"ng thường không có STT mà có text �x c�"t tên.
      */
     private generateSTT(rowDef: LayoutRowDef, _currentIdx: number, _allRows: LayoutRowDef[]): string {
-        // DÃ²ng tá»•ng/formula thÆ°á»ng khÃ´ng cáº§n STT
+        // Dòng t�"ng/formula thường không cần STT
         if (rowDef.isReadOnly) {
             return '';
         }
 
-        // Náº¿u rowCode cÃ³ dáº¡ng "CHITIEU_01" â†’ trÃ­ch sá»‘ Ä‘á»ƒ táº¡o STT
-        // ÄÃ¢y lÃ  giáº£i phÃ¡p Ä‘Æ¡n giáº£n; cho production nÃªn láº¥y STT tá»« template
+        // Nếu rowCode có dạng "CHITIEU_01" �  trích s� �Ồ tạo STT
+        // Đây là giải pháp �ơn giản; cho production nên lấy STT từ template
         const match = rowDef.rowCode.match(/(\d+)$/);
         if (match) {
             return match[1];

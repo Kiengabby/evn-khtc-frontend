@@ -1,5 +1,5 @@
 // ============================================
-// Service: User Management â€” Quáº£n lÃ½ ngÆ°á»i dÃ¹ng
+// Service: User Management � Quản lý người dùng
 // Thin wrapper around MockApiService for user operations
 // ============================================
 

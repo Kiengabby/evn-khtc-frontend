@@ -1,9 +1,9 @@
 // ============================================
 // FormConfigMapperService
-// Chuyá»ƒn Ä‘á»•i ExportedTemplate (format FE) â†’
+// ChuyỒn ��"i ExportedTemplate (format FE) � 
 // FormConfigSaveRequest (format BE API v2)
 //
-// FE format (tá»« Form Designer exportToJson()):
+// FE format (từ Form Designer exportToJson()):
 //   { formId, formName, version: { year, layoutJSON }, ... }
 //
 // BE format (POST /api/v2/FormConfig/save-form-config):
@@ -20,26 +20,26 @@ import {
 export class FormConfigMapperService {
 
     /**
-     * Chuyá»ƒn Ä‘á»•i ExportedTemplate â†’ FormConfigSaveRequest.
+     * ChuyỒn ��"i ExportedTemplate �  FormConfigSaveRequest.
      *
-     * @param exported - JSON tá»« Form Designer (exportToJson())
-     * @returns Payload sáºµn sÃ ng POST lÃªn BE
+     * @param exported - JSON từ Form Designer (exportToJson())
+     * @returns Payload sẵn sàng POST lên BE
      */
     toSaveRequest(exported: any): FormConfigSaveRequest {
         const formID = exported.formId || exported.formID || '';
         const year = exported.version?.year || new Date().getFullYear();
         const layoutJSON = exported.version?.layoutJSON;
 
-        // â”€â”€ layoutJSON: BE ká»³ vá»ng dáº¡ng string â”€â”€
+        // ���� layoutJSON: BE kỳ vọng dạng string ����
         const layoutJSONString = typeof layoutJSON === 'string'
             ? layoutJSON
             : JSON.stringify(layoutJSON);
 
-        // â”€â”€ effectiveDate / expiryDate: máº·c Ä‘á»‹nh Ä‘áº§u nÄƒm â†’ cuá»‘i nÄƒm â”€â”€
+        // ���� effectiveDate / expiryDate: mặc ��9nh �ầu nĒm �  cu�i nĒm ����
         const effectiveDate = new Date(year, 0, 1).toISOString();
         const expiryDate = new Date(year, 11, 31, 23, 59, 59).toISOString();
 
-        // â”€â”€ mappings: chuyá»ƒn tá»« FE format â†’ BE format â”€â”€
+        // ���� mappings: chuyỒn từ FE format �  BE format ����
         const feMappings: any[] = layoutJSON?.mappings || [];
         const mappings = this.convertMappings(feMappings);
 
@@ -54,7 +54,7 @@ export class FormConfigMapperService {
     }
 
     /**
-     * Chuyá»ƒn FE mappings â†’ BE mappings.
+     * ChuyỒn FE mappings �  BE mappings.
      *
      * FE mapping item:
      *   { rowKey, colKey, rowCode, colCode, cellRole, formula?, isReadOnly }

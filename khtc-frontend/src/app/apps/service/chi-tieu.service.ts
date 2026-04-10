@@ -1,10 +1,10 @@
 // ============================================
-// Service: Quáº£n lÃ½ Chá»‰ tiÃªu (Account Service)
+// Service: Quản lý Ch�0 tiêu (Account Service)
 // ============================================
-// Service nÃ y Ä‘Ã³ng vai trÃ² trung gian giá»¯a Component vÃ  API.
-// Hiá»‡n táº¡i dÃ¹ng MockApiService, sau nÃ y Ä‘á»•i sang API tháº­t.
+// Service này �óng vai trò trung gian giữa Component và API.
+// Hi�!n tại dùng MockApiService, sau này ��"i sang API thật.
 //
-// === CÃCH DÃ™NG TRONG COMPONENT ===
+// === CÁCH D�"NG TRONG COMPONENT ===
 //   chiTieuService = inject(ChiTieuService);
 //   danhSach = signal<ChiTieu[]>([]);
 //
@@ -22,12 +22,12 @@ import { KetQuaApi } from '../../config/models/api-response.model';
 @Injectable({ providedIn: 'root' })
 export class ChiTieuService {
 
-    // Inject MockApiService (sau nÃ y Ä‘á»•i thÃ nh HttpClient + ApiService)
+    // Inject MockApiService (sau này ��"i thành HttpClient + ApiService)
     private api = inject(MockApiService);
 
     /**
-     * Láº¥y danh sÃ¡ch chá»‰ tiÃªu (flat, cÃ³ phÃ¢n trang)
-     * @param boLoc - Bá»™ lá»c: tá»« khÃ³a, loáº¡i, tráº¡ng thÃ¡i, phÃ¢n trang
+     * Lấy danh sách ch�0 tiêu (flat, có phân trang)
+     * @param boLoc - B�" lọc: từ khóa, loại, trạng thái, phân trang
      * @returns KetQuaApi<ChiTieu[]>
      */
     layDanhSach(boLoc: ChiTieuBoLoc = {}): Promise<KetQuaApi<ChiTieu[]>> {
@@ -35,7 +35,7 @@ export class ChiTieuService {
     }
 
     /**
-     * Láº¥y cÃ¢y chá»‰ tiÃªu (hierarchical, dÃ¹ng cho TreeTable)
+     * Lấy cây ch�0 tiêu (hierarchical, dùng cho TreeTable)
      * @returns KetQuaApi<ChiTieuNode[]>
      */
     layCayChiTieu(): Promise<KetQuaApi<ChiTieuNode[]>> {
@@ -43,32 +43,32 @@ export class ChiTieuService {
     }
 
     /**
-     * Láº¥y chi tiáº¿t 1 chá»‰ tiÃªu
-     * @param id - ID chá»‰ tiÃªu
+     * Lấy chi tiết 1 ch�0 tiêu
+     * @param id - ID ch�0 tiêu
      */
     layTheoId(id: number): Promise<KetQuaApi<ChiTieu | null>> {
         return this.api.layChiTieuTheoId(id);
     }
 
     /**
-     * Táº¡o chá»‰ tiÃªu má»›i
-     * @param dto - Dá»¯ liá»‡u táº¡o má»›i (khÃ´ng cáº§n id)
+     * Tạo ch�0 tiêu m�:i
+     * @param dto - Dữ li�!u tạo m�:i (không cần id)
      */
     taoMoi(dto: ChiTieuTaoMoi): Promise<KetQuaApi<ChiTieu>> {
         return this.api.taoChiTieu(dto);
     }
 
     /**
-     * Cáº­p nháº­t chá»‰ tiÃªu
-     * @param dto - Dá»¯ liá»‡u cáº­p nháº­t (báº¯t buá»™c cÃ³ id)
+     * Cập nhật ch�0 tiêu
+     * @param dto - Dữ li�!u cập nhật (bắt bu�"c có id)
      */
     capNhat(dto: ChiTieuCapNhat): Promise<KetQuaApi<ChiTieu>> {
         return this.api.capNhatChiTieu(dto);
     }
 
     /**
-     * XÃ³a chá»‰ tiÃªu
-     * @param id - ID chá»‰ tiÃªu cáº§n xÃ³a
+     * Xóa ch�0 tiêu
+     * @param id - ID ch�0 tiêu cần xóa
      */
     xoa(id: number): Promise<KetQuaApi<null>> {
         return this.api.xoaChiTieu(id);

@@ -1,5 +1,5 @@
 // ============================================
-// Page: Há»™p thÆ° phÃª duyá»‡t (Approval Inbox)
+// Page: H�"p thư phê duy�!t (Approval Inbox)
 // ============================================
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -21,7 +21,7 @@ export class HopThuDuyetComponent implements OnInit {
     dangXuLy = signal(false);
     thongBao = signal<{ noiDung: string; loai: 'success' | 'error' } | null>(null);
 
-    // Dialog xÃ¡c nháº­n
+    // Dialog xác nhận
     hienDialog = signal(false);
     itemDangXuLy = signal<PheDuyetItem | null>(null);
     hanhDongChon: 'duyet' | 'tu_choi' | 'tra_lai' = 'duyet';
@@ -37,7 +37,7 @@ export class HopThuDuyetComponent implements OnInit {
             const kq = await this.workflowService.layHopThuPheDuyet();
             if (kq.trangThai) this.danhSach.set(kq.duLieu);
         } catch {
-            this.hienThongBao('KhÃ´ng táº£i Ä‘Æ°á»£c danh sÃ¡ch phÃª duyá»‡t', 'error');
+            this.hienThongBao('Không tải �ược danh sách phê duy�!t', 'error');
         }
         this.dangTai.set(false);
     }
@@ -68,13 +68,13 @@ export class HopThuDuyetComponent implements OnInit {
                 this.hienThongBao(kq.thongBao, 'error');
             }
         } catch {
-            this.hienThongBao('Lá»—i khi xá»­ lÃ½ phÃª duyá»‡t', 'error');
+            this.hienThongBao('L�i khi xử lý phê duy�!t', 'error');
         }
         this.dangXuLy.set(false);
     }
 
     tenMucDo(mucDo: string): string {
-        const map: Record<string, string> = { cao: 'Cao', trung_binh: 'Trung bÃ¬nh', thap: 'Tháº¥p' };
+        const map: Record<string, string> = { cao: 'Cao', trung_binh: 'Trung bình', thap: 'Thấp' };
         return map[mucDo] || mucDo;
     }
 
@@ -84,7 +84,7 @@ export class HopThuDuyetComponent implements OnInit {
     }
 
     tenHanhDong(hd: string): string {
-        const map: Record<string, string> = { duyet: 'Duyá»‡t', tu_choi: 'Tá»« chá»‘i', tra_lai: 'Tráº£ láº¡i' };
+        const map: Record<string, string> = { duyet: 'Duy�!t', tu_choi: 'Từ ch�i', tra_lai: 'Trả lại' };
         return map[hd] || hd;
     }
 

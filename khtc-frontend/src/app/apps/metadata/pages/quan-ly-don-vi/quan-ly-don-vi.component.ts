@@ -1,11 +1,11 @@
 // ============================================
-// Page: Quáº£n lÃ½ ÄÆ¡n vá»‹ (Entity Management)
+// Page: Quản lý Đơn v�9 (Entity Management)
 // ============================================
-// Hiá»ƒn thá»‹ báº£ng danh sÃ¡ch Ä‘Æ¡n vá»‹ thÃ nh viÃªn EVN.
-// Chá»©c nÄƒng: TÃ¬m kiáº¿m, thÃªm/sá»­a/xÃ³a, hiá»ƒn thá»‹ cÃ¢y tá»• chá»©c.
+// HiỒn th�9 bảng danh sách �ơn v�9 thành viên EVN.
+// Chức nĒng: Tìm kiếm, thêm/sửa/xóa, hiỒn th�9 cây t�" chức.
 //
-// === LUá»’NG Dá»® LIá»†U ===
-// Component â†’ MockApiService â†’ KetQuaApi<DonVi[]>
+// === LU�NG DỮ LI� U ===
+// Component �  MockApiService �  KetQuaApi<DonVi[]>
 // ============================================
 
 import { Component, inject, signal, OnInit } from '@angular/core';
@@ -48,7 +48,7 @@ export class QuanLyDonViComponent implements OnInit {
     }
 
     // ============================================
-    // LOAD Dá»® LIá»†U
+    // LOAD DỮ LI� U
     // ============================================
 
     async taiDuLieu(): Promise<void> {
@@ -73,7 +73,7 @@ export class QuanLyDonViComponent implements OnInit {
     }
 
     // ============================================
-    // THÃŠM / Sá»¬A
+    // TH�`M / SỬA
     // ============================================
 
     moFormThemMoi(): void {
@@ -93,9 +93,9 @@ export class QuanLyDonViComponent implements OnInit {
     }
 
     async luuDonVi(): Promise<void> {
-        if (!this.form.maDonVi?.trim()) { this.loiForm.set('Vui lÃ²ng nháº­p mÃ£ Ä‘Æ¡n vá»‹'); return; }
-        if (!this.form.tenDonVi?.trim()) { this.loiForm.set('Vui lÃ²ng nháº­p tÃªn Ä‘Æ¡n vá»‹'); return; }
-        if (!this.form.tenVietTat?.trim()) { this.loiForm.set('Vui lÃ²ng nháº­p tÃªn viáº¿t táº¯t'); return; }
+        if (!this.form.maDonVi?.trim()) { this.loiForm.set('Vui lòng nhập mã �ơn v�9'); return; }
+        if (!this.form.tenDonVi?.trim()) { this.loiForm.set('Vui lòng nhập tên �ơn v�9'); return; }
+        if (!this.form.tenVietTat?.trim()) { this.loiForm.set('Vui lòng nhập tên viết tắt'); return; }
 
         this.dangLuu.set(true);
 
@@ -112,17 +112,17 @@ export class QuanLyDonViComponent implements OnInit {
             await this.taiDuLieu();
             this.dongDialog();
         } catch (err) {
-            this.loiForm.set('ÄÃ£ xáº£y ra lá»—i há»‡ thá»‘ng');
+            this.loiForm.set('Đã xảy ra l�i h�! th�ng');
         }
         this.dangLuu.set(false);
     }
 
     // ============================================
-    // XÃ“A
+    // X�A
     // ============================================
 
     async xacNhanXoa(dv: DonVi): Promise<void> {
-        if (!confirm(`XÃ³a Ä‘Æ¡n vá»‹ "${dv.tenVietTat}"?`)) return;
+        if (!confirm(`Xóa �ơn v�9 "${dv.tenVietTat}"?`)) return;
 
         const kq = await this.donViService.xoa(dv.id);
         if (kq.trangThai) {
@@ -141,11 +141,11 @@ export class QuanLyDonViComponent implements OnInit {
 
     tenCapDonVi(cap: CapDonVi): string {
         const map: Record<CapDonVi, string> = {
-            'TAP_DOAN': 'Táº­p Ä‘oÃ n',
-            'TONG_CONG_TY': 'Tá»•ng cÃ´ng ty',
-            'CONG_TY': 'CÃ´ng ty',
-            'CHI_NHANH': 'Chi nhÃ¡nh',
-            'DIEN_LUC': 'Äiá»‡n lá»±c',
+            'TAP_DOAN': 'Tập �oàn',
+            'TONG_CONG_TY': 'T�"ng công ty',
+            'CONG_TY': 'Công ty',
+            'CHI_NHANH': 'Chi nhánh',
+            'DIEN_LUC': 'Đi�!n lực',
         };
         return map[cap] || cap;
     }

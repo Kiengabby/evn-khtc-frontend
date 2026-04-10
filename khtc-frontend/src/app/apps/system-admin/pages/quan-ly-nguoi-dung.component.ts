@@ -1,5 +1,5 @@
 // ============================================
-// Component: Quáº£n lÃ½ NgÆ°á»i dÃ¹ng â€” User Management CRUD
+// Component: Quản lý Người dùng � User Management CRUD
 // ============================================
 
 import { Component, OnInit, signal } from '@angular/core';
@@ -88,7 +88,7 @@ export class QuanLyNguoiDungComponent implements OnInit {
                 this.hienThongBao(ketQua.thongBao, 'error');
             }
         } catch (error) {
-            this.hienThongBao('KhÃ´ng thá»ƒ táº£i danh sÃ¡ch ngÆ°á»i dÃ¹ng', 'error');
+            this.hienThongBao('Không thỒ tải danh sách người dùng', 'error');
         } finally {
             this.dangTai.set(false);
         }
@@ -101,7 +101,7 @@ export class QuanLyNguoiDungComponent implements OnInit {
                 this.roles.set(ketQua.duLieu);
             }
         } catch (error) {
-            console.warn('KhÃ´ng thá»ƒ táº£i vai trÃ²:', error);
+            console.warn('Không thỒ tải vai trò:', error);
         }
     }
 
@@ -112,7 +112,7 @@ export class QuanLyNguoiDungComponent implements OnInit {
                 this.entities.set(ketQua.duLieu);
             }
         } catch (error) {
-            console.warn('KhÃ´ng thá»ƒ táº£i Ä‘Æ¡n vá»‹:', error);
+            console.warn('Không thỒ tải �ơn v�9:', error);
         }
     }
 
@@ -152,7 +152,7 @@ export class QuanLyNguoiDungComponent implements OnInit {
             email: user.email || '',
             phoneNumber: user.phoneNumber || '',
             entityCode: user.entityCode,
-            password: '', // KhÃ´ng hiá»ƒn thá»‹ password cÅ©
+            password: '', // Không hiỒn th�9 password cũ
             roleIds: user.roles.map(r => r.roleId),
             isActive: user.isActive,
             notes: user.notes || ''
@@ -196,14 +196,14 @@ export class QuanLyNguoiDungComponent implements OnInit {
                 this.hienThongBao(ketQua.thongBao, 'error');
             }
         } catch (error) {
-            this.hienThongBao('CÃ³ lá»—i xáº£y ra khi lÆ°u', 'error');
+            this.hienThongBao('Có l�i xảy ra khi lưu', 'error');
         } finally {
             this.dangTai.set(false);
         }
     }
 
     async xoaUser(user: UserAdmin): Promise<void> {
-        if (!confirm(`XÃ¡c nháº­n xÃ³a ngÆ°á»i dÃ¹ng "${user.username}"?`)) return;
+        if (!confirm(`Xác nhận xóa người dùng "${user.username}"?`)) return;
 
         try {
             const ketQua = await this.userService.xoa(user.userId);
@@ -214,13 +214,13 @@ export class QuanLyNguoiDungComponent implements OnInit {
                 this.hienThongBao(ketQua.thongBao, 'error');
             }
         } catch (error) {
-            this.hienThongBao('CÃ³ lá»—i xáº£y ra khi xÃ³a', 'error');
+            this.hienThongBao('Có l�i xảy ra khi xóa', 'error');
         }
     }
 
     async toggleKhoaUser(user: UserAdmin): Promise<void> {
-        const action = user.isLocked ? 'má»Ÿ khÃ³a' : 'khÃ³a';
-        if (!confirm(`XÃ¡c nháº­n ${action} tÃ i khoáº£n "${user.username}"?`)) return;
+        const action = user.isLocked ? 'm�x khóa' : 'khóa';
+        if (!confirm(`Xác nhận ${action} tài khoản "${user.username}"?`)) return;
 
         try {
             const ketQua = await this.userService.toggleKhoa(user.userId);
@@ -231,12 +231,12 @@ export class QuanLyNguoiDungComponent implements OnInit {
                 this.hienThongBao(ketQua.thongBao, 'error');
             }
         } catch (error) {
-            this.hienThongBao('CÃ³ lá»—i xáº£y ra', 'error');
+            this.hienThongBao('Có l�i xảy ra', 'error');
         }
     }
 
     async resetPassword(user: UserAdmin): Promise<void> {
-        if (!confirm(`XÃ¡c nháº­n reset máº­t kháº©u cho "${user.username}"?`)) return;
+        if (!confirm(`Xác nhận reset mật khẩu cho "${user.username}"?`)) return;
 
         try {
             const ketQua = await this.userService.resetMatKhau({
@@ -246,13 +246,13 @@ export class QuanLyNguoiDungComponent implements OnInit {
             });
             
             if (ketQua.trangThai) {
-                this.hienThongBao(ketQua.thongBao + ' (Máº­t kháº©u má»›i: 123456)', 'success');
+                this.hienThongBao(ketQua.thongBao + ' (Mật khẩu m�:i: 123456)', 'success');
                 await this.taiDanhSachUsers();
             } else {
                 this.hienThongBao(ketQua.thongBao, 'error');
             }
         } catch (error) {
-            this.hienThongBao('CÃ³ lá»—i xáº£y ra', 'error');
+            this.hienThongBao('Có l�i xảy ra', 'error');
         }
     }
 
@@ -280,7 +280,7 @@ export class QuanLyNguoiDungComponent implements OnInit {
 
     // Template helpers
     formatDate(dateStr: Date | string | null | undefined): string {
-        if (!dateStr) return 'ChÆ°a tá»«ng';
+        if (!dateStr) return 'Chưa từng';
         const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
         return date.toLocaleDateString('vi-VN');
     }
@@ -292,9 +292,9 @@ export class QuanLyNguoiDungComponent implements OnInit {
     }
 
     getStatusLabel(user: UserAdmin): string {
-        if (user.isLocked) return 'KhÃ³a';
-        if (!user.isActive) return 'VÃ´ hiá»‡u';
-        return 'Hoáº¡t Ä‘á»™ng';
+        if (user.isLocked) return 'Khóa';
+        if (!user.isActive) return 'Vô hi�!u';
+        return 'Hoạt ��"ng';
     }
 
     onRoleToggle(roleId: number, isChecked: boolean): void {
@@ -312,6 +312,6 @@ export class QuanLyNguoiDungComponent implements OnInit {
     }
 
     getRoleNames(user: UserAdmin): string {
-        return user.roles.map(r => r.roleName).join(', ') || 'KhÃ´ng cÃ³';
+        return user.roles.map(r => r.roleName).join(', ') || 'Không có';
     }
 }

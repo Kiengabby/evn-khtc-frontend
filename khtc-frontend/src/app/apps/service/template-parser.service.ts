@@ -461,9 +461,11 @@ export class TemplateParserService {
       return member.Display.Value;
     }
     // Type === 'Dim' → tra cứu metadata
-    const dim = meta[dimKey];
-    if (dim?.[member.Key]) {
-      return dim[member.Key][member.Display.Value] ?? member.Key;
+    // Safe access: check cả dim, memberData và property trước khi truy cập
+    const dim = meta?.[dimKey];
+    const memberData = dim?.[member.Key];
+    if (memberData) {
+      return memberData[member.Display.Value] ?? member.Key;
     }
     return member.Key;
   }

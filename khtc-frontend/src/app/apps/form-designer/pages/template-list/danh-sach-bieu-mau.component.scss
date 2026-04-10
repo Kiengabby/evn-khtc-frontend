@@ -190,6 +190,34 @@
     }
 }
 
+// --- Filter Entity (mã danh mục) ---
+.filter-entity {
+    padding: 8px 12px;
+    border: 1px solid $surface-border;
+    border-radius: $border-radius-md;
+    font-size: $font-size-sm;
+    background: white;
+    color: $gray-700;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+        border-color: $gray-300;
+        background: $gray-50;
+    }
+
+    &:focus {
+        outline: none;
+        border-color: $primary;
+        box-shadow: 0 0 0 3px rgba($primary, 0.08);
+    }
+
+    option {
+        color: $gray-800;
+        background: white;
+    }
+}
+
 // --- View Toggle ---
 .view-toggle {
     display: flex;
@@ -649,6 +677,25 @@
     text-align: center !important;
 }
 
+// === NEW COLUMNS FOR UPDATED TABLE ===
+.col-report {
+    min-width: 240px;
+}
+
+.col-entity {
+    width: 140px;
+}
+
+.col-period {
+    width: 120px;
+    white-space: nowrap;
+}
+
+.col-created, .col-updated {
+    width: 120px;
+    white-space: nowrap;
+}
+
 .code-badge {
     font-family: $font-family-mono;
     font-size: $font-size-xs;
@@ -706,6 +753,49 @@
 .pill-inactive {
     background: $gray-100;
     color: $gray-500;
+}
+
+// === NEW CELL STYLES FOR UPDATED TABLE ===
+.report-cell {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.entity-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.entity-code {
+    font-family: $font-family-mono;
+    font-size: $font-size-xs;
+    color: $primary;
+    background: $primary-lighter;
+    padding: 2px 8px;
+    border-radius: $border-radius-sm;
+    font-weight: $font-weight-semibold;
+    display: inline-block;
+    width: fit-content;
+}
+
+.entity-name {
+    display: block;
+    font-size: $font-size-sm;
+    color: $gray-700;
+    font-weight: $font-weight-medium;
+}
+
+.period-text {
+    font-family: $font-family-mono;
+    font-size: $font-size-sm;
+    color: $gray-700;
+    font-weight: $font-weight-medium;
+}
+
+.text-muted {
+    color: $gray-400;
 }
 
 .table-actions {

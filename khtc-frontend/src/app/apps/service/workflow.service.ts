@@ -1,31 +1,54 @@
 // ============================================
-// Service: Workflow â€” Wrapper cho MockApiService
+// Service: Workflow — API Integration
 // ============================================
 import { Injectable, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { MockApiService } from './_deprecated/mock-api.service';
-import { TrangThaiHoSo, PheDuyetDto } from '../../config/models/workflow.model';
+import { FactSubmissionApiService } from './fact-submission-api.service';
+import { TrangThaiHoSo, PheDuyetDto, HoSoNop } from '../../config/models/workflow.model';
 
 @Injectable({ providedIn: 'root' })
 export class WorkflowService {
-    private api = inject(MockApiService);
+    private mockApi = inject(MockApiService);
+    private factSubmissionApi = inject(FactSubmissionApiService);
 
-    layDanhSachHoSo(boLoc: { tuKhoa?: string; trangThai?: TrangThaiHoSo; maDonVi?: string } = {}) {
-        return this.api.layDanhSachHoSo(boLoc);
+    /**
+     * Lấy danh sách hồ sơ nộp từ API
+     * Dùng API thực /api/v2/FactSubmission/history
+     */
+    async layDanhSachHoSo(boLoc: { tuKhoa?: string; trangThai?: TrangThaiHoSo; maDonVi?: string } = {}) {
+        try {
+            const duLieu = await firstValueFrom(
+                this.factSubmissionApi.getSubmissionHistory(boLoc)
+            );
+            return {
+                trangThai: true,
+                duLieu,
+                thongBao: 'Tải danh sách thành công',
+            };
+        } catch (err) {
+            console.error('[WorkflowService] Error loading submissions:', err);
+            return {
+                trangThai: false,
+                duLieu: [] as HoSoNop[],
+                thongBao: 'Lỗi khi tải danh sách hồ sơ',
+            };
+        }
     }
 
     layHopThuPheDuyet() {
-        return this.api.layHopThuPheDuyet();
+        return this.mockApi.layHopThuPheDuyet();
     }
 
     xuLyPheDuyet(dto: PheDuyetDto) {
-        return this.api.xuLyPheDuyet(dto);
+        return this.mockApi.xuLyPheDuyet(dto);
     }
 
     nopHoSo(hoSoId: number) {
-        return this.api.nopHoSo(hoSoId);
+        return this.mockApi.nopHoSo(hoSoId);
     }
 
     rutHoSo(hoSoId: number) {
-        return this.api.rutHoSo(hoSoId);
+        return this.mockApi.rutHoSo(hoSoId);
     }
 }

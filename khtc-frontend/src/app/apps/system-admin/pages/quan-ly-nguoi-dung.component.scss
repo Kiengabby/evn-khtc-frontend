@@ -1,3 +1,4 @@
+@use 'sass:color';
 @use 'styles/variables' as *;
 @use 'styles/mixins' as *;
 
@@ -57,7 +58,7 @@
   &:focus {
     outline: none;
     border-color: $primary;
-    box-shadow: 0 0 0 3px transparentize($primary, 0.9);
+    box-shadow: 0 0 0 3px color.scale($primary, $alpha: -90%);
   }
 }
 
@@ -102,7 +103,7 @@
   color: white;
   
   &:hover:not(:disabled) {
-    background: darken($primary, 8%);
+    background: color.adjust($primary, $lightness: -8%);
   }
 }
 
@@ -121,7 +122,7 @@
   color: white;
   
   &:hover:not(:disabled) {
-    background: darken($primary, 8%);
+    background: color.adjust($primary, $lightness: -8%);
   }
 }
 
@@ -402,7 +403,7 @@
     &:focus {
       outline: none;
       border-color: $primary;
-      box-shadow: 0 0 0 3px transparentize($primary, 0.9);
+      box-shadow: 0 0 0 3px color.scale($primary, $alpha: -90%);
     }
     
     &[readonly] {

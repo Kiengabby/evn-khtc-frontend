@@ -8,7 +8,7 @@ export const dataEntryRoutes: Routes = [
   {
     path: 'planning',
     loadComponent: () =>
-      import('./pages/planning-grid/bao-cao-ke-hoach.component')
+      import('../../features/data-entry/pages/planning-grid/bao-cao-ke-hoach.component')
         .then(m => m.BaoCaoKeHoachComponent),
   },
 ];

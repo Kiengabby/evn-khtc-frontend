@@ -1,5 +1,5 @@
 // ============================================
-// Page: BÃ¡o cÃ¡o há»£p nháº¥t â€” Tá»•ng há»£p sá»‘ liá»‡u Ä‘Æ¡n vá»‹
+// Page: Báo cáo hợp nhất � T�"ng hợp s� li�!u �ơn v�9
 // ============================================
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -73,7 +73,7 @@ export class BaoCaoHopNhatComponent implements OnInit {
 
     tenTrangThai(tt: string): string {
         const map: Record<string, string> = {
-            hoan_thanh: 'HoÃ n thÃ nh', dang_lam: 'Äang lÃ m', chua_nop: 'ChÆ°a ná»™p',
+            hoan_thanh: 'Hoàn thành', dang_lam: 'Đang làm', chua_nop: 'Chưa n�"p',
         };
         return map[tt] || tt;
     }
