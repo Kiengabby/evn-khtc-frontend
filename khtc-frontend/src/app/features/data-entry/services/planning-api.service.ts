@@ -500,9 +500,127 @@ export class PlanningApiService {
             success: false,
             message: message || 'Lưu thất bại',
           };
-        }
       }),
     );
+  }
+
+  /**
+   * Load submission data từ API khi người dùng click "Sửa" từ danh sách submissions
+   * API: GET /api/v2/PlanningData/get-submission/{submissionId}
+   *
+   * BE trả về:
+   *   { formId, formVersionId, formCode, formName, layoutJSON: "...", cells: [...] }
+   */
+  getSubmissionData(submissionId: string): Observable<LoadGridResponse> {
+    const url = `${this.beApiBase}/api/v2/PlanningData/get-submission/${submissionId}`;
+    console.log('[PlanningApi] 📥 GET submission:', url);
+
+    return this.http.get<any>(url).pipe(
+      timeout(30000),
+      retry({ count: 1, delay: 1000 }),
+      catchError((err: unknown) => {
+        if (err instanceof Error && err.name === 'TimeoutError') {
+          return throwError(() => new Error('Request timeout sau 30 giây'));
+        }
+
+        const httpErr = err as HttpErrorResponse;
+        const body = httpErr?.error;
+        if (body && typeof body === 'object') {
+          const succeeded = body.Succeeded ?? body.succeeded;
+          if (succeeded === false) {
+            const errorMsg = body.Message || body.message || body.Errors?.join(', ') || 'Lấy bản nháp thất bại';
+            return throwError(() => new Error(`Lỗi API: ${errorMsg}`));
+          }
+        }
+        const errMsg = `Lỗi kết nối: ${httpErr?.message || 'Unknown error'}`;
+        return throwError(() => new Error(errMsg));
+      }),
+      map(raw => {
+        console.log('[PlanningApi] ✓✓ submission raw response:', raw);
+
+        let beData: any;
+
+        // Kiểm tra wrapped format
+        if (raw?.Succeeded !== undefined || raw?.succeeded !== undefined) {
+          const response = normalizeApiResponse(raw);
+          if (!response.succeeded) {
+            throw new Error(response.message || 'Lấy bản nháp thất bại');
+          }
+          beData = response.data;
+        } else {
+          beData = raw;
+        }
+
+        // Transform thành LoadGridResponse
+        return this.transformSubmissionToLoadGrid(beData);
+      }),
+    );
+  }
+
+  private transformSubmissionToLoadGrid(beData: any): LoadGridResponse {
+    // Lấy cells từ BE
+    const cells: BeCellData[] = beData?.cells || [];
+    if (!Array.isArray(cells)) {
+      throw new Error('Response không chứa cells hoặc cells không phải array');
+    }
+
+    console.log('[PlanningApi] ✓✓ BE submission cells count:', cells.length);
+
+    // Parse layoutJSON từ BE
+    let layoutJSON: LayoutJSON;
+    const beLayoutJSON = beData?.layoutJSON;
+
+    if (beLayoutJSON && typeof beLayoutJSON === 'string') {
+      try {
+        const parsed = JSON.parse(beLayoutJSON);
+        if (parsed.columns && Array.isArray(parsed.columns) &&
+            parsed.columns.length > 0 && typeof parsed.columns[0] === 'object' &&
+            parsed.columns[0].colCode) {
+          layoutJSON = parsed as LayoutJSON;
+          console.log('[PlanningApi] ✓✓ Parsed layoutJSON from submission');
+        } else {
+          console.warn('[PlanningApi] ⚠️ layoutJSON structure invalid, falling back to infer');
+          layoutJSON = this.inferLayoutFromCells(cells);
+        }
+      } catch (e) {
+        console.warn('[PlanningApi] ⚠️ layoutJSON parse failed:', e);
+        layoutJSON = this.inferLayoutFromCells(cells);
+      }
+    } else if (beLayoutJSON && typeof beLayoutJSON === 'object') {
+      layoutJSON = beLayoutJSON as LayoutJSON;
+    } else {
+      layoutJSON = this.inferLayoutFromCells(cells);
+    }
+
+    // Transform cells thành dbData
+    const dbData: GridCellData[] = cells
+      .filter((c) => c.rowCode && c.colCode && c.value !== undefined && c.value !== null)
+      .map((c) => ({
+        rowCode: c.rowCode,
+        colCode: c.colCode,
+        value: c.value,
+      }));
+
+    // Assemble response
+    const formId = beData?.formCode || beData?.formId;
+    const formName = beData?.formName || formId;
+
+    const template: LayoutTemplate = {
+      formId,
+      formName,
+      version: {
+        year: new Date().getFullYear(),
+        layoutJSON,
+      },
+    };
+
+    console.log('[PlanningApi] ✓✓ Transformed submission:', {
+      formId: template.formId,
+      formName,
+      cellsCount: dbData.length,
+    });
+
+    return { template, dbData };
   }
 
 

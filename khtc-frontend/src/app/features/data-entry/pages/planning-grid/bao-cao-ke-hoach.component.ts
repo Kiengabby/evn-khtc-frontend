@@ -6,6 +6,7 @@ import {
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import Handsontable from 'handsontable';
 import { HyperFormula } from 'hyperformula';
 import {
@@ -75,6 +76,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   private http   = inject(HttpClient);
   private v2Renderer = inject(LayoutGridRendererService);
   private formRegistry = inject(FormRegistryService);
+  private route = inject(ActivatedRoute);
 
   // === Template & Data ===
   template   = signal<TemplateJson | null>(null);
@@ -227,7 +229,25 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngOnInit(): void {
     document.addEventListener('keydown', this.xuLyPhimTat);
-    this.taiDanhSachBieuMau();
+    // Parse query params từ URL (khi gọi từ workflow/submissions)
+    this.route.queryParams.subscribe(params => {
+      if (params['submissionId']) {
+        // Load submission data automatically — không load danh sách biểu mẫu
+        console.log('[DataEntry] Loading submission:', params['submissionId']);
+        this.loadTaiSubmission(params['submissionId']);
+        return;
+      }
+
+      // Nếu không có submissionId, mới load danh sách biểu mẫu
+      this.taiDanhSachBieuMau();
+
+      if (params['formCode']) {
+        this.formId = params['formCode'];
+        this.entityCode = params['entityCode'] || '';
+        this.period = params['period'] || '';
+        this.nam = parseInt(params['year'] || new Date().getFullYear().toString());
+      }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -278,6 +298,46 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
         console.error('[DataEntry] ❌ V2 load error:', err);
         const errMsg = err?.message || err?.error?.message || JSON.stringify(err);
         this.hienThiThongBao('Lỗi tải biểu mẫu: ' + errMsg, 'error');
+        this.dangTai.set(false);
+      },
+    });
+  }
+
+  /**
+   * Load submission data từ API khi người dùng click "Sửa" từ danh sách submissions
+   * API: GET /api/v2/PlanningData/get-submission/{submissionId}
+   */
+  loadTaiSubmission(submissionId: string): void {
+    if (!submissionId?.trim()) {
+      this.hienThiThongBao('Submission ID không hợp lệ', 'error');
+      return;
+    }
+
+    this.dangTai.set(true);
+    this.xoaThayDoi();
+
+    this.isV2Mode = true;
+    console.log('[DataEntry] 🔍 Loading submission:', submissionId);
+
+    this.api.getSubmissionData(submissionId).subscribe({
+      next: (res) => {
+        console.log('[DataEntry] 📥 Submission loaded:', res.template.formId, res.template.formName);
+        const layout = res.template.version.layoutJSON;
+        this.v2LayoutJSON = layout;
+        this.v2VisibleCols = layout.columns.filter(c => c.colCode !== 'METADATA_ROW');
+        this.v2GridConfig = this.v2Renderer.render(layout, res.dbData);
+
+        // Set form info từ submission
+        this.formId = res.template.formId;
+
+        this.renderV2Grid();
+        this.dangTai.set(false);
+        this.hienThiThongBao(`Đã tải bản nháp "${res.template.formName}"`, 'success');
+      },
+      error: (err) => {
+        console.error('[DataEntry] ❌ Submission load error:', err);
+        const errMsg = err?.message || err?.error?.message || JSON.stringify(err);
+        this.hienThiThongBao('Lỗi tải bản nháp: ' + errMsg, 'error');
         this.dangTai.set(false);
       },
     });
