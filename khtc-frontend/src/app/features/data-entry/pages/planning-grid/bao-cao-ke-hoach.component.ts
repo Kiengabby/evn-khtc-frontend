@@ -46,10 +46,9 @@ interface TrackedChange {
 
 /** Danh sách kỳ theo thứ tự để điều hướng nhanh */
 const PERIOD_ORDER = [
-  'T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12',
+  '01','02','03','04','05','06','07','08','09','10','11','12',
   'Q1','Q2','Q3','Q4',
-  'Kỳ 1','Kỳ 2',
-  'Năm',
+  '00',
 ];
 
 @Component({
@@ -94,19 +93,11 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   formId = '';              // Mã biểu mẫu — sẽ được set từ API list ngay khi tải xong
   entityCode = 'EVN';       // Mã đơn vị
   nam = 2026;               // Năm
-  period = 'Kỳ 1';          // Kỳ báo cáo — BE bắt buộc (NullRef nếu rỗng)
-  scenario = 'Kế hoạch';    // Kịch bản
+  period = 'Q1';            // Kỳ báo cáo — mã theo bảng mapping (Q1-Q4, 01-12, 00)
+  scenario = 'QUARTER';     // Kịch bản — MONTH, QUARTER, YEAR
 
-  // Danh sách kỳ báo cáo nhóm theo loại
+  // Danh sách kỳ báo cáo nhóm theo loại (theo bảng mapping PM)
   periodGroups = [
-    {
-      group: 'Kỳ',
-      icon: 'pi-calendar',
-      items: [
-        { value: 'Kỳ 1',  label: 'Kỳ 1', sub: 'Tháng 1–6' },
-        { value: 'Kỳ 2',  label: 'Kỳ 2', sub: 'Tháng 7–12' },
-      ],
-    },
     {
       group: 'Quý',
       icon: 'pi-chart-bar',
@@ -121,25 +112,25 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
       group: 'Tháng',
       icon: 'pi-calendar-plus',
       items: [
-        { value: 'T1',  label: 'Tháng 1',  sub: '' },
-        { value: 'T2',  label: 'Tháng 2',  sub: '' },
-        { value: 'T3',  label: 'Tháng 3',  sub: '' },
-        { value: 'T4',  label: 'Tháng 4',  sub: '' },
-        { value: 'T5',  label: 'Tháng 5',  sub: '' },
-        { value: 'T6',  label: 'Tháng 6',  sub: '' },
-        { value: 'T7',  label: 'Tháng 7',  sub: '' },
-        { value: 'T8',  label: 'Tháng 8',  sub: '' },
-        { value: 'T9',  label: 'Tháng 9',  sub: '' },
-        { value: 'T10', label: 'Tháng 10', sub: '' },
-        { value: 'T11', label: 'Tháng 11', sub: '' },
-        { value: 'T12', label: 'Tháng 12', sub: '' },
+        { value: '01', label: 'Tháng 01', sub: '' },
+        { value: '02', label: 'Tháng 02', sub: '' },
+        { value: '03', label: 'Tháng 03', sub: '' },
+        { value: '04', label: 'Tháng 04', sub: '' },
+        { value: '05', label: 'Tháng 05', sub: '' },
+        { value: '06', label: 'Tháng 06', sub: '' },
+        { value: '07', label: 'Tháng 07', sub: '' },
+        { value: '08', label: 'Tháng 08', sub: '' },
+        { value: '09', label: 'Tháng 09', sub: '' },
+        { value: '10', label: 'Tháng 10', sub: '' },
+        { value: '11', label: 'Tháng 11', sub: '' },
+        { value: '12', label: 'Tháng 12', sub: '' },
       ],
     },
     {
       group: 'Tổng hợp',
       icon: 'pi-check-circle',
       items: [
-        { value: 'Năm', label: 'Cả năm', sub: 'T1–T12' },
+        { value: '00', label: 'Năm', sub: 'T1–T12' },
       ],
     },
   ];
