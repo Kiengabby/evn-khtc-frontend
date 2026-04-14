@@ -1,5 +1,18 @@
 <div class="page-layout">
 
+  <!-- ===== BREADCRUMB ===== -->
+  <div class="breadcrumb-bar">
+    <button class="btn-back" (click)="quayLai()" title="Quay lại danh sách biểu mẫu">
+      <i class="pi pi-arrow-left"></i>
+    </button>
+    <span class="bc-sep"><i class="pi pi-chevron-right"></i></span>
+    <span class="bc-item bc-link" (click)="quayLai()">Nhập liệu</span>
+    <span class="bc-sep"><i class="pi pi-chevron-right"></i></span>
+    <span class="bc-item bc-current">
+      {{ tenBieuMauHienTai() || formId || 'Biểu mẫu' }}
+    </span>
+  </div>
+
   <!-- ===== PAGE HEADER ===== -->
   <header class="page-header">
     <div class="header-left">
@@ -7,18 +20,24 @@
         <i class="pi pi-table"></i>
       </div>
       <div class="header-text">
-        <h1 class="page-title">Nhập liệu Kế hoạch Tài chính</h1>
-        <span class="page-badge"><i class="pi pi-database"></i> Template-driven từ BE API</span>
+        <h1 class="page-title">
+          {{ tenBieuMauHienTai() || 'Nhập liệu Kế hoạch Tài chính' }}
+        </h1>
+        <span class="page-badge">
+          <i class="pi pi-tag"></i>
+          <span class="badge-code">{{ formId }}</span>
+          <span class="badge-divider">|</span>
+          <i class="pi pi-database"></i> BE API
+        </span>
       </div>
     </div>
     <div class="header-right">
       @if (soOThayDoi() > 0) {
-        <span class="change-badge">
-          <i class="pi pi-pencil"></i>
-          <span>{{ soOThayDoi() }} ô thay đổi</span>
-        </span>
+      <span class="change-badge">
+        <i class="pi pi-pencil"></i>
+        <span>{{ soOThayDoi() }} ô thay đổi</span>
+      </span>
       }
-      <!-- Session history button removed -->
       <div class="header-actions">
         <button class="btn-action btn-excel" (click)="xuatExcel()"><i class="pi pi-file-excel"></i> Xuất Excel</button>
         <button class="btn-save" (click)="luuDuLieu()" [disabled]="(!isV2Mode && soOThayDoi() === 0) || dangLuu()">
@@ -33,46 +52,13 @@
   <!-- ===== FILTER SECTION ===== -->
   <section class="filter-section">
     <div class="filter-main">
-      <!-- formId — dropdown từ API /api/v2/FormTemplate/get-list -->
-      <div class="filter-item filter-form-select">
-        <label>
-          <i class="pi pi-file"></i> Biểu mẫu
-          @if (dangTaiBieuMau()) {
-            <i class="pi pi-spin pi-spinner" style="margin-left:4px;font-size:11px;"></i>
-          }
-        </label>
-        @if (danhSachBieuMauV2().length > 0) {
-          <div class="select-wrap">
-            <select [ngModel]="formId"
-                    (ngModelChange)="onFormTemplateChange($event)"
-                    class="filter-select">
-              @for (tpl of danhSachBieuMauV2(); track tpl.formCode) {
-                <option [ngValue]="tpl.formCode">
-                  {{ tpl.formCode }} — {{ tpl.formName }}
-                </option>
-              }
-            </select>
-            <i class="pi pi-chevron-down select-arrow"></i>
-          </div>
-        } @else if (!dangTaiBieuMau()) {
-          <!-- Fallback: API lỗi hoặc list rỗng → nhập tay -->
-          <div class="input-wrap">
-            <input type="text" [(ngModel)]="formId" placeholder="VD: BKH" class="filter-input" />
-          </div>
-        } @else {
-          <!-- Đang tải -->
-          <div class="input-wrap">
-            <input type="text" disabled placeholder="Đang tải danh sách..." class="filter-input" />
-          </div>
-        }
-      </div>
       <!-- entityCode — dropdown đơn vị -->
       <div class="filter-item">
         <label><i class="pi pi-building"></i> Đơn vị</label>
         <div class="select-wrap">
           <select [(ngModel)]="entityCode" class="filter-select">
             @for (dv of danhSachDonVi; track dv.maDonVi) {
-              <option [value]="dv.maDonVi">{{ dv.maDonVi }}</option>
+            <option [value]="dv.maDonVi">{{ dv.maDonVi }}</option>
             }
           </select>
           <i class="pi pi-chevron-down select-arrow"></i>
@@ -99,27 +85,26 @@
           <i class="pi pi-chevron-down period-arrow" [class.rotated]="periodDropdownOpen"></i>
         </div>
         @if (periodDropdownOpen) {
-          <div class="period-panel" (click)="$event.stopPropagation()">
-            @for (group of periodGroups; track group.group) {
-              <div class="period-group">
-                <div class="period-group-label">
-                  <i class="pi" [ngClass]="group.icon"></i>
-                  <span>{{ group.group }}</span>
-                </div>
-                <div class="period-chips" [class.month-grid]="group.group === 'Tháng'">
-                  @for (item of group.items; track item.value) {
-                    <button class="period-chip" [class.active]="period === item.value"
-                            (click)="selectPeriod(item.value)">
-                      <span class="chip-label">{{ item.label }}</span>
-                      @if (item.sub) {
-                        <span class="chip-sub">{{ item.sub }}</span>
-                      }
-                    </button>
-                  }
-                </div>
-              </div>
-            }
+        <div class="period-panel" (click)="$event.stopPropagation()">
+          @for (group of periodGroups; track group.group) {
+          <div class="period-group">
+            <div class="period-group-label">
+              <i class="pi" [ngClass]="group.icon"></i>
+              <span>{{ group.group }}</span>
+            </div>
+            <div class="period-chips" [class.month-grid]="group.group === 'Tháng'">
+              @for (item of group.items; track item.value) {
+              <button class="period-chip" [class.active]="period === item.value" (click)="selectPeriod(item.value)">
+                <span class="chip-label">{{ item.label }}</span>
+                @if (item.sub) {
+                <span class="chip-sub">{{ item.sub }}</span>
+                }
+              </button>
+              }
+            </div>
           </div>
+          }
+        </div>
         }
       </div>
       <!-- scenario -->
@@ -134,46 +119,47 @@
           <i class="pi pi-chevron-down select-arrow"></i>
         </div>
       </div>
-      
-      
+
+
     </div>
   </section>
 
   <!-- ===== TEST JSON PANEL ===== -->
   @if (panelJsonTestMo()) {
-    <div class="json-panel">
-      <p class="json-hint">
-        Dán JSON đầy đủ <code>&#123; template, dimMeta, factData &#125;</code> hoặc chỉ <code>template</code>
-        (sẽ dùng <code>assets/mock-data/dimension-metadata.json</code>, fact rỗng). Sau khi nạp, mở DevTools → Console để xem log.
-      </p>
-      <textarea class="json-textarea" [(ngModel)]="noiDungJsonTest" rows="10"
-                placeholder='Ví dụ: { "template": { ... }, "dimMeta": { ... }, "factData": [ ... ] }'></textarea>
-      <div class="json-actions">
-        <input #fileJsonTest type="file" accept=".json,application/json" class="json-file-input"
-               (change)="onChonFileJson($event)" />
-        <button type="button" class="btn-action" (click)="fileJsonTest.click()">
-          <i class="pi pi-upload"></i> Chọn file .json
-        </button>
-        <button type="button" class="btn-action btn-apply" (click)="apDungJsonTest()">
-          <i class="pi pi-check"></i> Áp dụng / Load mẫu
-        </button>
-        <button type="button" class="btn-action" (click)="logVaCopyJsonMauHienTai()">
-          <i class="pi pi-copy"></i> Log + copy mẫu hiện tại
-        </button>
-      </div>
+  <div class="json-panel">
+    <p class="json-hint">
+      Dán JSON đầy đủ <code>&#123; template, dimMeta, factData &#125;</code> hoặc chỉ <code>template</code>
+      (sẽ dùng <code>assets/mock-data/dimension-metadata.json</code>, fact rỗng). Sau khi nạp, mở DevTools → Console để
+      xem log.
+    </p>
+    <textarea class="json-textarea" [(ngModel)]="noiDungJsonTest" rows="10"
+      placeholder='Ví dụ: { "template": { ... }, "dimMeta": { ... }, "factData": [ ... ] }'></textarea>
+    <div class="json-actions">
+      <input #fileJsonTest type="file" accept=".json,application/json" class="json-file-input"
+        (change)="onChonFileJson($event)" />
+      <button type="button" class="btn-action" (click)="fileJsonTest.click()">
+        <i class="pi pi-upload"></i> Chọn file .json
+      </button>
+      <button type="button" class="btn-action btn-apply" (click)="apDungJsonTest()">
+        <i class="pi pi-check"></i> Áp dụng / Load mẫu
+      </button>
+      <button type="button" class="btn-action" (click)="logVaCopyJsonMauHienTai()">
+        <i class="pi pi-copy"></i> Log + copy mẫu hiện tại
+      </button>
     </div>
+  </div>
   }
 
   <!-- ===== REPORT INFO BAR ===== -->
   @if (template()) {
-    <div class="report-info">
-      <i class="pi pi-bookmark"></i>
-      <span class="report-name">{{ template()!.templateName }}</span>
-      @if (template()!.description) {
-        <span class="report-sep">—</span>
-        <span class="report-desc">{{ template()!.description }}</span>
-      }
-    </div>
+  <div class="report-info">
+    <i class="pi pi-bookmark"></i>
+    <span class="report-name">{{ template()!.templateName }}</span>
+    @if (template()!.description) {
+    <span class="report-sep">—</span>
+    <span class="report-desc">{{ template()!.description }}</span>
+    }
+  </div>
   }
 
   <!-- ===== EXCEL TOOLBAR ===== -->
@@ -195,22 +181,24 @@
       <div class="formula-bar">
         <span class="fx-label">fx</span>
         <input type="text" [value]="congThucHienTai()" readonly class="formula-input"
-               placeholder="Công thức hoặc giá trị ô..." />
+          placeholder="Công thức hoặc giá trị ô..." />
       </div>
     </div>
   </div>
 
   <!-- ===== HANDSONTABLE GRID ===== -->
-  <div class="grid-container" [style.transform]="'scale(' + zoomLevel/100 + ')'"
-       [style.transform-origin]="'top left'" [style.width]="(10000/zoomLevel) + '%'">
+  <div class="grid-container" [style.transform]="'scale(' + zoomLevel/100 + ')'" [style.transform-origin]="'top left'"
+    [style.width]="(10000/zoomLevel) + '%'">
     @if (dangTai()) {
-      <div class="loading-overlay">
-        <div class="loading-content">
-          <div class="spinner-wrap"><i class="pi pi-spin pi-spinner"></i></div>
-          <p class="loading-text">Đang tải dữ liệu...</p>
-          <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+    <div class="loading-overlay">
+      <div class="loading-content">
+        <div class="spinner-wrap"><i class="pi pi-spin pi-spinner"></i></div>
+        <p class="loading-text">Đang tải dữ liệu...</p>
+        <div class="loading-bar">
+          <div class="loading-bar-fill"></div>
         </div>
       </div>
+    </div>
     }
     <div #hotEl id="hotContainer"></div>
   </div>
@@ -225,19 +213,20 @@
     </div>
     <div class="status-right">
       @if (tongGiaTri() !== null) {
-        <span class="status-calc"><strong>SUM:</strong> {{ tongGiaTri() | number:'1.2-2' }}</span>
-        <span class="status-calc"><strong>COUNT:</strong> {{ countGiaTri() }}</span>
-        <span class="status-calc"><strong>AVG:</strong> {{ (tongGiaTri()! / countGiaTri()) | number:'1.2-2' }}</span>
+      <span class="status-calc"><strong>SUM:</strong> {{ tongGiaTri() | number:'1.2-2' }}</span>
+      <span class="status-calc"><strong>COUNT:</strong> {{ countGiaTri() }}</span>
+      <span class="status-calc"><strong>AVG:</strong> {{ (tongGiaTri()! / countGiaTri()) | number:'1.2-2' }}</span>
       }
     </div>
   </footer>
 
   <!-- ===== TOAST ===== -->
   @if (thongBao()) {
-    <div class="toast" [class]="'toast-' + thongBao()!.loai">
-      <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'" [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
-      {{ thongBao()!.noiDung }}
-    </div>
+  <div class="toast" [class]="'toast-' + thongBao()!.loai">
+    <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
+      [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+    {{ thongBao()!.noiDung }}
+  </div>
   }
 
   <!-- ===== NEXT-ACTION DIALOG AND SESSION HISTORY PANEL REMOVED ===== -->

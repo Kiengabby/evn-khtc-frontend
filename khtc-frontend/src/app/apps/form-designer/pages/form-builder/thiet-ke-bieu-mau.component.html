@@ -431,6 +431,65 @@
             </div>
           </div>
 
+          <!-- ===== LOẠI BIỂU MẪU ===== -->
+          <div class="info-section">
+            <div class="section-header">
+              <i class="pi pi-th-large"></i>
+              <h3>Loại biểu mẫu</h3>
+              <div class="section-badge">formType</div>
+            </div>
+
+            <div class="dimensions-help">
+              <div class="help-card">
+                <i class="pi pi-info-circle"></i>
+                <div>
+                  <strong>Loại quyết định kỳ báo cáo</strong>
+                  <p>Mỗi loại biểu mẫu tương ứng với danh sách kỳ báo cáo hợp lệ mà người dùng có thể chọn khi nhập liệu</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form type cards -->
+            <div class="form-type-grid">
+              @for (ft of danhSachLoaiBieuMau; track ft.code) {
+                <button type="button"
+                        class="form-type-card"
+                        [class.active]="templateInfo.formTypeCode === ft.code"
+                        (click)="onFormTypeChange(ft.code)">
+                  <div class="ft-icon">
+                    <i class="pi {{ ft.icon }}"></i>
+                  </div>
+                  <div class="ft-body">
+                    <div class="ft-label">{{ ft.label }}</div>
+                    <div class="ft-desc">{{ ft.description }}</div>
+                  </div>
+                  @if (templateInfo.formTypeCode === ft.code) {
+                    <div class="ft-check"><i class="pi pi-check-circle"></i></div>
+                  }
+                </button>
+              }
+            </div>
+
+            <!-- Preview danh sách kỳ báo cáo -->
+            @if (danhSachKyBaoCao.length > 0) {
+              <div class="period-preview">
+                <div class="period-preview-title">
+                  <i class="pi pi-list"></i>
+                  <span>Kỳ báo cáo của loại <strong>{{ selectedFormType?.label }}</strong>
+                    ({{ danhSachKyBaoCao.length }} kỳ)</span>
+                </div>
+                <div class="period-chips">
+                  @for (p of danhSachKyBaoCao; track p.value) {
+                    <span class="period-chip" [class.has-group]="!!p.group" [title]="p.group || ''">
+                      {{ p.label }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- ===== ĐƠN VỊ ÁP DỤNG ===== -->
           <div class="info-section">
             <div class="section-header">
               <i class="pi pi-building"></i>

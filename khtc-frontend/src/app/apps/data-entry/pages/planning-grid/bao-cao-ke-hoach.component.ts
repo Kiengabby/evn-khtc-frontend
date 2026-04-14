@@ -66,22 +66,22 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (this.periodDropdownOpen && this.periodRef &&
-        !this.periodRef.nativeElement.contains(event.target)) {
+      !this.periodRef.nativeElement.contains(event.target)) {
       this.periodDropdownOpen = false;
     }
   }
 
-  private api    = inject(PlanningApiService);
+  private api = inject(PlanningApiService);
   private parser = inject(TemplateParserService);
-  private http   = inject(HttpClient);
+  private http = inject(HttpClient);
   private v2Renderer = inject(LayoutGridRendererService);
   private formRegistry = inject(FormRegistryService);
   private route = inject(ActivatedRoute);
 
   // === Template & Data ===
-  template   = signal<TemplateJson | null>(null);
-  dimMeta    = signal<DimMetadata | null>(null);
-  factData   = signal<FactDataPoint[]>([]);
+  template = signal<TemplateJson | null>(null);
+  dimMeta = signal<DimMetadata | null>(null);
+  factData = signal<FactDataPoint[]>([]);
   gridConfig: ParsedGridConfig | null = null;
 
   // === V2 Layout mode ===
@@ -159,13 +159,13 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   closePeriodDropdown(): void {
     this.periodDropdownOpen = false;
   }
-  
+
   // Backward compatible aliases
   get bieuMau(): string { return this.formId; }
   set bieuMau(v: string) { this.formId = v; }
   get kichBan(): string { return this.scenario; }
   set kichBan(v: string) { this.scenario = v; }
-  
+
   // Danh sách đơn vị để chọn
   danhSachDonVi = [
     { maDonVi: 'EVN', tenDonVi: 'Tập đoàn Điện lực Việt Nam' },
@@ -175,11 +175,11 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     { maDonVi: 'EVNHCMC', tenDonVi: 'Tổng công ty Điện lực TP.HCM' },
     { maDonVi: 'EVNHANOI', tenDonVi: 'Tổng công ty Điện lực Hà Nội' },
   ];
-  
+
   // Danh sách dropdown (có thể mở rộng sau)
   danhSachBieuMau = signal<TemplateListItem[]>([]);
   danhSachKichBan = signal<PlanningScenarioItem[]>([]);
-  povDropdowns    = signal<PovDropdown[]>([]);
+  povDropdowns = signal<PovDropdown[]>([]);
 
   /** Danh sách biểu mẫu từ API /api/v2/FormTemplate/get-list */
   danhSachBieuMauV2 = signal<FormTemplateListItem[]>([]);
@@ -190,18 +190,18 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
 
   // === Grid state ===
   hot: Handsontable | null = null;
-  dangTai         = signal(false);
-  dangLuu         = signal(false);
-  soOThayDoi      = signal(0);
-  tongGiaTri      = signal<number | null>(null);
-  countGiaTri     = signal(0);
-  viTriO          = signal('');
+  dangTai = signal(false);
+  dangLuu = signal(false);
+  soOThayDoi = signal(0);
+  tongGiaTri = signal<number | null>(null);
+  countGiaTri = signal(0);
+  viTriO = signal('');
   congThucHienTai = signal('');
-  thongBao        = signal<{ noiDung: string; loai: 'success' | 'error' } | null>(null);
-  zoomLevel       = 100;
+  thongBao = signal<{ noiDung: string; loai: 'success' | 'error' } | null>(null);
+  zoomLevel = 100;
   private trackedChanges: TrackedChange[] = [];
 
-   /** Panel test: nạp mẫu từ JSON (dán hoặc file) — chỉ dùng khi kiểm thử */
+  /** Panel test: nạp mẫu từ JSON (dán hoặc file) — chỉ dùng khi kiểm thử */
   panelJsonTestMo = signal(false);
   noiDungJsonTest = '';
 
@@ -289,7 +289,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
       this.hienThiThongBao('Vui lòng nhập Mã biểu mẫu (formId)', 'error');
       return;
     }
-    
+
     this.dangTai.set(true);
     this.xoaThayDoi();
 
@@ -389,14 +389,14 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     const hdrCount = cfg.headerRowCount || 0;
 
     this.hot.updateSettings({
-      data:              cfg.data,
-      colHeaders:        false,
-      nestedHeaders:     undefined as any,
-      colWidths:         cfg.colWidths,
+      data: cfg.data,
+      colHeaders: false,
+      nestedHeaders: undefined as any,
+      colWidths: cfg.colWidths,
       fixedColumnsStart: cfg.fixedColumnsStart,
-      fixedRowsTop:      cfg.fixedRowsTop,
-      columns:           cfg.columns,
-      mergeCells:        cfg.mergeCells.length > 0 ? cfg.mergeCells : false,
+      fixedRowsTop: cfg.fixedRowsTop,
+      columns: cfg.columns,
+      mergeCells: cfg.mergeCells.length > 0 ? cfg.mergeCells : false,
       // ★ Truyền formulaCellSet để ô công thức được highlight đúng và khóa sửa
       cells: this.v2Renderer.buildCellCallback(
         cfg.rowMeta,
@@ -422,7 +422,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     const dropdowns: PovDropdown[] = [];
     for (let i = 0; i < tpl.POV.Dimension.length; i++) {
       const dimKey = tpl.POV.Dimension[i];
-      const label  = tpl.POV.Promt[i];
+      const label = tpl.POV.Promt[i];
       const dimData = meta[dimKey] ?? {};
       const members = Object.entries(dimData).map(([key, val]) => ({
         key,
@@ -438,7 +438,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   // ===================================
 
   private parseVaRender(): void {
-    const tpl  = this.template();
+    const tpl = this.template();
     const meta = this.dimMeta();
     if (!tpl || !meta) return;
 
@@ -451,14 +451,14 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     }
 
     this.hot?.updateSettings({
-      data:              this.gridConfig.data,
-      nestedHeaders:     this.gridConfig.nestedHeaders,
-      colWidths:         this.gridConfig.colWidths,
+      data: this.gridConfig.data,
+      nestedHeaders: this.gridConfig.nestedHeaders,
+      colWidths: this.gridConfig.colWidths,
       fixedColumnsStart: this.gridConfig.fixedColumnsStart,
-      columns:           this.gridConfig.columns,
-      cells:             this.parser.buildCellCallback(
-                           this.gridConfig.rowMeta,
-                           this.gridConfig.physicalCols),
+      columns: this.gridConfig.columns,
+      cells: this.parser.buildCellCallback(
+        this.gridConfig.rowMeta,
+        this.gridConfig.physicalCols),
     });
     this.hot?.render();
     this.xoaThayDoi();
@@ -677,7 +677,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     // V2 save: collect ALL data cells from grid (not just changes)
     if (this.isV2Mode && this.v2GridConfig && this.hot) {
       this.dangLuu.set(true);
-      
+
       // Extract ALL editable cells from the current grid
       const allCells = this.v2Renderer.extractAllDataCells(
         this.hot,

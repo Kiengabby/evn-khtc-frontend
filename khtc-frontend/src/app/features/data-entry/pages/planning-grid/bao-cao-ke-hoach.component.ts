@@ -6,7 +6,7 @@ import {
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import Handsontable from 'handsontable';
 import { HyperFormula } from 'hyperformula';
 import {
@@ -46,8 +46,8 @@ interface TrackedChange {
 
 /** Danh sách kỳ theo thứ tự để điều hướng nhanh */
 const PERIOD_ORDER = [
-  '01','02','03','04','05','06','07','08','09','10','11','12',
-  'Q1','Q2','Q3','Q4',
+  '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12',
+  'Q1', 'Q2', 'Q3', 'Q4',
   '00',
 ];
 
@@ -65,22 +65,23 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (this.periodDropdownOpen && this.periodRef &&
-        !this.periodRef.nativeElement.contains(event.target)) {
+      !this.periodRef.nativeElement.contains(event.target)) {
       this.periodDropdownOpen = false;
     }
   }
 
-  private api    = inject(PlanningApiService);
+  private api = inject(PlanningApiService);
   private parser = inject(TemplateParserService);
-  private http   = inject(HttpClient);
+  private http = inject(HttpClient);
   private v2Renderer = inject(LayoutGridRendererService);
   private formRegistry = inject(FormRegistryService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   // === Template & Data ===
-  template   = signal<TemplateJson | null>(null);
-  dimMeta    = signal<DimMetadata | null>(null);
-  factData   = signal<FactDataPoint[]>([]);
+  template = signal<TemplateJson | null>(null);
+  dimMeta = signal<DimMetadata | null>(null);
+  factData = signal<FactDataPoint[]>([]);
   gridConfig: ParsedGridConfig | null = null;
 
   // === V2 Layout mode ===
@@ -158,13 +159,13 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   closePeriodDropdown(): void {
     this.periodDropdownOpen = false;
   }
-  
+
   // Backward compatible aliases
   get bieuMau(): string { return this.formId; }
   set bieuMau(v: string) { this.formId = v; }
   get kichBan(): string { return this.scenario; }
   set kichBan(v: string) { this.scenario = v; }
-  
+
   // Danh sách đơn vị để chọn
   danhSachDonVi = [
     { maDonVi: 'EVN', tenDonVi: 'Tập đoàn Điện lực Việt Nam' },
@@ -174,30 +175,32 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     { maDonVi: 'EVNHCMC', tenDonVi: 'Tổng công ty Điện lực TP.HCM' },
     { maDonVi: 'EVNHANOI', tenDonVi: 'Tổng công ty Điện lực Hà Nội' },
   ];
-  
+
   // Danh sách dropdown (có thể mở rộng sau)
   danhSachBieuMau = signal<TemplateListItem[]>([]);
   danhSachKichBan = signal<PlanningScenarioItem[]>([]);
-  povDropdowns    = signal<PovDropdown[]>([]);
+  povDropdowns = signal<PovDropdown[]>([]);
 
   /** Danh sách biểu mẫu từ API /api/v2/FormTemplate/get-list */
   danhSachBieuMauV2 = signal<FormTemplateListItem[]>([]);
   /** ID biểu mẫu hiện đang chọn (id từ FormTemplate) */
   selectedFormTemplateId = signal<number | null>(null);
+  /** Ten bieu mau dang nhan lieu (lay tu route param) */
+  tenBieuMauHienTai = signal<string>('');
   /** Đang tải danh sách biểu mẫu */
   dangTaiBieuMau = signal(false);
 
   // === Grid state ===
   hot: Handsontable | null = null;
-  dangTai         = signal(false);
-  dangLuu         = signal(false);
-  soOThayDoi      = signal(0);
-  tongGiaTri      = signal<number | null>(null);
-  countGiaTri     = signal(0);
-  viTriO          = signal('');
+  dangTai = signal(false);
+  dangLuu = signal(false);
+  soOThayDoi = signal(0);
+  tongGiaTri = signal<number | null>(null);
+  countGiaTri = signal(0);
+  viTriO = signal('');
   congThucHienTai = signal('');
-  thongBao        = signal<{ noiDung: string; loai: 'success' | 'error' } | null>(null);
-  zoomLevel       = 100;
+  thongBao = signal<{ noiDung: string; loai: 'success' | 'error' } | null>(null);
+  zoomLevel = 100;
   private trackedChanges: TrackedChange[] = [];
 
   /**
@@ -220,25 +223,30 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngOnInit(): void {
     document.addEventListener('keydown', this.xuLyPhimTat);
-    // Parse query params từ URL (khi gọi từ workflow/submissions)
-    this.route.queryParams.subscribe(params => {
-      if (params['submissionId']) {
-        // Load submission data automatically — không load danh sách biểu mẫu
-        console.log('[DataEntry] Loading submission:', params['submissionId']);
-        this.loadTaiSubmission(params['submissionId']);
-        return;
-      }
 
-      // Nếu không có submissionId, mới load danh sách biểu mẫu
-      this.taiDanhSachBieuMau();
+    // --- Uu tien: submissionId trong query params (tu workflow)
+    const queryParams = this.route.snapshot.queryParams;
+    if (queryParams['submissionId']) {
+      console.log('[DataEntry] Loading submission:', queryParams['submissionId']);
+      this.loadTaiSubmission(queryParams['submissionId']);
+      return;
+    }
 
-      if (params['formCode']) {
-        this.formId = params['formCode'];
-        this.entityCode = params['entityCode'] || '';
-        this.period = params['period'] || '';
-        this.nam = parseInt(params['year'] || new Date().getFullYear().toString());
-      }
-    });
+    // --- Lay formCode tu route param (:formCode) — luong moi
+    const routeFormCode = this.route.snapshot.paramMap.get('formCode');
+    if (routeFormCode) {
+      this.formId = routeFormCode;
+      // Cap nhat entity/period/year tu query param neu co
+      if (queryParams['entityCode']) this.entityCode = queryParams['entityCode'];
+      if (queryParams['period']) this.period = queryParams['period'];
+      if (queryParams['year']) this.nam = parseInt(queryParams['year']);
+      // Tai thong tin bien mau de hien ten, roi tu dong tai form
+      this.taiDanhSachBieuMau(true);
+      return;
+    }
+
+    // --- Fallback: khong co formCode -> tai danh sach (backward compat)
+    this.taiDanhSachBieuMau();
   }
 
   ngAfterViewInit(): void {
@@ -260,7 +268,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
       this.hienThiThongBao('Vui lòng nhập Mã biểu mẫu (formId)', 'error');
       return;
     }
-    
+
     this.dangTai.set(true);
     this.xoaThayDoi();
 
@@ -360,14 +368,14 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     const hdrCount = cfg.headerRowCount || 0;
 
     this.hot.updateSettings({
-      data:              cfg.data,
-      colHeaders:        false,
-      nestedHeaders:     undefined as any,
-      colWidths:         cfg.colWidths,
+      data: cfg.data,
+      colHeaders: false,
+      nestedHeaders: undefined as any,
+      colWidths: cfg.colWidths,
       fixedColumnsStart: cfg.fixedColumnsStart,
-      fixedRowsTop:      cfg.fixedRowsTop,
-      columns:           cfg.columns,
-      mergeCells:        cfg.mergeCells.length > 0 ? cfg.mergeCells : false,
+      fixedRowsTop: cfg.fixedRowsTop,
+      columns: cfg.columns,
+      mergeCells: cfg.mergeCells.length > 0 ? cfg.mergeCells : false,
       // ★ Truyền formulaCellSet để ô công thức được highlight đúng và khóa sửa
       cells: this.v2Renderer.buildCellCallback(
         cfg.rowMeta,
@@ -394,7 +402,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     const dropdowns: PovDropdown[] = [];
     for (let i = 0; i < tpl.POV.Dimension.length; i++) {
       const dimKey = tpl.POV.Dimension[i];
-      const label  = tpl.POV.Promt[i];
+      const label = tpl.POV.Promt[i];
       const dimData = meta[dimKey] ?? {};
       const members = Object.entries(dimData).map(([key, val]) => ({
         key,
@@ -410,7 +418,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   // ===================================
 
   private parseVaRender(): void {
-    const tpl  = this.template();
+    const tpl = this.template();
     const meta = this.dimMeta();
     if (!tpl || !meta) return;
 
@@ -423,14 +431,14 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     }
 
     this.hot?.updateSettings({
-      data:              this.gridConfig.data,
-      nestedHeaders:     this.gridConfig.nestedHeaders,
-      colWidths:         this.gridConfig.colWidths,
+      data: this.gridConfig.data,
+      nestedHeaders: this.gridConfig.nestedHeaders,
+      colWidths: this.gridConfig.colWidths,
       fixedColumnsStart: this.gridConfig.fixedColumnsStart,
-      columns:           this.gridConfig.columns,
-      cells:             this.parser.buildCellCallback(
-                           this.gridConfig.rowMeta,
-                           this.gridConfig.physicalCols),
+      columns: this.gridConfig.columns,
+      cells: this.parser.buildCellCallback(
+        this.gridConfig.rowMeta,
+        this.gridConfig.physicalCols),
     });
     this.hot?.render();
     this.xoaThayDoi();
@@ -457,15 +465,22 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   /** Khi user chọn biểu mẫu từ dropdown -> tự động load */
+  /** Quay ve trang chon bieu mau */
+  quayLai(): void {
+    this.router.navigate(['/app/data-entry']);
+  }
+
   onFormTemplateChange(formCode: string): void {
     this.formId = formCode;
+    const matched = this.danhSachBieuMauV2().find(f => f.formCode === formCode);
+    if (matched) this.tenBieuMauHienTai.set(matched.formName || matched.formCode);
     console.log('[DataEntry] 🔄 Form selected:', this.formId);
     // Tự động load biểu mẫu khi chọn
     this.taiForm();
   }
 
   /** Gọi API lấy danh sách biểu mẫu */
-  private taiDanhSachBieuMau(): void {
+  private taiDanhSachBieuMau(autoLoadFormCode = false): void {
     this.dangTaiBieuMau.set(true);
     this.api.getFormTemplateList().subscribe({
       next: (list) => {
@@ -473,11 +488,23 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
         this.dangTaiBieuMau.set(false);
         console.log('[DataEntry] 📋 FormTemplate list loaded:', list.length, 'items');
         // ★ LUÔN auto-select item đầu tiên và tự động load
-        if (list.length > 0) {
+        // Luu thong tin ten bieu mau neu formCode khop
+        const matchedForm = list.find((f: any) => f.formCode === this.formId);
+        if (matchedForm) {
+          this.selectedFormTemplateId.set(matchedForm.id);
+          this.tenBieuMauHienTai.set(matchedForm.formName || matchedForm.formCode);
+        }
+
+        if (autoLoadFormCode && this.formId) {
+          // Luong moi: formCode da co san tu route param -> tu dong tai luon
+          console.log('[DataEntry] Auto-load from route formCode:', this.formId);
+          this.taiForm();
+        } else if (!autoLoadFormCode && list.length > 0 && !this.formId) {
+          // Backward compat: tu dong chon item dau tien neu chua co formId
           this.selectedFormTemplateId.set(list[0].id);
           this.formId = list[0].formCode;
-          console.log('[DataEntry] ✅ Auto-selected form:', this.formId, '(id:', list[0].id, ')');
-          // Tự động load biểu mẫu đầu tiên
+          this.tenBieuMauHienTai.set(list[0].formName || list[0].formCode);
+          console.log('[DataEntry] Auto-selected form:', this.formId);
           this.taiForm();
         }
       },

@@ -196,13 +196,13 @@ export class PlanningApiService {
     if (this.useMockV1) {
       return of([
         // ���� BiỒu mẫu trọng yếu (từ document PM) ����
-        { templateId: 'KHTC_SXKD_03',  templateName: 'KhTC/SXKD/03 � Kế hoạch sản xuất kinh doanh �i�!n' },
-        { templateId: 'TH_SXKD_03',    templateName: 'TH.KhTC/SXKD/03 � Báo cáo thực hi�!n kế hoạch SXKD' },
-        { templateId: 'UTH_SXKD_03',   templateName: 'ƯTH.KhTC/SXKD/03 � Ư�:c thực hi�!n và dự báo SXKD' },
+        { templateId: 'KHTC_SXKD_03', templateName: 'KhTC/SXKD/03 � Kế hoạch sản xuất kinh doanh �i�!n' },
+        { templateId: 'TH_SXKD_03', templateName: 'TH.KhTC/SXKD/03 � Báo cáo thực hi�!n kế hoạch SXKD' },
+        { templateId: 'UTH_SXKD_03', templateName: 'ƯTH.KhTC/SXKD/03 � Ư�:c thực hi�!n và dự báo SXKD' },
         // ���� BiỒu mẫu cũ (giữ �Ồ tương thích) ����
-        { templateId: 'BKH_KH_01',      templateName: 'BKH.KH.01 � Kế hoạch Đi�!n sản xuất và Mua' },
+        { templateId: 'BKH_KH_01', templateName: 'BKH.KH.01 � Kế hoạch Đi�!n sản xuất và Mua' },
         { templateId: 'BCTH_SXKD_DIEN', templateName: 'Báo cáo thực hi�!n KH SXKD Đi�!n (cũ)' },
-        { templateId: 'NEW_TEMPLATE',   templateName: 'BiỒu mẫu m�:i � Layout colCode/rowCode' },
+        { templateId: 'NEW_TEMPLATE', templateName: 'BiỒu mẫu m�:i � Layout colCode/rowCode' },
       ]).pipe(delay(100));
     }
     return this.http.get<TemplateListItem[]>(`${this.apiBaseUrl}/templates`);
@@ -269,10 +269,10 @@ export class PlanningApiService {
   /** File fact mock theo biỒu mẫu */
   private mockFactDataUrl(templateId: string): string {
     const map: Record<string, string> = {
-      'KHTC_SXKD_03':  'assets/mock-data/khtc-sxkd-03-fact-data.json',
-      'TH_SXKD_03':    'assets/mock-data/th-sxkd-03-fact-data.json',
-      'UTH_SXKD_03':   'assets/mock-data/uth-sxkd-03-fact-data.json',
-      'BCTH_SXKD_DIEN':'assets/mock-data/bcth-sxkd-dien-fact-data.json',
+      'KHTC_SXKD_03': 'assets/mock-data/khtc-sxkd-03-fact-data.json',
+      'TH_SXKD_03': 'assets/mock-data/th-sxkd-03-fact-data.json',
+      'UTH_SXKD_03': 'assets/mock-data/uth-sxkd-03-fact-data.json',
+      'BCTH_SXKD_DIEN': 'assets/mock-data/bcth-sxkd-dien-fact-data.json',
     };
     return map[templateId] ?? 'assets/mock-data/planning-fact-data.json';
   }
@@ -326,7 +326,7 @@ export class PlanningApiService {
         if (err instanceof Error && err.name === 'TimeoutError') {
           return throwError(() => new Error('Request timeout sau 30 giây'));
         }
-        
+
         // Xử lý HTTP error
         const httpErr = err as HttpErrorResponse;
         const body = httpErr?.error;
@@ -349,19 +349,19 @@ export class PlanningApiService {
       }),
       map(raw => {
         console.log('[PlanningApi] �x� load-form raw response:', raw);
-        
+
         // BE có thỒ trả về 2 format:
         // 1. Wrapped: { Succeeded, Data: {...}, Message, ... }
         // 2. Direct:  { formId, formName, layoutJSON, cells, ... }
-        
+
         let beData: any;
-        
+
         // KiỒm tra xem response có phải format wrapped không
         if (raw?.Succeeded !== undefined || raw?.succeeded !== undefined) {
           // Format wrapped �  normalize
           const response = normalizeApiResponse(raw);
           console.log('[PlanningApi] �x� Wrapped response (normalized):', response);
-          
+
           if (!response.succeeded) {
             throw new Error(response.errors?.join(', ') || response.message || 'Load form thất bại');
           }
@@ -442,7 +442,7 @@ export class PlanningApiService {
         if (err instanceof Error && err.name === 'TimeoutError') {
           return throwError(() => new Error('Request timeout sau 30 giây'));
         }
-        
+
         // Xử lý HTTP error
         const httpErr = err as HttpErrorResponse;
         const body2 = httpErr?.error;
@@ -463,7 +463,7 @@ export class PlanningApiService {
         // BE có thỒ trả 2 format: wrapped hoặc direct
         let succeeded: boolean;
         let message: string;
-        
+
         if (raw?.Succeeded !== undefined || raw?.succeeded !== undefined) {
           const response = normalizeApiResponse(raw);
           console.log('[PlanningApi] �x� save-submission response (normalized):', response);
@@ -479,7 +479,7 @@ export class PlanningApiService {
         if (succeeded) {
           // 🔄 Cache data vào session để merge khi load lại (workaround BE không lưu đúng)
           this.cacheAfterSave(payload);
-          
+
           return {
             success: true,
             savedCount: payload.data.length,
@@ -566,8 +566,8 @@ export class PlanningApiService {
       try {
         const parsed = JSON.parse(beLayoutJSON);
         if (parsed.columns && Array.isArray(parsed.columns) &&
-            parsed.columns.length > 0 && typeof parsed.columns[0] === 'object' &&
-            parsed.columns[0].colCode) {
+          parsed.columns.length > 0 && typeof parsed.columns[0] === 'object' &&
+          parsed.columns[0].colCode) {
           layoutJSON = parsed as LayoutJSON;
           console.log('[PlanningApi] ✓✓ Parsed layoutJSON from submission');
         } else {
@@ -657,8 +657,8 @@ export class PlanningApiService {
         const parsed = JSON.parse(beLayoutJSON);
         // Validate cấu trúc cơ bản: phải có columns array chứa objects (không phải nested arrays r�ng)
         if (parsed.columns && Array.isArray(parsed.columns) &&
-            parsed.columns.length > 0 && typeof parsed.columns[0] === 'object' &&
-            parsed.columns[0].colCode) {
+          parsed.columns.length > 0 && typeof parsed.columns[0] === 'object' &&
+          parsed.columns[0].colCode) {
           layoutJSON = parsed as LayoutJSON;
           console.log('[PlanningApi] �S& Parsed layoutJSON from BE string:', {
             columns: layoutJSON.columns?.length,
@@ -677,9 +677,9 @@ export class PlanningApiService {
         layoutJSON = this.inferLayoutFromCells(cells);
       }
     } else if (beLayoutJSON && typeof beLayoutJSON === 'object' &&
-               beLayoutJSON.columns && Array.isArray(beLayoutJSON.columns) &&
-               beLayoutJSON.columns.length > 0 && typeof beLayoutJSON.columns[0] === 'object' &&
-               beLayoutJSON.columns[0].colCode) {
+      beLayoutJSON.columns && Array.isArray(beLayoutJSON.columns) &&
+      beLayoutJSON.columns.length > 0 && typeof beLayoutJSON.columns[0] === 'object' &&
+      beLayoutJSON.columns[0].colCode) {
       // BE trả layoutJSON dạng object �ã parse sẵn (�úng cấu trúc)
       layoutJSON = beLayoutJSON as LayoutJSON;
       console.log('[PlanningApi] �S& Using layoutJSON object from BE directly');
@@ -700,7 +700,7 @@ export class PlanningApiService {
 
     // ���� DIAGNOSTIC: KiỒm tra xem BE có trả về data khác 0 không ����
     const nonZeroCells = dbData.filter(c => c.value !== 0 && c.value !== null && c.value !== '');
-    const labelColCodes = new Set(['STT','CHITIEU_NAME','NOI_DUNG','UNIT','DVT','MA_CHITIEU','TEN_CHITIEU','DON_VI','METADATA_ROW']);
+    const labelColCodes = new Set(['STT', 'CHITIEU_NAME', 'NOI_DUNG', 'UNIT', 'DVT', 'MA_CHITIEU', 'TEN_CHITIEU', 'DON_VI', 'METADATA_ROW']);
     const editableCells = dbData.filter(c => !labelColCodes.has(c.colCode?.toUpperCase()));
     console.warn('[PlanningApi] �x� Load-form data diagnostic:', {
       totalCells: dbData.length,
@@ -773,7 +773,7 @@ export class PlanningApiService {
     for (const [colCode, sampleCell] of colCodeSet) {
       const colKey = this.indexToColLetter(colIndex);
       const isReadOnlyCol = this.isLabelColumn(colCode);
-      
+
       columns.push({
         key: colKey,
         colCode: colCode,
@@ -911,14 +911,14 @@ export class PlanningApiService {
     };
     const upper = colCode.toUpperCase();
     if (titleMap[upper]) return titleMap[upper];
-    
+
     // Fallback: parse patterns like T1, T2, Q1, etc.
     const monthMatch = colCode.match(/T(\d+)$/i);
     if (monthMatch) return `Tháng ${monthMatch[1]}`;
-    
+
     const quarterMatch = colCode.match(/Q(\d+)$/i);
     if (quarterMatch) return `Quý ${quarterMatch[1]}`;
-    
+
     return colCode;
   }
 

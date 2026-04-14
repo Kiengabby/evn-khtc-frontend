@@ -13,19 +13,19 @@
     </div>
     <div class="header-right">
       @if (soOThayDoi() > 0) {
-        <span class="change-badge">
-          <i class="pi pi-pencil"></i>
-          <span>{{ soOThayDoi() }} ô thay đổi</span>
-        </span>
+      <span class="change-badge">
+        <i class="pi pi-pencil"></i>
+        <span>{{ soOThayDoi() }} ô thay đổi</span>
+      </span>
       }
       <!-- Session history button -->
       @if (lichSuLuu().length > 0) {
-        <button class="btn-session-history" (click)="toggleLichSu()" [class.active]="hienLichSu()">
-          <i class="pi pi-history"></i>
-          <span class="session-count">{{ lichSuLuu().length }}</span>
-          <span>Phiên nhập</span>
-          <i class="pi pi-chevron-down" [class.rotated]="hienLichSu()"></i>
-        </button>
+      <button class="btn-session-history" (click)="toggleLichSu()" [class.active]="hienLichSu()">
+        <i class="pi pi-history"></i>
+        <span class="session-count">{{ lichSuLuu().length }}</span>
+        <span>Phiên nhập</span>
+        <i class="pi pi-chevron-down" [class.rotated]="hienLichSu()"></i>
+      </button>
       }
       <div class="header-actions">
         <button class="btn-action btn-excel" (click)="xuatExcel()"><i class="pi pi-file-excel"></i> Xuất Excel</button>
@@ -46,32 +46,30 @@
         <label>
           <i class="pi pi-file"></i> Biểu mẫu
           @if (dangTaiBieuMau()) {
-            <i class="pi pi-spin pi-spinner" style="margin-left:4px;font-size:11px;"></i>
+          <i class="pi pi-spin pi-spinner" style="margin-left:4px;font-size:11px;"></i>
           }
         </label>
         @if (danhSachBieuMauV2().length > 0) {
-          <div class="select-wrap">
-            <select [ngModel]="formId"
-                    (ngModelChange)="onFormTemplateChange($event)"
-                    class="filter-select">
-              @for (tpl of danhSachBieuMauV2(); track tpl.formCode) {
-                <option [ngValue]="tpl.formCode">
-                  {{ tpl.formCode }} — {{ tpl.formName }}
-                </option>
-              }
-            </select>
-            <i class="pi pi-chevron-down select-arrow"></i>
-          </div>
+        <div class="select-wrap">
+          <select [ngModel]="formId" (ngModelChange)="onFormTemplateChange($event)" class="filter-select">
+            @for (tpl of danhSachBieuMauV2(); track tpl.formCode) {
+            <option [ngValue]="tpl.formCode">
+              {{ tpl.formCode }} — {{ tpl.formName }}
+            </option>
+            }
+          </select>
+          <i class="pi pi-chevron-down select-arrow"></i>
+        </div>
         } @else if (!dangTaiBieuMau()) {
-          <!-- Fallback: API lỗi hoặc list rỗng → nhập tay -->
-          <div class="input-wrap">
-            <input type="text" [(ngModel)]="formId" placeholder="VD: BKH" class="filter-input" />
-          </div>
+        <!-- Fallback: API lỗi hoặc list rỗng → nhập tay -->
+        <div class="input-wrap">
+          <input type="text" [(ngModel)]="formId" placeholder="VD: BKH" class="filter-input" />
+        </div>
         } @else {
-          <!-- Đang tải -->
-          <div class="input-wrap">
-            <input type="text" disabled placeholder="Đang tải danh sách..." class="filter-input" />
-          </div>
+        <!-- Đang tải -->
+        <div class="input-wrap">
+          <input type="text" disabled placeholder="Đang tải danh sách..." class="filter-input" />
+        </div>
         }
       </div>
       <!-- entityCode — dropdown đơn vị -->
@@ -80,7 +78,7 @@
         <div class="select-wrap">
           <select [(ngModel)]="entityCode" class="filter-select">
             @for (dv of danhSachDonVi; track dv.maDonVi) {
-              <option [value]="dv.maDonVi">{{ dv.maDonVi }} — {{ dv.tenDonVi }}</option>
+            <option [value]="dv.maDonVi">{{ dv.maDonVi }} — {{ dv.tenDonVi }}</option>
             }
           </select>
           <i class="pi pi-chevron-down select-arrow"></i>
@@ -107,27 +105,26 @@
           <i class="pi pi-chevron-down period-arrow" [class.rotated]="periodDropdownOpen"></i>
         </div>
         @if (periodDropdownOpen) {
-          <div class="period-panel" (click)="$event.stopPropagation()">
-            @for (group of periodGroups; track group.group) {
-              <div class="period-group">
-                <div class="period-group-label">
-                  <i class="pi" [ngClass]="group.icon"></i>
-                  <span>{{ group.group }}</span>
-                </div>
-                <div class="period-chips" [class.month-grid]="group.group === 'Tháng'">
-                  @for (item of group.items; track item.value) {
-                    <button class="period-chip" [class.active]="period === item.value"
-                            (click)="selectPeriod(item.value)">
-                      <span class="chip-label">{{ item.label }}</span>
-                      @if (item.sub) {
-                        <span class="chip-sub">{{ item.sub }}</span>
-                      }
-                    </button>
-                  }
-                </div>
-              </div>
-            }
+        <div class="period-panel" (click)="$event.stopPropagation()">
+          @for (group of periodGroups; track group.group) {
+          <div class="period-group">
+            <div class="period-group-label">
+              <i class="pi" [ngClass]="group.icon"></i>
+              <span>{{ group.group }}</span>
+            </div>
+            <div class="period-chips" [class.month-grid]="group.group === 'Tháng'">
+              @for (item of group.items; track item.value) {
+              <button class="period-chip" [class.active]="period === item.value" (click)="selectPeriod(item.value)">
+                <span class="chip-label">{{ item.label }}</span>
+                @if (item.sub) {
+                <span class="chip-sub">{{ item.sub }}</span>
+                }
+              </button>
+              }
+            </div>
           </div>
+          }
+        </div>
         }
       </div>
       <!-- scenario -->
@@ -146,29 +143,25 @@
 
     <!-- Test Get Submission -->
     <div class="filter-test-submission">
-      <input type="text"
-             [(ngModel)]="submissionIdTest"
-             placeholder="Nhập Submission ID"
-             class="filter-input-test">
-      <button type="button"
-              class="btn-test-submission"
-              (click)="loadSubmissionTest()">
+      <input type="text" [(ngModel)]="submissionIdTest" placeholder="Nhập Submission ID" class="filter-input-test">
+      <button type="button" class="btn-test-submission" (click)="loadSubmissionTest()">
         <i class="pi pi-download"></i> Tải dữ liệu
       </button>
     </div>
 
-  <!-- ===== TEST JSON PANEL ===== -->
-  @if (panelJsonTestMo()) {
+    <!-- ===== TEST JSON PANEL ===== -->
+    @if (panelJsonTestMo()) {
     <div class="json-panel">
       <p class="json-hint">
         Dán JSON đầy đủ <code>&#123; template, dimMeta, factData &#125;</code> hoặc chỉ <code>template</code>
-        (sẽ dùng <code>assets/mock-data/dimension-metadata.json</code>, fact rỗng). Sau khi nạp, mở DevTools → Console để xem log.
+        (sẽ dùng <code>assets/mock-data/dimension-metadata.json</code>, fact rỗng). Sau khi nạp, mở DevTools → Console
+        để xem log.
       </p>
       <textarea class="json-textarea" [(ngModel)]="noiDungJsonTest" rows="10"
-                placeholder='Ví dụ: { "template": { ... }, "dimMeta": { ... }, "factData": [ ... ] }'></textarea>
+        placeholder='Ví dụ: { "template": { ... }, "dimMeta": { ... }, "factData": [ ... ] }'></textarea>
       <div class="json-actions">
         <input #fileJsonTest type="file" accept=".json,application/json" class="json-file-input"
-               (change)="onChonFileJson($event)" />
+          (change)="onChonFileJson($event)" />
         <button type="button" class="btn-action" (click)="fileJsonTest.click()">
           <i class="pi pi-upload"></i> Chọn file .json
         </button>
@@ -180,86 +173,89 @@
         </button>
       </div>
     </div>
-  }
+    }
 
-  <!-- ===== REPORT INFO BAR ===== -->
-  @if (template()) {
+    <!-- ===== REPORT INFO BAR ===== -->
+    @if (template()) {
     <div class="report-info">
       <i class="pi pi-bookmark"></i>
       <span class="report-name">{{ template()!.templateName }}</span>
       @if (template()!.description) {
-        <span class="report-sep">—</span>
-        <span class="report-desc">{{ template()!.description }}</span>
+      <span class="report-sep">—</span>
+      <span class="report-desc">{{ template()!.description }}</span>
       }
     </div>
-  }
+    }
 
-  <!-- ===== EXCEL TOOLBAR ===== -->
-  <div class="grid-toolbar">
-    <div class="toolbar-left">
-      <button class="tb-btn" title="Hoàn tác (Ctrl+Z)" (click)="hot?.undo()"><i class="pi pi-undo"></i></button>
-      <button class="tb-btn" title="Làm lại (Ctrl+Y)" (click)="hot?.redo()"><i class="pi pi-refresh"></i></button>
-      <span class="tb-divider"></span>
-      <div class="zoom-control">
-        <button class="tb-btn" (click)="thaydoiZoom(-10)"><i class="pi pi-search-minus"></i></button>
-        <span class="zoom-value">{{ zoomLevel }}%</span>
-        <button class="tb-btn" (click)="thaydoiZoom(10)"><i class="pi pi-search-plus"></i></button>
+    <!-- ===== EXCEL TOOLBAR ===== -->
+    <div class="grid-toolbar">
+      <div class="toolbar-left">
+        <button class="tb-btn" title="Hoàn tác (Ctrl+Z)" (click)="hot?.undo()"><i class="pi pi-undo"></i></button>
+        <button class="tb-btn" title="Làm lại (Ctrl+Y)" (click)="hot?.redo()"><i class="pi pi-refresh"></i></button>
+        <span class="tb-divider"></span>
+        <div class="zoom-control">
+          <button class="tb-btn" (click)="thaydoiZoom(-10)"><i class="pi pi-search-minus"></i></button>
+          <span class="zoom-value">{{ zoomLevel }}%</span>
+          <button class="tb-btn" (click)="thaydoiZoom(10)"><i class="pi pi-search-plus"></i></button>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <div class="name-box">
+          <span class="cell-name"><i class="pi pi-th-large"></i> {{ viTriO() }}</span>
+        </div>
+        <div class="formula-bar">
+          <span class="fx-label">fx</span>
+          <input type="text" [value]="congThucHienTai()" readonly class="formula-input"
+            placeholder="Công thức hoặc giá trị ô..." />
+        </div>
       </div>
     </div>
-    <div class="toolbar-right">
-      <div class="name-box">
-        <span class="cell-name"><i class="pi pi-th-large"></i> {{ viTriO() }}</span>
-      </div>
-      <div class="formula-bar">
-        <span class="fx-label">fx</span>
-        <input type="text" [value]="congThucHienTai()" readonly class="formula-input"
-               placeholder="Công thức hoặc giá trị ô..." />
-      </div>
-    </div>
-  </div>
 
-  <!-- ===== HANDSONTABLE GRID ===== -->
-  <div class="grid-container" [style.transform]="'scale(' + zoomLevel/100 + ')'"
-       [style.transform-origin]="'top left'" [style.width]="(10000/zoomLevel) + '%'">
-    @if (dangTai()) {
+    <!-- ===== HANDSONTABLE GRID ===== -->
+    <div class="grid-container" [style.transform]="'scale(' + zoomLevel/100 + ')'" [style.transform-origin]="'top left'"
+      [style.width]="(10000/zoomLevel) + '%'">
+      @if (dangTai()) {
       <div class="loading-overlay">
         <div class="loading-content">
           <div class="spinner-wrap"><i class="pi pi-spin pi-spinner"></i></div>
           <p class="loading-text">Đang tải dữ liệu...</p>
-          <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+          <div class="loading-bar">
+            <div class="loading-bar-fill"></div>
+          </div>
         </div>
       </div>
-    }
-    <div #hotEl id="hotContainer"></div>
-  </div>
-
-  <!-- ===== STATUS BAR ===== -->
-  <footer class="status-bar">
-    <div class="status-left">
-      <span class="status-indicator" [class.unsaved]="soOThayDoi() > 0">
-        <i class="pi pi-circle-fill"></i>
-        {{ soOThayDoi() > 0 ? 'Chưa lưu' : 'Đã lưu' }}
-      </span>
+      }
+      <div #hotEl id="hotContainer"></div>
     </div>
-    <div class="status-right">
-      @if (tongGiaTri() !== null) {
+
+    <!-- ===== STATUS BAR ===== -->
+    <footer class="status-bar">
+      <div class="status-left">
+        <span class="status-indicator" [class.unsaved]="soOThayDoi() > 0">
+          <i class="pi pi-circle-fill"></i>
+          {{ soOThayDoi() > 0 ? 'Chưa lưu' : 'Đã lưu' }}
+        </span>
+      </div>
+      <div class="status-right">
+        @if (tongGiaTri() !== null) {
         <span class="status-calc"><strong>SUM:</strong> {{ tongGiaTri() | number:'1.2-2' }}</span>
         <span class="status-calc"><strong>COUNT:</strong> {{ countGiaTri() }}</span>
         <span class="status-calc"><strong>AVG:</strong> {{ (tongGiaTri()! / countGiaTri()) | number:'1.2-2' }}</span>
-      }
-    </div>
-  </footer>
+        }
+      </div>
+    </footer>
 
-  <!-- ===== TOAST ===== -->
-  @if (thongBao()) {
+    <!-- ===== TOAST ===== -->
+    @if (thongBao()) {
     <div class="toast" [class]="'toast-' + thongBao()!.loai">
-      <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'" [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+      <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
+        [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
       {{ thongBao()!.noiDung }}
     </div>
-  }
+    }
 
-  <!-- ===== SESSION HISTORY PANEL ===== -->
-  @if (hienLichSu() && lichSuLuu().length > 0) {
+    <!-- ===== SESSION HISTORY PANEL ===== -->
+    @if (hienLichSu() && lichSuLuu().length > 0) {
     <div class="session-panel-overlay" (click)="hienLichSu.set(false)"></div>
     <div class="session-panel">
       <div class="session-panel-header">
@@ -274,24 +270,25 @@
       <div class="session-panel-body">
         <p class="session-hint">Nhấn vào một bản ghi để quay lại nhập liệu cho biểu mẫu / kỳ đó.</p>
         @for (rec of lichSuLuu(); track rec.savedAt) {
-          <button class="session-rec" (click)="nhapLaiTuLichSu(rec)">
-            <div class="srec-icon"><i class="pi pi-check-circle"></i></div>
-            <div class="srec-info">
-              <span class="srec-form">{{ rec.formCode }}</span>
-              <span class="srec-name">{{ rec.formName }}</span>
-              <span class="srec-meta">Kỳ: <strong>{{ rec.period }}</strong> &nbsp;&bull;&nbsp; Năm: <strong>{{ rec.nam }}</strong> &nbsp;&bull;&nbsp; {{ rec.savedCount }} ô</span>
-            </div>
-            <div class="srec-time">
-              {{ rec.savedAt | date:'HH:mm' }}
-            </div>
-          </button>
+        <button class="session-rec" (click)="nhapLaiTuLichSu(rec)">
+          <div class="srec-icon"><i class="pi pi-check-circle"></i></div>
+          <div class="srec-info">
+            <span class="srec-form">{{ rec.formCode }}</span>
+            <span class="srec-name">{{ rec.formName }}</span>
+            <span class="srec-meta">Kỳ: <strong>{{ rec.period }}</strong> &nbsp;&bull;&nbsp; Năm: <strong>{{ rec.nam
+                }}</strong> &nbsp;&bull;&nbsp; {{ rec.savedCount }} ô</span>
+          </div>
+          <div class="srec-time">
+            {{ rec.savedAt | date:'HH:mm' }}
+          </div>
+        </button>
         }
       </div>
     </div>
-  }
+    }
 
-  <!-- ===== POST-SAVE NEXT-ACTION DIALOG ===== -->
-  @if (hienDialogTiepTheo() && luuVuaRoi()) {
+    <!-- ===== POST-SAVE NEXT-ACTION DIALOG ===== -->
+    @if (hienDialogTiepTheo() && luuVuaRoi()) {
     <div class="next-action-backdrop" (click)="dongDialogTiepTheo()"></div>
     <div class="next-action-dialog" role="dialog" aria-modal="true">
 
@@ -332,34 +329,34 @@
 
           <!-- Option 2: Next period -->
           @if (kyTiepTheo) {
-            <button class="nad-card" (click)="nhapKyTiepTheo()">
-              <div class="nadc-icon nadc-icon--period">
-                <i class="pi pi-calendar-plus"></i>
-              </div>
-              <div class="nadc-content">
-                <span class="nadc-label">Nhập kỳ tiếp theo</span>
-                <span class="nadc-desc">Chuyển sang kỳ <strong>{{ kyTiepTheo }}</strong><br>
-                  Biểu mẫu <strong>{{ luuVuaRoi()!.formCode }}</strong></span>
-              </div>
-              <i class="pi pi-arrow-right nadc-arrow"></i>
-            </button>
+          <button class="nad-card" (click)="nhapKyTiepTheo()">
+            <div class="nadc-icon nadc-icon--period">
+              <i class="pi pi-calendar-plus"></i>
+            </div>
+            <div class="nadc-content">
+              <span class="nadc-label">Nhập kỳ tiếp theo</span>
+              <span class="nadc-desc">Chuyển sang kỳ <strong>{{ kyTiepTheo }}</strong><br>
+                Biểu mẫu <strong>{{ luuVuaRoi()!.formCode }}</strong></span>
+            </div>
+            <i class="pi pi-arrow-right nadc-arrow"></i>
+          </button>
           }
 
           <!-- Option 3: Next form in list -->
           @if (coBieuMauTiepTheo) {
-            <button class="nad-card" (click)="nhapBieuMauTiepTheo()">
-              <div class="nadc-icon nadc-icon--form">
-                <i class="pi pi-file-edit"></i>
-              </div>
-              <div class="nadc-content">
-                <span class="nadc-label">Biểu mẫu tiếp theo</span>
-                <span class="nadc-desc">
-                  <strong>{{ bieuMauTiepTheo?.formCode }}</strong><br>
-                  {{ bieuMauTiepTheo?.formName }}
-                </span>
-              </div>
-              <i class="pi pi-arrow-right nadc-arrow"></i>
-            </button>
+          <button class="nad-card" (click)="nhapBieuMauTiepTheo()">
+            <div class="nadc-icon nadc-icon--form">
+              <i class="pi pi-file-edit"></i>
+            </div>
+            <div class="nadc-content">
+              <span class="nadc-label">Biểu mẫu tiếp theo</span>
+              <span class="nadc-desc">
+                <strong>{{ bieuMauTiepTheo?.formCode }}</strong><br>
+                {{ bieuMauTiepTheo?.formName }}
+              </span>
+            </div>
+            <i class="pi pi-arrow-right nadc-arrow"></i>
+          </button>
           }
 
         </div>
@@ -371,13 +368,13 @@
           <i class="pi pi-times-circle"></i> Ở lại trang hiện tại
         </button>
         @if (lichSuLuu().length > 1) {
-          <span class="nad-session-info">
-            <i class="pi pi-check-circle"></i>
-            Đã hoàn thành {{ lichSuLuu().length }} phiếu trong phiên này
-          </span>
+        <span class="nad-session-info">
+          <i class="pi pi-check-circle"></i>
+          Đã hoàn thành {{ lichSuLuu().length }} phiếu trong phiên này
+        </span>
         }
       </div>
     </div>
-  }
+    }
 
 </div>

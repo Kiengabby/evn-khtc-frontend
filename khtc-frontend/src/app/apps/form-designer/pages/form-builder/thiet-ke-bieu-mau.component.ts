@@ -1,5 +1,5 @@
-﻿import {
-  Component, inject, signal, OnInit, AfterViewInit, OnDestroy,
+import {
+  Component, inject, signal, computed, OnInit, AfterViewInit, OnDestroy,
   ViewChild, ElementRef, HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -12,6 +12,12 @@ import { BieuMauService } from '../../../service/bieu-mau.service';
 import { FormConfigApiService } from '../../../service/form-config-api.service';
 import { DimAccountApiService } from '../../../service/dim-account-api.service';
 import { FormTemplate } from '../../../../config/models/form-template.model';
+import {
+  FORM_TYPE_CONFIG,
+  FormTypeConfig,
+  ReportPeriodItem,
+  getPeriodsForFormType,
+} from '../../../../config/form-type.config';
 
 import {
   FormLayoutConfig, ColumnConfig, HeaderRow, HeaderCell, MergeCell,
@@ -47,6 +53,8 @@ interface ExportedTemplate {
   formId: string;
   formName: string;
   isActive: boolean;
+  formTypeCode?: string;
+  allowedPeriods?: string[];
   orgList: string[];
   isDynamicRow: boolean;
   layoutConfig: {
@@ -183,10 +191,31 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
   zoomLevel = signal(100);
 
   showInfoDialog = signal(false);
-  templateInfo = { templateId: '', templateName: '', version: '2026', isActive: true };
+  templateInfo = {
+    templateId: '',
+    templateName: '',
+    version: '2026',
+    isActive: true,
+    formTypeCode: 'MONTH',
+  };
 
   // Danh sách �ơn v�9 áp dụng � kh�:p v�:i BE appliedEntities
   entValues: string[] = ['EVN', 'EVNHCMC', 'EVNHANOI'];
+
+  // === Loai bieu mau & Ky bao cao ===
+  readonly danhSachLoaiBieuMau: FormTypeConfig[] = FORM_TYPE_CONFIG;
+
+  get danhSachKyBaoCao(): ReportPeriodItem[] {
+    return getPeriodsForFormType(this.templateInfo.formTypeCode);
+  }
+
+  get selectedFormType(): FormTypeConfig | undefined {
+    return this.danhSachLoaiBieuMau.find(ft => ft.code === this.templateInfo.formTypeCode);
+  }
+
+  onFormTypeChange(code: string): void {
+    this.templateInfo.formTypeCode = code;
+  }
 
   // === Indicator Code (Mã ch�0 tiêu) ===
   colIndicators = signal<IndicatorGroup[]>([]);
@@ -261,6 +290,9 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         this.templateInfo.templateId = result.formCode;
         this.templateInfo.templateName = result.formName;
         this.templateInfo.version = String(result.year);
+        if (result.layoutJSON?.formTypeCode) {
+          this.templateInfo.formTypeCode = result.layoutJSON.formTypeCode;
+        }
 
         if (result.formUUID) {
           this.existingFormUUID = result.formUUID;
@@ -1302,6 +1334,8 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
       formId: this.templateInfo.templateId || this.formId || 'NEW_TEMPLATE',
       formName: this.templateInfo.templateName || 'Biểu mẫu mới',
       isActive: this.templateInfo.isActive ?? true,
+      formTypeCode: this.templateInfo.formTypeCode || 'THANG',
+      allowedPeriods: getPeriodsForFormType(this.templateInfo.formTypeCode).map(p => p.value),
       orgList: this.entValues.map(v => v.trim()).filter(Boolean),
       isDynamicRow: false,
       layoutConfig: {

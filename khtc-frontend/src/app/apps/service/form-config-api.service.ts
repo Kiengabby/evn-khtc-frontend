@@ -295,6 +295,10 @@ export class FormConfigApiService {
             formName: exportedTemplate.formName || 'BiỒu mẫu m�:i',
             isActive: exportedTemplate.isActive ?? true,
             appliedEntities: (exportedTemplate.orgList || []).join(','),
+            formTypeCode: exportedTemplate.formTypeCode || 'MONTH',
+            allowedPeriods: Array.isArray(exportedTemplate.allowedPeriods)
+                ? JSON.stringify(exportedTemplate.allowedPeriods)
+                : (exportedTemplate.allowedPeriods || ''),
         };
         console.log('[FormConfigApi] �x� Step 1 � save-form (tạo m�:i formCode:', formCode, ')');
 

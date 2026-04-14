@@ -22,6 +22,16 @@ export interface FormTemplateSaveRequest {
     isActive: boolean;
     /** Danh sách đơn vị áp dụng (comma-separated hoặc JSON string) */
     appliedEntities: string;
+    /**
+     * Mã loại biểu mẫu (e.g. "THANG", "QUY", "NAM", "THANG_QUY", "KY").
+     * Xác định danh sách kỳ báo cáo hợp lệ cho biểu mẫu này.
+     */
+    formTypeCode?: string;
+    /**
+     * Danh sách kỳ báo cáo được phép (JSON array string hoặc comma-separated).
+     * VD: '["T01","T02","T03","Q1"]'
+     */
+    allowedPeriods?: string;
 }
 
 // ─── FormConfig (Step 2: Lưu layout + mappings) ───
