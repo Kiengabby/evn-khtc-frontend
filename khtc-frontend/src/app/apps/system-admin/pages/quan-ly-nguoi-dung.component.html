@@ -20,8 +20,8 @@
     
     <select [value]="entityFilter()" (change)="entityFilter.set($any($event.target).value)">
       <option value="">Tất cả đơn vị</option>
-      @for (entity of entities(); track entity.maDonVi) {
-        <option [value]="entity.maDonVi">{{ entity.tenDonVi }}</option>
+      @for (entity of entities(); track entity.entityCode) {
+        <option [value]="entity.entityCode">{{ entity.entityName }}</option>
       }
     </select>
 
@@ -194,8 +194,8 @@
               <label for="entityCode">Đơn vị <span class="required">*</span></label>
               <select id="entityCode" [(ngModel)]="formData.entityCode" name="entityCode" required>
                 <option value="">-- Chọn đơn vị --</option>
-                @for (entity of entities(); track entity.maDonVi) {
-                  <option [value]="entity.maDonVi">{{ entity.tenDonVi }}</option>
+                @for (entity of entities(); track entity.entityCode) {
+                  <option [value]="entity.entityCode">{{ entity.entityName }}</option>
                 }
               </select>
             </div>

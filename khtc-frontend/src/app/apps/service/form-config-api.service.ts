@@ -128,39 +128,80 @@ export class FormConfigApiService {
         formName: string;
         year: number;
         layoutJSON: any;
-        formUUID: string | null;  // UUID từ BE �Ồ dùng khi UPDATE (không tạo m�:i)
+        formUUID: string | null;
+        formTypeCode: string | null;
+        periodType: string | null;
     } | null> {
-        const effectiveYear = year || new Date().getFullYear();
+        const currentYear = new Date().getFullYear();
+        // Thử các năm: năm truyền vào (nếu có), năm hiện tại, năm sau, năm trước
+        const yearsToTry: number[] = year
+            ? [year]
+            : [currentYear, currentYear + 1, currentYear - 1];
+
+        return this.tryLoadForDesigner(formCode, yearsToTry);
+    }
+
+    private tryLoadForDesigner(formCode: string, yearsToTry: number[]): Observable<{
+        formCode: string;
+        formName: string;
+        year: number;
+        layoutJSON: any;
+        formUUID: string | null;
+        formTypeCode: string | null;
+        periodType: string | null;
+    } | null> {
+        if (yearsToTry.length === 0) return of(null);
+
+        const [tryYear, ...rest] = yearsToTry;
+        return this.loadFormForDesignerWithYear(formCode, tryYear).pipe(
+            switchMap(result => {
+                if (result !== null) return of(result);
+                console.warn('[FormConfigApi] Thử năm', tryYear, 'không có data, thử năm tiếp theo...');
+                return this.tryLoadForDesigner(formCode, rest);
+            }),
+        );
+    }
+
+    private loadFormForDesignerWithYear(formCode: string, effectiveYear: number): Observable<{
+        formCode: string;
+        formName: string;
+        year: number;
+        layoutJSON: any;
+        formUUID: string | null;
+        formTypeCode: string | null;
+        periodType: string | null;
+    } | null> {
         const url = `${this.apiBase}/api/v2/PlanningData/load-form`;
 
         const params = new HttpParams()
             .set('formCode', formCode)
             .set('year', effectiveYear.toString())
             .set('entityCode', 'EVN')
-            .set('period', 'Kỳ 1');  // BE yêu cầu period (NullRef nếu r�ng)
+            .set('period', '00');  // '00' là mã kỳ hợp lệ cho YEAR, tránh NullRef trên BE
 
-        console.log('[FormConfigApi] �x� Load form for designer:', { formCode, year: effectiveYear });
+        console.log('[FormConfigApi] Load form for designer:', { formCode, year: effectiveYear });
 
         return this.http.get<any>(url, { params }).pipe(
             catchError((httpErr: HttpErrorResponse) => {
                 const errBody = httpErr.error;
-                // BE trả HTTP error nhưng body có Succeeded �  xử lý bình thường
                 if (errBody && typeof errBody === 'object' &&
                     (errBody.Succeeded !== undefined || errBody.succeeded !== undefined)) {
-                    console.warn('[FormConfigApi] �a�️ HTTP', httpErr.status, '� treating body as response');
+                    console.warn('[FormConfigApi] HTTP', httpErr.status, 'treating body as response');
                     return of(errBody);
                 }
-                throw httpErr;
+                // 500 or network error → return null to try next year
+                console.warn('[FormConfigApi] HTTP error', httpErr.status, 'for year', effectiveYear);
+                return of(null);
             }),
             map(raw => {
-                console.log('[FormConfigApi] �x� Load form raw response:', raw);
+                if (raw === null) return null;
+                console.log('[FormConfigApi] Load form raw response (year=' + effectiveYear + '):', raw);
 
-                // ���� Normalize PascalCase �  camelCase ����
                 let beData: any;
                 if (raw?.Succeeded !== undefined || raw?.succeeded !== undefined) {
                     const response = normalizeApiResponse(raw);
                     if (!response.succeeded) {
-                        console.warn('[FormConfigApi] �a�️ Load form thất bại:', response.message);
+                        console.warn('[FormConfigApi] Load form thất bại:', response.message);
                         return null;
                     }
                     beData = response.data;
@@ -168,12 +209,8 @@ export class FormConfigApiService {
                     beData = raw;
                 }
 
-                if (!beData) {
-                    console.warn('[FormConfigApi] �a�️ Response data r�ng');
-                    return null;
-                }
+                if (!beData) return null;
 
-                // ���� Parse layoutJSON ����
                 let layoutJSON: any = null;
                 const rawLayout = beData.layoutJSON || beData.LayoutJSON;
 
@@ -181,35 +218,35 @@ export class FormConfigApiService {
                     try {
                         layoutJSON = JSON.parse(rawLayout);
                     } catch (e) {
-                        console.warn('[FormConfigApi] �a�️ layoutJSON parse error:', e);
+                        console.warn('[FormConfigApi] layoutJSON parse error:', e);
                         return null;
                     }
                 } else if (rawLayout && typeof rawLayout === 'object') {
                     layoutJSON = rawLayout;
                 }
 
-                // Validate cấu trúc cơ bản
                 if (!layoutJSON?.columns || !Array.isArray(layoutJSON.columns) || layoutJSON.columns.length === 0) {
-                    console.warn('[FormConfigApi] �a�️ layoutJSON không có columns hợp l�!');
+                    console.warn('[FormConfigApi] layoutJSON không có columns hợp lệ');
                     return null;
                 }
 
-                console.log('[FormConfigApi] �S& Loaded form for designer:', {
+                console.log('[FormConfigApi] Loaded form for designer:', {
                     formCode: beData.formCode || formCode,
                     formName: beData.formName,
+                    year: effectiveYear,
                     columns: layoutJSON.columns?.length,
-                    rows: layoutJSON.rows?.length,
-                    headerRows: layoutJSON.headerRows?.length,
-                    mappings: layoutJSON.mappings?.length,
-                    mergeCells: layoutJSON.mergeCells?.length,
                 });
 
+                const rawFormTypeCode = beData.formTypeCode || beData.FormTypeCode || null;
+                const rawPeriodType = beData.periodType || beData.PeriodType || rawFormTypeCode || null;
                 return {
                     formCode: beData.formCode || beData.formId || formCode,
                     formName: beData.formName || beData.formConfig?.formName || formCode,
                     year: effectiveYear,
                     layoutJSON,
-                    formUUID: beData.formId || beData.FormId || null, // UUID �Ồ dùng khi UPDATE
+                    formUUID: beData.formId || beData.FormId || null,
+                    formTypeCode: rawFormTypeCode,
+                    periodType: rawPeriodType,
                 };
             }),
         );
@@ -278,58 +315,50 @@ export class FormConfigApiService {
      */
     saveTemplateAndConfig(exportedTemplate: any): Observable<FormConfigApiResponse> {
         const existingUUID = exportedTemplate.existingFormUUID || null;
-
-        // ���� Nếu form �ã t�n tại trên BE (có UUID) �  bỏ qua Step 1, nhảy thẳng Step 2 ����
-        // BE endpoint save-form ch�0 h� trợ INSERT, không UPDATE.
-        // Gọi lại v�:i formCode �ã có �  400 FormCodeAlreadyExists.
-        if (existingUUID) {
-            console.log('[FormConfigApi] �x Form �ã t�n tại (UUID:', existingUUID, ') �  Bỏ qua Step 1, ch�0 lưu layout config');
-            return this.saveConfigOnly(existingUUID, exportedTemplate);
-        }
-
-        // ���� Form m�:i: Step 1 (tạo FormTemplate) �  Step 2 (lưu config) ����
         const formCode = exportedTemplate.formId || 'NEW_TEMPLATE';
+
+        // Gửi cả khi INSERT (formID=null) lẫn UPDATE (formID=UUID) qua cùng save-form endpoint
         const templateRequest: FormTemplateSaveRequest = {
-            formID: null, // null = INSERT m�:i trên BE
+            formID: existingUUID,
             formCode,
-            formName: exportedTemplate.formName || 'BiỒu mẫu m�:i',
+            formName: exportedTemplate.formName || 'Biểu mẫu mới',
             isActive: exportedTemplate.isActive ?? true,
             appliedEntities: (exportedTemplate.orgList || []).join(','),
-            formTypeCode: exportedTemplate.formTypeCode || 'MONTH',
+            formTypeCode: exportedTemplate.formTypeCode || 'YEAR',
             allowedPeriods: Array.isArray(exportedTemplate.allowedPeriods)
                 ? JSON.stringify(exportedTemplate.allowedPeriods)
                 : (exportedTemplate.allowedPeriods || ''),
         };
-        console.log('[FormConfigApi] �x� Step 1 � save-form (tạo m�:i formCode:', formCode, ')');
+
+        const mode = existingUUID ? 'UPDATE' : 'INSERT';
+        console.log('[FormConfigApi] Step 1 save-form (' + mode + ' ' + formCode + '):', templateRequest);
 
         return this.saveFormTemplate(templateRequest).pipe(
             switchMap((step1Response) => {
                 if (!step1Response.succeeded) {
-                    console.error('[FormConfigApi] �R Step 1 thất bại:', step1Response);
+                    console.error('[FormConfigApi] Step 1 thất bại:', step1Response);
                     return of(step1Response);
                 }
 
-                console.log('[FormConfigApi] �S& Step 1 thành công:', step1Response);
+                console.log('[FormConfigApi] Step 1 thành công:', step1Response);
 
-                // BE trả data = UUID string của FormTemplate vừa tạo
                 const beFormID = (typeof step1Response.data === 'string')
                     ? step1Response.data
-                    : (step1Response.data?.formID || step1Response.data?.id || null);
+                    : (step1Response.data?.formID || step1Response.data?.id || existingUUID || null);
 
-                // ĐĒng ký vào FormRegistry (code �  UUID)
                 if (beFormID && formCode) {
                     this.formRegistry.registerForm(formCode, beFormID);
                 }
 
-                return this.saveConfigOnly(beFormID || formCode, exportedTemplate);
+                return this.saveConfigOnly(beFormID || existingUUID || formCode, exportedTemplate);
             }),
             catchError((err) => {
-                console.error('[FormConfigApi] �R L�i trong flow save:', err);
+                console.error('[FormConfigApi] Lỗi trong flow save:', err);
                 const errBody = err.error;
                 const serverMsg = errBody?.Message ?? errBody?.message ?? err.message ?? 'Unknown error';
                 return of({
                     succeeded: false,
-                    message: 'L�i kết n�i server',
+                    message: 'Lỗi kết nối server',
                     data: null,
                     errors: [serverMsg],
                     statusCode: err.status || 500,
@@ -338,7 +367,6 @@ export class FormConfigApiService {
             }),
         );
     }
-
     /**
      * Ch�0 lưu FormConfig (layout) v�:i formID �ã biết.
      * Dùng khi UPDATE form �ã t�n tại (bỏ qua bư�:c tạo FormTemplate).

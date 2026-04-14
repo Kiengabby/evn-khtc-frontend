@@ -2,12 +2,12 @@
 // Cấu hình Loại biểu mẫu và Kỳ báo cáo
 // ============================================
 // Mã loại form và mã kỳ báo cáo khớp với danh mục BE:
-//   Loại: MONTH | QUATER | YEAR
+//   Loại: MONTH | QUARTER | YEAR
 //   Kỳ:   01..12 (tháng) | Q1..Q4 (quý) | 00 (năm)
 // ============================================
 
 export interface FormTypeConfig {
-    /** Mã loại biểu mẫu gửi lên BE: MONTH | QUATER | YEAR */
+    /** Mã loại biểu mẫu gửi lên BE: MONTH | QUARTER | YEAR */
     code: string;
     /** Tên hiển thị */
     label: string;
@@ -30,7 +30,7 @@ export interface ReportPeriodItem {
 
 // ============================================
 // Định nghĩa các loại biểu mẫu
-// Mã loại: MONTH | QUATER | YEAR  (khớp danh mục BE)
+// Mã loại: MONTH | QUARTER | YEAR  (khớp danh mục BE)
 // ============================================
 export const FORM_TYPE_CONFIG: FormTypeConfig[] = [
     {
@@ -54,7 +54,7 @@ export const FORM_TYPE_CONFIG: FormTypeConfig[] = [
         ],
     },
     {
-        code: 'QUATER',
+        code: 'QUARTER',
         label: 'Quý',
         description: 'Báo cáo theo từng quý trong năm (4 kỳ)',
         icon: 'pi-chart-bar',

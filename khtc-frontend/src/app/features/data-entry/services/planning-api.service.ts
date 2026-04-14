@@ -31,6 +31,7 @@ export interface TemplateListItem {
 /** Item trả về từ GET /api/v2/FormTemplate/get-list */
 export interface FormTemplateListItem {
   id: number;
+  formId?: string;
   formCode: string;
   formName: string;
   description?: string;
@@ -39,14 +40,44 @@ export interface FormTemplateListItem {
   updatedAt?: string;
   currentVersion?: string | null;
   applyYear?: number | null;
+  /** Loại kỳ báo cáo: MONTH | QUARTER | YEAR — khớp với periodType của DimPeriod */
+  periodType?: string | null;
+}
+
+/** Kỳ báo cáo từ API BE (DimPeriod) */
+export interface DimPeriodItem {
+  id: string;
+  periodCode: string;
+  periodName: string;
+  periodType: string;
+  sortOrder: number;
+  isActive: boolean;
 }
 
 
 
-/** Kịch bản nhập liệu (VD: Kế hoạch / Thực hiện — mã SCE) — gửi kèm khi lưu / tải dữ liệu */
+/** Đơn vị nhập liệu từ BE (DimEntity) */
+export interface DimEntityItem {
+  id: string;
+  entityCode: string;
+  entityName: string;
+  description?: string | null;
+  parentName?: string | null;
+  isActive?: boolean;
+  created?: string;
+  createdBy?: string | null;
+  lastModified?: string | null;
+  lastModifiedBy?: string | null;
+}
+
+/** Kịch bản nhập liệu từ BE (DimScenario) */
 export interface PlanningScenarioItem {
-  scenarioId: string;
+  id: string;
+  scenarioCode: string;
   scenarioName: string;
+  description?: string | null;
+  order?: string | number;
+  isActive?: boolean;
 }
 
 export interface CellChangePayload {
@@ -259,18 +290,136 @@ export class PlanningApiService {
     );
   }
 
-  /** Danh sách kịch bản (mock / GET thật khi BE sẵn sàng) */
+  /** Danh sách kịch bản từ BE (DimScenario) */
   getScenarioList(): Observable<PlanningScenarioItem[]> {
-    if (this.useMockV1) {
-      return of([
-        { scenarioId: 'KH', scenarioName: 'Kế hoạch' },
-        { scenarioId: 'TH', scenarioName: 'Thực hiện' },
-      ]).pipe(delay(80));
-    }
-    return this.http.get<PlanningScenarioItem[]>(`${this.apiBaseUrl}/scenarios`);
+    const url = `${this.beApiBase}/api/v2/DimScenario/get-list`;
+    console.log('[PlanningApi] 🌐 GET DimScenario list:', url);
+
+    return this.http.get<any>(url).pipe(
+      timeout(15000),
+      map(raw => {
+        // BE trả wrapped: { Succeeded, Data: [...], Message }
+        if (raw?.Succeeded !== undefined || raw?.succeeded !== undefined) {
+          const response = normalizeApiResponse(raw);
+          if (!response.succeeded) {
+            throw new Error(response.message || 'Tải danh sách kịch bản thất bại');
+          }
+          return (response.data as PlanningScenarioItem[]) || [];
+        }
+        // Direct array
+        if (Array.isArray(raw)) return raw as PlanningScenarioItem[];
+        return [];
+      }),
+      map(list => {
+        const active = list.filter(item => item.isActive !== false);
+        return active.sort((a, b) => {
+          const ao = Number(a.order ?? 0);
+          const bo = Number(b.order ?? 0);
+          return ao - bo;
+        });
+      }),
+      catchError((err: unknown) => {
+        const httpErr = err as HttpErrorResponse;
+        console.error('[PlanningApi] ❌ DimScenario list error:', err);
+        const fallback: PlanningScenarioItem[] = [
+          { id: 'ACTUAL', scenarioCode: 'ACTUAL', scenarioName: 'Thực hiện', order: 1, isActive: true },
+          { id: 'PLAN', scenarioCode: 'PLAN', scenarioName: 'Kế hoạch', order: 2, isActive: true },
+          { id: 'FORCAST', scenarioCode: 'FORCAST', scenarioName: 'Ước thực hiện', order: 3, isActive: true },
+        ];
+        const errMsg = httpErr?.message || httpErr?.statusText || 'Unknown error';
+        console.warn('[PlanningApi] ⚠️ Fallback scenario list used:', errMsg);
+        return of(fallback);
+      }),
+    );
+  }
+
+  /** Danh sách đơn vị từ BE (DimEntity) */
+  getEntityList(): Observable<DimEntityItem[]> {
+    const url = `${this.beApiBase}/api/v2/DimEntity/get-all`;
+    console.log('[PlanningApi] 🌐 GET DimEntity list:', url);
+
+    return this.http.get<any>(url).pipe(
+      timeout(15000),
+      map(raw => {
+        if (raw?.Succeeded !== undefined || raw?.succeeded !== undefined) {
+          const response = normalizeApiResponse(raw);
+          if (!response.succeeded) {
+            throw new Error(response.message || 'Tải danh sách đơn vị thất bại');
+          }
+          return (response.data as DimEntityItem[]) || [];
+        }
+        if (Array.isArray(raw)) return raw as DimEntityItem[];
+        return [];
+      }),
+      map(list => {
+        return list.sort((a, b) => (a.entityCode || '').localeCompare(b.entityCode || ''));
+      }),
+      catchError((err: unknown) => {
+        const httpErr = err as HttpErrorResponse;
+        console.error('[PlanningApi] ❌ DimEntity list error:', err);
+        const fallback: DimEntityItem[] = [
+          {
+            id: 'EVN',
+            entityCode: 'EVN',
+            entityName: 'Tập đoàn điện lực',
+            isActive: true,
+          },
+        ];
+        const errMsg = httpErr?.message || httpErr?.statusText || 'Unknown error';
+        console.warn('[PlanningApi] ⚠️ Fallback entity list used:', errMsg);
+        return of(fallback);
+      }),
+    );
   }
 
 
+
+  /** Lấy danh sách kỳ báo cáo theo loại từ BE (DimPeriod) */
+  getPeriodsByType(periodType: string): Observable<DimPeriodItem[]> {
+    const url = `${this.beApiBase}/api/v2/DimPeriod/get-period-type/${encodeURIComponent(periodType)}`;
+    console.log('[PlanningApi] 🌐 GET DimPeriod by type:', url);
+
+    return this.http.get<any>(url).pipe(
+      timeout(15000),
+      map(raw => {
+        const response = normalizeApiResponse(raw);
+        if (!response.succeeded) {
+          throw new Error(response.message || 'Tải kỳ báo cáo thất bại');
+        }
+        const list = Array.isArray(response.data) ? (response.data as DimPeriodItem[]) : [];
+        return list.sort((a, b) => {
+          if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+          return a.periodCode.localeCompare(b.periodCode);
+        });
+      }),
+      catchError((err: unknown) => {
+        const httpErr = err as HttpErrorResponse;
+        console.error('[PlanningApi] ❌ DimPeriod error:', err);
+        // Fallback theo periodType
+        return of(this.fallbackPeriods(periodType));
+      }),
+    );
+  }
+
+  /** Fallback kỳ báo cáo khi API lỗi */
+  private fallbackPeriods(periodType: string): DimPeriodItem[] {
+    if (periodType === 'MONTH') {
+      return Array.from({ length: 12 }, (_, i) => {
+        const code = String(i + 1).padStart(2, '0');
+        return { id: code, periodCode: code, periodName: `Tháng ${i + 1}`, periodType: 'MONTH', sortOrder: i + 1, isActive: true };
+      });
+    }
+    if (periodType === 'QUATER') {
+      return [
+        { id: 'Q1', periodCode: 'Q1', periodName: 'Quý 1', periodType: 'QUATER', sortOrder: 1, isActive: true },
+        { id: 'Q2', periodCode: 'Q2', periodName: 'Quý 2', periodType: 'QUATER', sortOrder: 2, isActive: true },
+        { id: 'Q3', periodCode: 'Q3', periodName: 'Quý 3', periodType: 'QUATER', sortOrder: 3, isActive: true },
+        { id: 'Q4', periodCode: 'Q4', periodName: 'Quý 4', periodType: 'QUATER', sortOrder: 4, isActive: true },
+      ];
+    }
+    // YEAR hoặc mặc định
+    return [{ id: '00', periodCode: '00', periodName: 'Năm', periodType: 'YEAR', sortOrder: 0, isActive: true }];
+  }
 
   private mockLoadForm(templateId: string): Observable<PlanningFormResponse> {
     const fileName = templateId.toLowerCase().replace(/_/g, '-');

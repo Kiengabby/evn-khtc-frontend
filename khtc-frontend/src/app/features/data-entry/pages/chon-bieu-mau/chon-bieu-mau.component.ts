@@ -91,7 +91,11 @@ export class ChonBieuMauComponent implements OnInit, OnDestroy {
   }
 
   chonBieuMau(formCode: string): void {
-    this.router.navigate(['/app/data-entry/planning', formCode]);
+    const bm = this.danhSach().find(x => x.formCode === formCode);
+    this.router.navigate(
+      ['/app/data-entry/planning', formCode],
+      { state: { formName: bm?.formName, periodType: bm?.periodType } },
+    );
   }
 
   // === UI Helpers ===

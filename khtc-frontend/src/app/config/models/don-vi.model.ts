@@ -1,43 +1,63 @@
 // ============================================
-// Model: Đơn vị (Entity / Dimension Entity)
+// Model: Đơn vị (DimEntity)
 // ============================================
-// Đại diện cho các đơn vị thành viên trong Tập đoàn EVN
-// VD: Tập đoàn EVN > Tổng công ty EVNNPC > PC Nam Định
-//
-// === API Endpoints ===
-// GET  /api/danh-muc/don-vi          → Danh sách đơn vị (flat/tree)
-// GET  /api/danh-muc/don-vi/:id      → Chi tiết 1 đơn vị
-// POST /api/danh-muc/don-vi          → Tạo đơn vị mới
-// PUT  /api/danh-muc/don-vi/:id      → Cập nhật đơn vị
+// Khớp với API BE: /api/v2/DimEntity
+// GET  /api/v2/DimEntity/get-all
+// POST /api/v2/DimEntity/create
+// POST /api/v2/DimEntity/update/{id}
+// POST /api/v2/DimEntity/delete/{id}
 // ============================================
 
-/**
- * Cấp đơn vị trong cây tổ chức
- */
+/** Dữ liệu đơn vị trả về từ BE (GET /api/v2/DimEntity/get-all) */
+export interface DimEntity {
+    id: string;
+    entityCode: string;
+    entityName: string;
+    description: string | null;
+    parentId: string | null;
+    parentName: string | null;
+    isActive: boolean;
+    created: string | null;
+    createdBy: string | null;
+    lastModified: string | null;
+    lastModifiedBy: string | null;
+}
+
+/** Payload gửi lên khi tạo mới hoặc cập nhật đơn vị */
+export interface DimEntitySaveRequest {
+    entityCode: string;
+    entityName: string;
+    description: string | null;
+    parentId: string | null;
+    isActive: boolean;
+}
+
+/** Form state nội bộ trong component */
+export interface DimEntityForm {
+    entityCode: string;
+    entityName: string;
+    description: string;
+    parentId: string | null;
+    isActive: boolean;
+}
+
+// ============================================
+// Legacy types — backward compatibility
+// Các component cũ (report-wizard, analytics...) vẫn dùng DonVi
+// ============================================
+
+/** @deprecated Dùng DimEntity thay thế */
 export type CapDonVi = 'TAP_DOAN' | 'TONG_CONG_TY' | 'CONG_TY' | 'CHI_NHANH' | 'DIEN_LUC';
 
-/**
- * Đơn vị (Entity) — Model chính
- *
- * Ví dụ:
- * {
- *   id: 10,
- *   maDonVi: 'PC_NAM_DINH',
- *   tenDonVi: 'Công ty Điện lực Nam Định',
- *   tenVietTat: 'PC Nam Định',
- *   capDonVi: 'CONG_TY',
- *   maDonViCha: 'EVNNPC',
- *   trangThai: true
- * }
- */
+/** @deprecated Dùng DimEntity thay thế */
 export interface DonVi {
-    id: number;
-    maDonVi: string;                     // Mã đơn vị (unique, VD: 'PC_NAM_DINH')
-    tenDonVi: string;                    // Tên đầy đủ
-    tenVietTat: string;                  // Tên viết tắt hiển thị trên báo cáo
-    capDonVi: CapDonVi;                  // Cấp đơn vị
-    maDonViCha: string | null;          // Mã đơn vị cha (null = gốc/Tập đoàn)
-    trangThai: boolean;                  // Đang hoạt động / Ngừng
+    id: string | number;
+    maDonVi: string;
+    tenDonVi: string;
+    tenVietTat: string;
+    capDonVi: CapDonVi;
+    maDonViCha: string | null;
+    trangThai: boolean;
     diaChi?: string;
     soDienThoai?: string;
     maSoThue?: string;
@@ -46,13 +66,7 @@ export interface DonVi {
     ngayCapNhat?: string;
 }
 
-/** Node cây đơn vị — cho TreeTable */
-export interface DonViNode extends DonVi {
-    children?: DonViNode[];
-    expanded?: boolean;
-}
-
-/** DTO tạo mới đơn vị */
+/** @deprecated Dùng DimEntitySaveRequest thay thế */
 export interface DonViTaoMoi {
     maDonVi: string;
     tenDonVi: string;
@@ -60,7 +74,5 @@ export interface DonViTaoMoi {
     capDonVi: CapDonVi;
     maDonViCha: string | null;
     diaChi?: string;
-    soDienThoai?: string;
-    maSoThue?: string;
     ghiChu?: string;
 }

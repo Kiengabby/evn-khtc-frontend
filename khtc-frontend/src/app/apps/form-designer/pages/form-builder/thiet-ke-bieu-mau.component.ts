@@ -290,8 +290,10 @@ export class ThietKeBieuMauComponent implements OnInit, AfterViewInit, OnDestroy
         this.templateInfo.templateId = result.formCode;
         this.templateInfo.templateName = result.formName;
         this.templateInfo.version = String(result.year);
-        if (result.layoutJSON?.formTypeCode) {
-          this.templateInfo.formTypeCode = result.layoutJSON.formTypeCode;
+        // formTypeCode/periodType từ FormTemplate BE (ưu tiên hơn layoutJSON)
+        const beFormType = result.formTypeCode || result.periodType || result.layoutJSON?.formTypeCode;
+        if (beFormType) {
+          this.templateInfo.formTypeCode = beFormType;
         }
 
         if (result.formUUID) {

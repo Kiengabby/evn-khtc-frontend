@@ -1,17 +1,7 @@
-// ============================================
-// Page: Quản lý Đơn v�9 (Entity Management)
-// ============================================
-// HiỒn th�9 bảng danh sách �ơn v�9 thành viên EVN.
-// Chức nĒng: Tìm kiếm, thêm/sửa/xóa, hiỒn th�9 cây t�" chức.
-//
-// === LU�NG DỮ LI� U ===
-// Component �  MockApiService �  KetQuaApi<DonVi[]>
-// ============================================
-
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DonVi, CapDonVi, DonViTaoMoi } from '../../../../config/models/don-vi.model';
+import { DimEntity, DimEntityForm } from '../../../../config/models/don-vi.model';
 import { DonViService } from '../../../service/don-vi.service';
 
 @Component({
@@ -25,7 +15,7 @@ export class QuanLyDonViComponent implements OnInit {
     private donViService = inject(DonViService);
 
     // === State ===
-    danhSach = signal<DonVi[]>([]);
+    danhSach = signal<DimEntity[]>([]);
     dangTai = signal(false);
     hienDialog = signal(false);
     dangSua = signal(false);
@@ -34,10 +24,20 @@ export class QuanLyDonViComponent implements OnInit {
     thongBao = signal<{ noiDung: string; loai: 'success' | 'error' } | null>(null);
 
     tuKhoa = '';
-    locCapDonVi = '';
-    form: any = this.formMacDinh();
-    private idDangSua: number | null = null;
+    form: DimEntityForm = this.formMacDinh();
+    /** entityCode của đơn vị đang sửa — dùng cho endpoint update/{entityCode} */
+    maDangSua: string | null = null;
     private timerTimKiem: any;
+
+    danhSachHienThi = computed(() => {
+        const tk = this.tuKhoa.trim().toLowerCase();
+        if (!tk) return this.danhSach();
+        return this.danhSach().filter(dv =>
+            dv.entityCode.toLowerCase().includes(tk) ||
+            dv.entityName.toLowerCase().includes(tk) ||
+            (dv.description ?? '').toLowerCase().includes(tk)
+        );
+    });
 
     // ============================================
     // LIFECYCLE
@@ -48,88 +48,124 @@ export class QuanLyDonViComponent implements OnInit {
     }
 
     // ============================================
-    // LOAD DỮ LI� U
+    // LOAD DỮ LIỆU
     // ============================================
 
     async taiDuLieu(): Promise<void> {
         this.dangTai.set(true);
-        try {
-            const kq = await this.donViService.layDanhSach({
-                tuKhoa: this.tuKhoa || undefined,
-                capDonVi: this.locCapDonVi || undefined,
-            });
-            if (kq.trangThai) {
-                this.danhSach.set(kq.duLieu);
-            }
-        } catch {
+        const kq = await this.donViService.layDanhSach();
+        if (kq.ok) {
+            this.danhSach.set(kq.data);
+        } else {
             this.danhSach.set([]);
+            this.hienThongBao(kq.message || 'Không tải được danh sách đơn vị', 'error');
         }
         this.dangTai.set(false);
     }
 
     onTimKiem(): void {
         clearTimeout(this.timerTimKiem);
-        this.timerTimKiem = setTimeout(() => this.taiDuLieu(), 300);
+        this.timerTimKiem = setTimeout(() => {}, 0);
     }
 
     // ============================================
-    // TH�`M / SỬA
+    // THÊM / SỬA
     // ============================================
 
     moFormThemMoi(): void {
         this.form = this.formMacDinh();
-        this.idDangSua = null;
+        this.maDangSua = null;
         this.dangSua.set(false);
         this.loiForm.set(null);
         this.hienDialog.set(true);
     }
 
-    moFormSua(dv: DonVi): void {
-        this.form = { ...dv };
-        this.idDangSua = dv.id;
+    moFormSua(dv: DimEntity): void {
+        // parentId trong form dùng entityCode của đơn vị cha
+        // BE get-all chỉ trả parentName (không trả parentId),
+        // nên ta tra entityCode từ parentName để map dropdown cho đúng.
+        const parentEntityCode = this.resolveParentCode(dv);
+
+        this.form = {
+            entityCode: dv.entityCode,
+            entityName: dv.entityName,
+            description: dv.description ?? '',
+            parentId: parentEntityCode,
+            isActive: dv.isActive,
+        };
+        this.maDangSua = dv.entityCode;
         this.dangSua.set(true);
         this.loiForm.set(null);
         this.hienDialog.set(true);
     }
 
     async luuDonVi(): Promise<void> {
-        if (!this.form.maDonVi?.trim()) { this.loiForm.set('Vui lòng nhập mã �ơn v�9'); return; }
-        if (!this.form.tenDonVi?.trim()) { this.loiForm.set('Vui lòng nhập tên �ơn v�9'); return; }
-        if (!this.form.tenVietTat?.trim()) { this.loiForm.set('Vui lòng nhập tên viết tắt'); return; }
+        if (!this.form.entityCode.trim()) {
+            this.loiForm.set('Vui lòng nhập mã đơn vị');
+            return;
+        }
+        if (!this.form.entityName.trim()) {
+            this.loiForm.set('Vui lòng nhập tên đơn vị');
+            return;
+        }
 
         this.dangLuu.set(true);
+        this.loiForm.set(null);
+
+        // parentId gửi lên là id (UUID) của đơn vị cha nếu có.
+        // Trong dropdown ta đang lưu entityCode của cha → cần tra lại id UUID.
+        const parentIdUuid = this.resolveParentIdUuid(this.form.parentId);
+
+        const payload = {
+            entityCode: this.form.entityCode.trim(),
+            entityName: this.form.entityName.trim(),
+            description: this.form.description.trim() || null,
+            parentId: parentIdUuid,
+            isActive: this.form.isActive,
+        };
 
         try {
-            if (this.dangSua() && this.idDangSua) {
-                const kq = await this.donViService.capNhat(this.idDangSua, this.form);
-                if (!kq.trangThai) { this.loiForm.set(kq.thongBao); this.dangLuu.set(false); return; }
-                this.hienThongBao(kq.thongBao, 'success');
+            if (this.dangSua() && this.maDangSua) {
+                // BE (tạm thời) tìm theo entityCode, không phải id UUID
+                const kq = await this.donViService.capNhat(this.maDangSua, payload);
+                if (!kq.ok) {
+                    this.loiForm.set(kq.message || 'Cập nhật thất bại');
+                    this.dangLuu.set(false);
+                    return;
+                }
+                this.hienThongBao('Cập nhật đơn vị thành công', 'success');
             } else {
-                const kq = await this.donViService.taoMoi(this.form as DonViTaoMoi);
-                if (!kq.trangThai) { this.loiForm.set(kq.thongBao); this.dangLuu.set(false); return; }
-                this.hienThongBao(kq.thongBao, 'success');
+                const kq = await this.donViService.taoMoi(payload);
+                if (!kq.ok) {
+                    this.loiForm.set(kq.message || 'Tạo mới thất bại');
+                    this.dangLuu.set(false);
+                    return;
+                }
+                this.hienThongBao('Tạo đơn vị thành công', 'success');
             }
             await this.taiDuLieu();
             this.dongDialog();
-        } catch (err) {
-            this.loiForm.set('Đã xảy ra l�i h�! th�ng');
+        } catch {
+            this.loiForm.set('Đã xảy ra lỗi hệ thống');
         }
+
         this.dangLuu.set(false);
     }
 
     // ============================================
-    // X�A
+    // XÓA
     // ============================================
 
-    async xacNhanXoa(dv: DonVi): Promise<void> {
-        if (!confirm(`Xóa �ơn v�9 "${dv.tenVietTat}"?`)) return;
+    async xacNhanXoa(dv: DimEntity): Promise<void> {
+        if (!confirm(`Xóa đơn vị "${dv.entityName}" (${dv.entityCode})?`)) return;
 
-        const kq = await this.donViService.xoa(dv.id);
-        if (kq.trangThai) {
-            this.hienThongBao(kq.thongBao, 'success');
+        // BE (tạm thời) tìm theo entityCode, không phải id UUID
+        const kq = await this.donViService.xoa(dv.entityCode);
+        if (kq.ok) {
+            this.hienThongBao('Xóa đơn vị thành công', 'success');
             await this.taiDuLieu();
         } else {
-            this.hienThongBao(kq.thongBao, 'error');
+            this.hienThongBao(kq.message || 'Xóa thất bại', 'error');
         }
     }
 
@@ -137,30 +173,63 @@ export class QuanLyDonViComponent implements OnInit {
     // HELPERS
     // ============================================
 
-    dongDialog(): void { this.hienDialog.set(false); this.loiForm.set(null); }
-
-    tenCapDonVi(cap: CapDonVi): string {
-        const map: Record<CapDonVi, string> = {
-            'TAP_DOAN': 'Tập �oàn',
-            'TONG_CONG_TY': 'T�"ng công ty',
-            'CONG_TY': 'Công ty',
-            'CHI_NHANH': 'Chi nhánh',
-            'DIEN_LUC': 'Đi�!n lực',
-        };
-        return map[cap] || cap;
+    dongDialog(): void {
+        this.hienDialog.set(false);
+        this.loiForm.set(null);
     }
 
-    private formMacDinh() {
+    /** Hiển thị tên đơn vị cha trong bảng */
+    tenDonViCha(dv: DimEntity): string {
+        // Ưu tiên parentName BE trả về
+        if (dv.parentName) return dv.parentName;
+        if (!dv.parentId) return '—';
+        // Fallback: tra trong danh sách theo id
+        const cha = this.danhSach().find(x => x.id === dv.parentId || x.entityCode === dv.parentId);
+        return cha ? `${cha.entityName}` : dv.parentId;
+    }
+
+    /**
+     * Khi mở form sửa: lấy entityCode của đơn vị cha để điền vào dropdown.
+     * BE get-all trả parentName (tên), không trả parentId (uuid).
+     * Ta tra danh sách để tìm entityCode từ parentName.
+     */
+    private resolveParentCode(dv: DimEntity): string | null {
+        // Nếu BE có trả parentId thì dùng luôn (là uuid hay entityCode tuỳ BE)
+        // Nhưng theo response thực tế, parentId = null, parentName = tên cha
+        if (dv.parentName) {
+            const cha = this.danhSach().find(x => x.entityName === dv.parentName);
+            return cha ? cha.entityCode : null;
+        }
+        if (dv.parentId) {
+            // parentId có thể là uuid hoặc entityCode
+            const chaBangId = this.danhSach().find(x => x.id === dv.parentId);
+            return chaBangId ? chaBangId.entityCode : dv.parentId;
+        }
+        return null;
+    }
+
+    /**
+     * Khi lưu: chuyển entityCode của đơn vị cha → UUID id để gửi lên BE.
+     * BE create nhận parentId là UUID.
+     */
+    private resolveParentIdUuid(parentEntityCode: string | null): string | null {
+        if (!parentEntityCode) return null;
+        const cha = this.danhSach().find(x => x.entityCode === parentEntityCode);
+        return cha ? cha.id : null;
+    }
+
+    private formMacDinh(): DimEntityForm {
         return {
-            maDonVi: '', tenDonVi: '', tenVietTat: '',
-            capDonVi: 'CONG_TY' as CapDonVi,
-            maDonViCha: null as string | null,
-            diaChi: '',
+            entityCode: '',
+            entityName: '',
+            description: '',
+            parentId: null,
+            isActive: true,
         };
     }
 
     private hienThongBao(noiDung: string, loai: 'success' | 'error'): void {
         this.thongBao.set({ noiDung, loai });
-        setTimeout(() => this.thongBao.set(null), 3000);
+        setTimeout(() => this.thongBao.set(null), 3500);
     }
 }

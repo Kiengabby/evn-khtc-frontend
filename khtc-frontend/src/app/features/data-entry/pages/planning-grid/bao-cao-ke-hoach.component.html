@@ -56,9 +56,12 @@
       <div class="filter-item">
         <label><i class="pi pi-building"></i> Đơn vị</label>
         <div class="select-wrap">
-          <select [(ngModel)]="entityCode" class="filter-select">
-            @for (dv of danhSachDonVi; track dv.maDonVi) {
-            <option [value]="dv.maDonVi">{{ dv.maDonVi }}</option>
+          <select [(ngModel)]="entityCode" class="filter-select" [disabled]="danhSachDonVi().length === 0">
+            @if (danhSachDonVi().length === 0) {
+            <option value="" disabled>Chưa có đơn vị</option>
+            }
+            @for (dv of danhSachDonVi(); track dv.entityCode) {
+            <option [value]="dv.entityCode">{{ dv.entityCode }} — {{ dv.entityName }}</option>
             }
           </select>
           <i class="pi pi-chevron-down select-arrow"></i>
@@ -77,44 +80,44 @@
           <i class="pi pi-chevron-down select-arrow"></i>
         </div>
       </div>
-      <!-- period (custom dropdown) -->
-      <div class="filter-item filter-period" #periodRef>
-        <label><i class="pi pi-clock"></i> Kỳ báo cáo</label>
-        <div class="period-trigger" [class.open]="periodDropdownOpen" (click)="togglePeriodDropdown()">
-          <span class="period-value">{{ periodLabel }}</span>
-          <i class="pi pi-chevron-down period-arrow" [class.rotated]="periodDropdownOpen"></i>
-        </div>
-        @if (periodDropdownOpen) {
-        <div class="period-panel" (click)="$event.stopPropagation()">
-          @for (group of periodGroups; track group.group) {
-          <div class="period-group">
-            <div class="period-group-label">
-              <i class="pi" [ngClass]="group.icon"></i>
-              <span>{{ group.group }}</span>
-            </div>
-            <div class="period-chips" [class.month-grid]="group.group === 'Tháng'">
-              @for (item of group.items; track item.value) {
-              <button class="period-chip" [class.active]="period === item.value" (click)="selectPeriod(item.value)">
-                <span class="chip-label">{{ item.label }}</span>
-                @if (item.sub) {
-                <span class="chip-sub">{{ item.sub }}</span>
-                }
-              </button>
-              }
-            </div>
-          </div>
+      <!-- period — dropdown kỳ báo cáo động từ API -->
+      <div class="filter-item">
+        <label>
+          <i class="pi pi-clock"></i> Kỳ báo cáo
+          @if (formTypeCode()) {
+            <span class="period-type-badge">{{ formTypeCode() }}</span>
           }
+        </label>
+        <div class="select-wrap">
+          @if (dangTaiKy()) {
+            <select class="filter-select" disabled>
+              <option>Đang tải...</option>
+            </select>
+          } @else if (danhSachKy().length === 0) {
+            <select class="filter-select" disabled>
+              <option>Chưa có kỳ báo cáo</option>
+            </select>
+          } @else {
+            <select [(ngModel)]="period" class="filter-select">
+              @for (ky of danhSachKy(); track ky.periodCode) {
+                <option [value]="ky.periodCode">{{ ky.periodName }}</option>
+              }
+            </select>
+          }
+          <i class="pi pi-chevron-down select-arrow"></i>
         </div>
-        }
       </div>
       <!-- scenario -->
       <div class="filter-item">
         <label><i class="pi pi-compass"></i> Kịch bản</label>
         <div class="select-wrap">
-          <select [(ngModel)]="scenario">
-            <option value="MONTH">Tháng</option>
-            <option value="QUARTER">Quý</option>
-            <option value="YEAR">Năm</option>
+          <select [(ngModel)]="scenario" (change)="onKichBanChange()" [disabled]="danhSachKichBan().length === 0">
+            @if (danhSachKichBan().length === 0) {
+            <option value="" disabled>Chưa có kịch bản</option>
+            }
+            @for (kb of danhSachKichBan(); track kb.scenarioCode) {
+            <option [value]="kb.scenarioCode">{{ kb.scenarioName }}</option>
+            }
           </select>
           <i class="pi pi-chevron-down select-arrow"></i>
         </div>

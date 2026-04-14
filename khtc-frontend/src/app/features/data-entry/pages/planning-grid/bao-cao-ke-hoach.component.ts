@@ -1,5 +1,5 @@
 import {
-  Component, ViewChild, ElementRef, HostListener,
+  Component, ViewChild, ElementRef,
   OnInit, AfterViewInit, OnDestroy,
   signal, inject,
 } from '@angular/core';
@@ -14,7 +14,7 @@ import {
   ParsedGridConfig, PovSelection, FactDataPoint,
 } from '../../../../apps/service/template-parser.service';
 import {
-  PlanningApiService, TemplateListItem, PlanningScenarioItem, CellChangePayload, FormTemplateListItem
+  PlanningApiService, TemplateListItem, PlanningScenarioItem, CellChangePayload, FormTemplateListItem, DimEntityItem, DimPeriodItem
 } from '../../services/planning-api.service';
 import {
   LayoutGridRendererService, RenderedGridConfig, RenderedRowMeta, RenderedColMeta,
@@ -59,16 +59,6 @@ const PERIOD_ORDER = [
 })
 export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('hotEl') hotEl!: ElementRef;
-  @ViewChild('periodRef') periodRef!: ElementRef;
-
-  /** Close period dropdown when clicking outside */
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (this.periodDropdownOpen && this.periodRef &&
-      !this.periodRef.nativeElement.contains(event.target)) {
-      this.periodDropdownOpen = false;
-    }
-  }
 
   private api = inject(PlanningApiService);
   private parser = inject(TemplateParserService);
@@ -95,69 +85,19 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   entityCode = 'EVN';       // Mã đơn vị
   nam = 2026;               // Năm
   period = 'Q1';            // Kỳ báo cáo — mã theo bảng mapping (Q1-Q4, 01-12, 00)
-  scenario = 'QUARTER';     // Kịch bản — MONTH, QUARTER, YEAR
+  scenario = '';            // Kịch bản — scenarioCode từ DimScenario (ACTUAL/PLAN/FORCAST...)
 
-  // Danh sách kỳ báo cáo nhóm theo loại (theo bảng mapping PM)
-  periodGroups = [
-    {
-      group: 'Quý',
-      icon: 'pi-chart-bar',
-      items: [
-        { value: 'Q1', label: 'Quý 1', sub: 'T1–T3' },
-        { value: 'Q2', label: 'Quý 2', sub: 'T4–T6' },
-        { value: 'Q3', label: 'Quý 3', sub: 'T7–T9' },
-        { value: 'Q4', label: 'Quý 4', sub: 'T10–T12' },
-      ],
-    },
-    {
-      group: 'Tháng',
-      icon: 'pi-calendar-plus',
-      items: [
-        { value: '01', label: 'Tháng 01', sub: '' },
-        { value: '02', label: 'Tháng 02', sub: '' },
-        { value: '03', label: 'Tháng 03', sub: '' },
-        { value: '04', label: 'Tháng 04', sub: '' },
-        { value: '05', label: 'Tháng 05', sub: '' },
-        { value: '06', label: 'Tháng 06', sub: '' },
-        { value: '07', label: 'Tháng 07', sub: '' },
-        { value: '08', label: 'Tháng 08', sub: '' },
-        { value: '09', label: 'Tháng 09', sub: '' },
-        { value: '10', label: 'Tháng 10', sub: '' },
-        { value: '11', label: 'Tháng 11', sub: '' },
-        { value: '12', label: 'Tháng 12', sub: '' },
-      ],
-    },
-    {
-      group: 'Tổng hợp',
-      icon: 'pi-check-circle',
-      items: [
-        { value: '00', label: 'Năm', sub: 'T1–T12' },
-      ],
-    },
-  ];
-
-  // Custom dropdown state
-  periodDropdownOpen = false;
+  // === Kỳ báo cáo động theo loại biểu mẫu ===
+  /** periodType của form đang chọn: MONTH | QUARTER | YEAR | null (từ BE FormTemplate/get-list) */
+  formTypeCode = signal<string | null>(null);
+  /** Danh sách kỳ báo cáo từ API BE (lọc theo formTypeCode) */
+  danhSachKy = signal<DimPeriodItem[]>([]);
+  /** Đang tải danh sách kỳ */
+  dangTaiKy = signal(false);
 
   get periodLabel(): string {
-    for (const g of this.periodGroups) {
-      const found = g.items.find(i => i.value === this.period);
-      if (found) return found.label;
-    }
-    return this.period;
-  }
-
-  selectPeriod(value: string): void {
-    this.period = value;
-    this.periodDropdownOpen = false;
-  }
-
-  togglePeriodDropdown(): void {
-    this.periodDropdownOpen = !this.periodDropdownOpen;
-  }
-
-  closePeriodDropdown(): void {
-    this.periodDropdownOpen = false;
+    const found = this.danhSachKy().find(k => k.periodCode === this.period);
+    return found?.periodName ?? this.period;
   }
 
   // Backward compatible aliases
@@ -166,15 +106,8 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   get kichBan(): string { return this.scenario; }
   set kichBan(v: string) { this.scenario = v; }
 
-  // Danh sách đơn vị để chọn
-  danhSachDonVi = [
-    { maDonVi: 'EVN', tenDonVi: 'Tập đoàn Điện lực Việt Nam' },
-    { maDonVi: 'EVNNPC', tenDonVi: 'Tổng công ty Điện lực miền Bắc' },
-    { maDonVi: 'EVNCPC', tenDonVi: 'Tổng công ty Điện lực miền Trung' },
-    { maDonVi: 'EVNSPC', tenDonVi: 'Tổng công ty Điện lực miền Nam' },
-    { maDonVi: 'EVNHCMC', tenDonVi: 'Tổng công ty Điện lực TP.HCM' },
-    { maDonVi: 'EVNHANOI', tenDonVi: 'Tổng công ty Điện lực Hà Nội' },
-  ];
+  // Danh sách đơn vị để chọn (từ BE)
+  danhSachDonVi = signal<DimEntityItem[]>([]);
 
   // Danh sách dropdown (có thể mở rộng sau)
   danhSachBieuMau = signal<TemplateListItem[]>([]);
@@ -224,29 +157,45 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   ngOnInit(): void {
     document.addEventListener('keydown', this.xuLyPhimTat);
 
-    // --- Uu tien: submissionId trong query params (tu workflow)
     const queryParams = this.route.snapshot.queryParams;
-    if (queryParams['submissionId']) {
-      console.log('[DataEntry] Loading submission:', queryParams['submissionId']);
-      this.loadTaiSubmission(queryParams['submissionId']);
-      return;
-    }
+    if (queryParams['entityCode']) this.entityCode = queryParams['entityCode'];
+    if (queryParams['period']) this.period = queryParams['period'];
+    if (queryParams['year']) this.nam = parseInt(queryParams['year']);
+    if (queryParams['scenario']) this.scenario = queryParams['scenario'];
+    this.taiDanhSachDonVi(() => {
+      this.taiDanhSachKichBan(() => {
+        // --- Uu tien: submissionId trong query params (tu workflow)
+        if (queryParams['submissionId']) {
+          console.log('[DataEntry] Loading submission:', queryParams['submissionId']);
+          this.loadTaiSubmission(queryParams['submissionId']);
+          return;
+        }
 
-    // --- Lay formCode tu route param (:formCode) — luong moi
-    const routeFormCode = this.route.snapshot.paramMap.get('formCode');
-    if (routeFormCode) {
-      this.formId = routeFormCode;
-      // Cap nhat entity/period/year tu query param neu co
-      if (queryParams['entityCode']) this.entityCode = queryParams['entityCode'];
-      if (queryParams['period']) this.period = queryParams['period'];
-      if (queryParams['year']) this.nam = parseInt(queryParams['year']);
-      // Tai thong tin bien mau de hien ten, roi tu dong tai form
-      this.taiDanhSachBieuMau(true);
-      return;
-    }
+        // --- Lay formCode tu route param (:formCode) — luong moi
+        const routeFormCode = this.route.snapshot.paramMap.get('formCode');
+        if (routeFormCode) {
+          this.formId = routeFormCode;
+          // Khi đi từ trang "Chọn biểu mẫu" sang đây, FE đã có formCode rồi.
+          // Không cần gọi lại /FormTemplate/get-list chỉ để lấy tên.
+          // Nếu có formName từ navigation state thì hiển thị luôn.
+          const navState = this.router.getCurrentNavigation()?.extras?.state as any;
+          const stateFormName = navState?.formName || (history.state as any)?.formName;
+          if (stateFormName) this.tenBieuMauHienTai.set(stateFormName);
 
-    // --- Fallback: khong co formCode -> tai danh sach (backward compat)
-    this.taiDanhSachBieuMau();
+          // Lấy periodType từ navigation state (trang chọn biểu mẫu đã truyền qua).
+          const statePeriodType = navState?.periodType || (history.state as any)?.periodType;
+          // Gọi API DimPeriod ngay nếu có periodType, không cần chờ get-list
+          this.capNhatKyTheoBieuMau(statePeriodType ?? null);
+
+          // Tự động load biểu mẫu luôn
+          this.taiForm();
+          return;
+        }
+
+        // --- Fallback: khong co formCode -> tai danh sach (backward compat)
+        this.taiDanhSachBieuMau();
+      });
+    });
   }
 
   ngAfterViewInit(): void {
@@ -285,6 +234,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
     this.api.loadFormV2(this.formId, this.entityCode, this.nam, this.period, this.scenario).subscribe({
       next: (res) => {
         console.log('[DataEntry] 📥 V2 form loaded:', res.template.formId, res.template.formName);
+        this.tenBieuMauHienTai.set(res.template.formName || res.template.formId);
         const layout = res.template.version.layoutJSON;
         this.v2LayoutJSON = layout;
         this.v2VisibleCols = layout.columns.filter(c => c.colCode !== 'METADATA_ROW');
@@ -328,6 +278,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
 
         // Set form info từ submission
         this.formId = res.template.formId;
+        this.tenBieuMauHienTai.set(res.template.formName || res.template.formId);
 
         this.renderV2Grid();
         this.dangTai.set(false);
@@ -473,10 +424,97 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   onFormTemplateChange(formCode: string): void {
     this.formId = formCode;
     const matched = this.danhSachBieuMauV2().find(f => f.formCode === formCode);
-    if (matched) this.tenBieuMauHienTai.set(matched.formName || matched.formCode);
-    console.log('[DataEntry] 🔄 Form selected:', this.formId);
-    // Tự động load biểu mẫu khi chọn
-    this.taiForm();
+    if (matched) {
+      this.tenBieuMauHienTai.set(matched.formName || matched.formCode);
+      this.capNhatKyTheoBieuMau(matched.periodType ?? null);
+    }
+    console.log('[DataEntry] 🔄 Form selected:', this.formId, '| periodType:', matched?.periodType);
+  }
+
+  /** Tải danh sách kỳ từ API BE theo periodType của biểu mẫu */
+  private capNhatKyTheoBieuMau(periodType: string | null | undefined): void {
+    this.formTypeCode.set(periodType ?? null);
+
+    if (!periodType) {
+      // BE trả periodType = null → dùng fallback tĩnh (tháng + quý + năm)
+      this.danhSachKy.set(this.fallbackKyTatCa());
+      return;
+    }
+
+    this.dangTaiKy.set(true);
+    this.api.getPeriodsByType(periodType).subscribe({
+      next: (list) => {
+        if (list.length === 0) {
+          // API trả rỗng (chưa có data) → fallback tĩnh theo loại
+          this.danhSachKy.set(this.fallbackTheoLoai(periodType));
+        } else {
+          this.danhSachKy.set(list);
+        }
+        // Đặt kỳ mặc định = kỳ đầu tiên nếu kỳ hiện tại không có trong danh sách
+        const kyHienTai = this.danhSachKy();
+        const valid = kyHienTai.some(k => k.periodCode === this.period);
+        if (!valid && kyHienTai.length > 0) {
+          this.period = kyHienTai[0].periodCode;
+        }
+        this.dangTaiKy.set(false);
+        console.log('[DataEntry] 📅 Kỳ theo loại', periodType, ':', this.danhSachKy().map(k => k.periodCode));
+      },
+      error: () => {
+        // Lỗi API → fallback tĩnh
+        this.danhSachKy.set(this.fallbackTheoLoai(periodType));
+        this.dangTaiKy.set(false);
+      },
+    });
+  }
+
+  /** Fallback kỳ tĩnh theo từng loại */
+  private fallbackTheoLoai(periodType: string): DimPeriodItem[] {
+    const upper = periodType.toUpperCase();
+    if (upper === 'MONTH') {
+      return Array.from({ length: 12 }, (_, i) => {
+        const code = String(i + 1).padStart(2, '0');
+        return { id: code, periodCode: code, periodName: `Tháng ${i + 1}`, periodType: 'MONTH', sortOrder: i + 1, isActive: true };
+      });
+    }
+    if (upper === 'QUARTER' || upper === 'QUATER') {
+      return ['Q1', 'Q2', 'Q3', 'Q4'].map((q, idx) => ({
+        id: q, periodCode: q, periodName: `Quý ${idx + 1}`, periodType, sortOrder: idx + 1, isActive: true,
+      }));
+    }
+    // YEAR hoặc mặc định
+    return [{ id: '00', periodCode: '00', periodName: 'Năm', periodType, sortOrder: 1, isActive: true }];
+  }
+
+  /** Kỳ fallback (tháng + quý + năm) khi chưa có formTypeCode từ BE */
+  private fallbackKyTatCa(): DimPeriodItem[] {
+    const thang: DimPeriodItem[] = Array.from({ length: 12 }, (_, i) => {
+      const code = String(i + 1).padStart(2, '0');
+      return {
+        id: code,
+        periodCode: code,
+        periodName: `Tháng ${i + 1}`,
+        periodType: 'MONTH',
+        sortOrder: i + 1,
+        isActive: true,
+      };
+    });
+    const quy: DimPeriodItem[] = ['Q1', 'Q2', 'Q3', 'Q4'].map((q, idx) => ({
+      id: q,
+      periodCode: q,
+      periodName: `Quý ${idx + 1}`,
+      periodType: 'QUARTER',
+      sortOrder: 20 + idx,
+      isActive: true,
+    }));
+    const nam: DimPeriodItem[] = [{
+      id: '00',
+      periodCode: '00',
+      periodName: 'Năm',
+      periodType: 'YEAR',
+      sortOrder: 99,
+      isActive: true,
+    }];
+    return [...thang, ...quy, ...nam];
   }
 
   /** Gọi API lấy danh sách biểu mẫu */
@@ -493,6 +531,10 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
         if (matchedForm) {
           this.selectedFormTemplateId.set(matchedForm.id);
           this.tenBieuMauHienTai.set(matchedForm.formName || matchedForm.formCode);
+          // BE đã trả periodType — gọi API DimPeriod đúng loại
+          this.capNhatKyTheoBieuMau(matchedForm.periodType ?? null);
+        } else {
+          this.danhSachKy.set(this.fallbackKyTatCa());
         }
 
         if (autoLoadFormCode && this.formId) {
@@ -504,6 +546,7 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
           this.selectedFormTemplateId.set(list[0].id);
           this.formId = list[0].formCode;
           this.tenBieuMauHienTai.set(list[0].formName || list[0].formCode);
+          this.capNhatKyTheoBieuMau((list[0] as FormTemplateListItem).periodType ?? null);
           console.log('[DataEntry] Auto-selected form:', this.formId);
           this.taiForm();
         }
@@ -511,6 +554,42 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
       error: (err) => {
         this.dangTaiBieuMau.set(false);
         console.warn('[DataEntry] ⚠️ Không tải được danh sách biểu mẫu:', err?.message);
+      },
+    });
+  }
+
+  /** Gọi API lấy danh sách đơn vị (DimEntity) */
+  private taiDanhSachDonVi(afterLoad?: () => void): void {
+    this.api.getEntityList().subscribe({
+      next: (list) => {
+        this.danhSachDonVi.set(list);
+        if (list.length > 0) {
+          const exists = list.some(dv => dv.entityCode === this.entityCode);
+          if (!exists) this.entityCode = list[0].entityCode;
+        }
+        afterLoad?.();
+      },
+      error: (err) => {
+        console.warn('[DataEntry] ⚠️ Không tải được danh sách đơn vị:', err?.message);
+        afterLoad?.();
+      },
+    });
+  }
+
+  /** Gọi API lấy danh sách kịch bản (DimScenario) */
+  private taiDanhSachKichBan(afterLoad?: () => void): void {
+    this.api.getScenarioList().subscribe({
+      next: (list) => {
+        this.danhSachKichBan.set(list);
+        if (list.length > 0) {
+          const exists = list.some(kb => kb.scenarioCode === this.scenario);
+          if (!exists) this.scenario = list[0].scenarioCode;
+        }
+        afterLoad?.();
+      },
+      error: (err) => {
+        console.warn('[DataEntry] ⚠️ Không tải được danh sách kịch bản:', err?.message);
+        afterLoad?.();
       },
     });
   }
@@ -627,6 +706,11 @@ export class BaoCaoKeHoachComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   onKichBanChange(): void {
+    if (this.isV2Mode) {
+      this.taiForm();
+      return;
+    }
+
     const tpl = this.template();
     const meta = this.dimMeta();
     if (!tpl || !meta) return;

@@ -316,6 +316,19 @@ $radius-lg:      12px;
     }
   }
 
+  // Badge loại biểu mẫu trên label kỳ
+  .period-type-badge {
+    display: inline-block;
+    padding: 1px 5px;
+    background: rgba($accent, 0.12);
+    color: $accent;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
   // ── Shared control base ──
   .input-wrap,
   .select-wrap,

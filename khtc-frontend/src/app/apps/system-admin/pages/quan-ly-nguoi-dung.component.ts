@@ -12,7 +12,7 @@ import { RoleService } from '../../service/role.service';
 import { UserAdmin, UserCreateDto, UserUpdateDto, UserFilterDto } from '../../../config/models/admin.model';
 import { RoleAdmin } from '../../../config/models/admin.model';
 import { DonViService } from '../../service/don-vi.service';
-import { DonVi } from '../../../config/models/don-vi.model';
+import { DimEntity } from '../../../config/models/don-vi.model';
 
 @Component({
   selector: 'app-quan-ly-nguoi-dung',
@@ -28,7 +28,7 @@ export class QuanLyNguoiDungComponent implements OnInit {
     // ============================================
     users = signal<UserAdmin[]>([]);
     roles = signal<RoleAdmin[]>([]);
-    entities = signal<DonVi[]>([]);
+    entities = signal<DimEntity[]>([]);
     dangTai = signal(false);
     hienDialog = signal(false);
     dangChinhSua = signal(false);
@@ -108,8 +108,8 @@ export class QuanLyNguoiDungComponent implements OnInit {
     private async taiDanhSachEntities(): Promise<void> {
         try {
             const ketQua = await this.donViService.layDanhSach();
-            if (ketQua.trangThai) {
-                this.entities.set(ketQua.duLieu);
+            if (ketQua.ok) {
+                this.entities.set(ketQua.data);
             }
         } catch (error) {
             console.warn('Không thỒ tải �ơn v�9:', error);
