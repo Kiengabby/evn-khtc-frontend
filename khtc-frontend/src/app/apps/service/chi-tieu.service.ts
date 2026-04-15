@@ -1,76 +1,164 @@
 // ============================================
-// Service: Quản lý Ch�0 tiêu (Account Service)
+// Service: Quản lý Chỉ tiêu — Kết nối API thật
 // ============================================
-// Service này �óng vai trò trung gian giữa Component và API.
-// Hi�!n tại dùng MockApiService, sau này ��"i sang API thật.
+// Sử dụng DimAccountApiService để gọi /api/v2/DimAccount/*
+// Map dữ liệu BE (AccountNode) ↔ FE (ChiTieu)
 //
-// === CÁCH D�"NG TRONG COMPONENT ===
-//   chiTieuService = inject(ChiTieuService);
-//   danhSach = signal<ChiTieu[]>([]);
-//
-//   async ngOnInit() {
-//     const kq = await this.chiTieuService.layDanhSach();
-//     if (kq.trangThai) this.danhSach.set(kq.duLieu);
-//   }
+// === LUỒNG DỮ LIỆU ===
+// 1. Component gọi ChiTieuService.layDanhSach(boLoc)
+// 2. Service gọi DimAccountApiService.getFlatList()
+// 3. Map FlatAccountNode[] → ChiTieu[] (có filter client-side)
+// 4. Trả về KetQuaApi<ChiTieu[]> cho component
 // ============================================
 
 import { Injectable, inject } from '@angular/core';
-import { MockApiService } from './_deprecated/mock-api.service';
-import { ChiTieu, ChiTieuNode, ChiTieuTaoMoi, ChiTieuCapNhat, ChiTieuBoLoc } from '../../config/models/chi-tieu.model';
+import { DimAccountApiService, FlatAccountNode } from './dim-account-api.service';
+import {
+    ChiTieu,
+    ChiTieuTaoMoi,
+    ChiTieuCapNhat,
+    ChiTieuBoLoc,
+    LoaiLuuTru,
+} from '../../config/models/chi-tieu.model';
 import { KetQuaApi } from '../../config/models/api-response.model';
 
 @Injectable({ providedIn: 'root' })
 export class ChiTieuService {
 
-    // Inject MockApiService (sau này ��"i thành HttpClient + ApiService)
-    private api = inject(MockApiService);
+    private dimAccountApi = inject(DimAccountApiService);
+
+    // =====================================================================
+    //  Đọc dữ liệu
+    // =====================================================================
 
     /**
-     * Lấy danh sách ch�0 tiêu (flat, có phân trang)
-     * @param boLoc - B�" lọc: từ khóa, loại, trạng thái, phân trang
-     * @returns KetQuaApi<ChiTieu[]>
+     * Lấy danh sách chỉ tiêu (flat list, đã sắp xếp theo cây)
+     * Áp dụng filter client-side vì BE không hỗ trợ filter trên get-tree.
      */
-    layDanhSach(boLoc: ChiTieuBoLoc = {}): Promise<KetQuaApi<ChiTieu[]>> {
-        return this.api.layDanhSachChiTieu(boLoc);
+    async layDanhSach(boLoc: ChiTieuBoLoc = {}): Promise<KetQuaApi<ChiTieu[]>> {
+        try {
+            const flatList = await this.dimAccountApi.getFlatList();
+            let chiTieus = flatList.map(node => this.mapToChiTieu(node));
+
+            // Filter client-side
+            if (boLoc.tuKhoa) {
+                const kw = boLoc.tuKhoa.toLowerCase();
+                chiTieus = chiTieus.filter(ct =>
+                    ct.maChiTieu.toLowerCase().includes(kw) ||
+                    ct.tenChiTieu.toLowerCase().includes(kw)
+                );
+            }
+            if (boLoc.loaiLuuTru) {
+                chiTieus = chiTieus.filter(ct => ct.loaiLuuTru === boLoc.loaiLuuTru);
+            }
+
+            return {
+                trangThai: true,
+                maLoi: null,
+                thongBao: 'Tải dữ liệu thành công',
+                duLieu: chiTieus,
+                tongSoBanGhi: chiTieus.length,
+            };
+        } catch (err) {
+            console.error('[ChiTieuService] layDanhSach error:', err);
+            return {
+                trangThai: false,
+                maLoi: 'LOAD_ERROR',
+                thongBao: 'Không thể tải danh sách chỉ tiêu',
+                duLieu: [],
+            };
+        }
     }
 
-    /**
-     * Lấy cây ch�0 tiêu (hierarchical, dùng cho TreeTable)
-     * @returns KetQuaApi<ChiTieuNode[]>
-     */
-    layCayChiTieu(): Promise<KetQuaApi<ChiTieuNode[]>> {
-        return this.api.layCayChiTieu();
+    // =====================================================================
+    //  Tạo mới
+    // =====================================================================
+
+    async taoMoi(dto: ChiTieuTaoMoi): Promise<KetQuaApi<string>> {
+        const result = await this.dimAccountApi.create({
+            accountCode: dto.maChiTieu,
+            accountName: dto.tenChiTieu,
+            parentAccountId: dto.idChiTieuCha,
+            accountType: dto.loaiTaiKhoan,
+            dataStorage: dto.loaiLuuTru,
+            formula: dto.congThuc || '',
+            unit: dto.donViTinh,
+            orderIndex: dto.thuTu,
+        });
+
+        return {
+            trangThai: result.ok,
+            maLoi: result.ok ? null : 'CREATE_ERROR',
+            thongBao: result.message ?? (result.ok ? 'Tạo chỉ tiêu thành công' : 'Tạo chỉ tiêu thất bại'),
+            duLieu: result.id ?? '',
+        };
     }
 
-    /**
-     * Lấy chi tiết 1 ch�0 tiêu
-     * @param id - ID ch�0 tiêu
-     */
-    layTheoId(id: number): Promise<KetQuaApi<ChiTieu | null>> {
-        return this.api.layChiTieuTheoId(id);
+    // =====================================================================
+    //  Cập nhật
+    // =====================================================================
+
+    async capNhat(dto: ChiTieuCapNhat): Promise<KetQuaApi<null>> {
+        const result = await this.dimAccountApi.update(dto.id, {
+            accountCode: dto.maChiTieu,
+            accountName: dto.tenChiTieu,
+            parentAccountId: dto.idChiTieuCha,
+            accountType: dto.loaiTaiKhoan,
+            dataStorage: dto.loaiLuuTru,
+            formula: dto.congThuc || '',
+            unit: dto.donViTinh,
+            orderIndex: dto.thuTu,
+        });
+
+        return {
+            trangThai: result.ok,
+            maLoi: result.ok ? null : 'UPDATE_ERROR',
+            thongBao: result.message ?? (result.ok ? 'Cập nhật thành công' : 'Cập nhật thất bại'),
+            duLieu: null,
+        };
     }
 
-    /**
-     * Tạo ch�0 tiêu m�:i
-     * @param dto - Dữ li�!u tạo m�:i (không cần id)
-     */
-    taoMoi(dto: ChiTieuTaoMoi): Promise<KetQuaApi<ChiTieu>> {
-        return this.api.taoChiTieu(dto);
+    // =====================================================================
+    //  Xóa
+    // =====================================================================
+
+    async xoa(id: string): Promise<KetQuaApi<null>> {
+        const result = await this.dimAccountApi.delete(id);
+
+        return {
+            trangThai: result.ok,
+            maLoi: result.ok ? null : 'DELETE_ERROR',
+            thongBao: result.message ?? (result.ok ? 'Xóa thành công' : 'Xóa thất bại'),
+            duLieu: null,
+        };
     }
 
-    /**
-     * Cập nhật ch�0 tiêu
-     * @param dto - Dữ li�!u cập nhật (bắt bu�"c có id)
-     */
-    capNhat(dto: ChiTieuCapNhat): Promise<KetQuaApi<ChiTieu>> {
-        return this.api.capNhatChiTieu(dto);
+    // =====================================================================
+    //  Private: Map BE → FE
+    // =====================================================================
+
+    /** Ánh xạ FlatAccountNode (BE) → ChiTieu (FE) */
+    private mapToChiTieu(node: FlatAccountNode): ChiTieu {
+        return {
+            id: node.accountId,
+            maChiTieu: node.accountCode,
+            tenChiTieu: node.accountName,
+            capDo: node.depth,
+            maChiTieuCha: node.parentCode,
+            idChiTieuCha: node.parentAccountId,
+            loaiTaiKhoan: (node.accountType as 0 | 1) ?? 0,
+            loaiLuuTru: this.parseLoaiLuuTru(node.dataStorage),
+            congThuc: node.formula || null,
+            donViTinh: node.unit || '',
+            thuTu: node.orderIndex ?? 0,
+        };
     }
 
-    /**
-     * Xóa ch�0 tiêu
-     * @param id - ID ch�0 tiêu cần xóa
-     */
-    xoa(id: number): Promise<KetQuaApi<null>> {
-        return this.api.xoaChiTieu(id);
+    /** Parse dataStorage string → LoaiLuuTru (có fallback an toàn) */
+    private parseLoaiLuuTru(dataStorage: string): LoaiLuuTru {
+        const valid: LoaiLuuTru[] = ['STORE', 'DYNAMIC_CALC', 'LABEL_ONLY'];
+        return valid.includes(dataStorage as LoaiLuuTru)
+            ? (dataStorage as LoaiLuuTru)
+            : 'STORE';
     }
 }

@@ -1,285 +1,367 @@
 <div class="page-wrapper">
-      <!-- === TIÊU ĐỀ TRANG === -->
-      <div class="page-head">
-        <div>
-          <h1 class="page-title">Quản lý Chỉ tiêu</h1>
-          <p class="page-desc">Danh mục chỉ tiêu tài chính — Thêm, sửa, xóa và sắp xếp cây chỉ tiêu</p>
-        </div>
+
+  <!-- === TIÊU ĐỀ TRANG === -->
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Quản lý Chỉ tiêu</h1>
+      <p class="page-desc">Danh mục chỉ tiêu tài chính — Thêm, sửa, xóa và sắp xếp cây chỉ tiêu</p>
+    </div>
+  </div>
+
+  <!-- === THANH CÔNG CỤ: TÌM KIẾM + NÚT THÊM MỚI === -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+
+      <!-- Tìm kiếm -->
+      <div class="search-box">
+        <i class="pi pi-search"></i>
+        <input type="text"
+               id="input-search-chi-tieu"
+               placeholder="Tìm mã hoặc tên chỉ tiêu..."
+               [(ngModel)]="tuKhoa"
+               (input)="onTimKiem()">
       </div>
 
-      <!-- === THANH CÔNG CỤ: TÌM KIẾM + NÚT THÊM MỚI === -->
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <!-- Tìm kiếm -->
-          <div class="search-box">
-            <i class="pi pi-search"></i>
-            <input type="text" placeholder="Tìm mã hoặc tên chỉ tiêu..."
-                   [(ngModel)]="tuKhoa"
-                   (input)="onTimKiem()">
-          </div>
+      <!-- Lọc theo loại lưu trữ -->
+      <select class="filter-select"
+              id="select-loc-loai-luu-tru"
+              [(ngModel)]="locLoaiLuuTru"
+              (change)="onTimKiem()">
+        <option value="">Tất cả loại</option>
+        <option value="STORE">Lưu trữ (Store)</option>
+        <option value="DYNAMIC_CALC">Tính toán (Dynamic)</option>
+        <option value="LABEL_ONLY">Nhãn (Label)</option>
+      </select>
+    </div>
 
-          <!-- Lọc theo loại -->
-          <select class="filter-select" [(ngModel)]="locLoaiLuuTru" (change)="onTimKiem()">
-            <option value="">Tất cả loại</option>
-            <option value="STORE">Lưu trữ (Store)</option>
-            <option value="DYNAMIC_CALC">Tính toán (Dynamic)</option>
-            <option value="LABEL_ONLY">Nhãn (Label)</option>
-          </select>
-        </div>
+    <div class="toolbar-right">
+      <button class="btn-primary"
+              id="btn-them-chi-tieu"
+              (click)="moFormThemMoi()">
+        <i class="pi pi-plus"></i> Thêm chỉ tiêu
+      </button>
+    </div>
+  </div>
 
-        <div class="toolbar-right">
-          <button class="btn-primary" (click)="moFormThemMoi()">
-            <i class="pi pi-plus"></i> Thêm chỉ tiêu
+  <!-- === BẢNG DỮ LIỆU === -->
+  <div class="table-card">
+    @if (dangTai()) {
+      <div class="loading-overlay">
+        <i class="pi pi-spin pi-spinner"></i> Đang tải dữ liệu...
+      </div>
+    }
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width:50px">STT</th>
+          <th style="width:180px">Mã chỉ tiêu</th>
+          <th>Tên chỉ tiêu</th>
+          <th style="width:60px" class="center">Cấp</th>
+          <th style="width:130px">Loại lưu trữ</th>
+          <th style="width:90px" class="center">Loại TK</th>
+          <th style="width:120px">Đơn vị tính</th>
+          <th style="width:60px" class="center">TT</th>
+          <th style="width:140px" class="center">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (ct of danhSach(); track ct.id; let i = $index) {
+          <tr>
+            <td class="center">{{ i + 1 }}</td>
+
+            <!-- Mã chỉ tiêu (thụt lề theo cấp độ) -->
+            <td>
+              <span class="ma-chi-tieu" [style.padding-left.px]="ct.capDo * 20">
+                @if (ct.capDo > 0) {
+                  <span class="tree-indent">└─</span>
+                }
+                {{ ct.maChiTieu }}
+              </span>
+            </td>
+
+            <!-- Tên chỉ tiêu -->
+            <td>
+              <span [class.ten-nhom]="ct.loaiLuuTru === 'LABEL_ONLY'">
+                {{ ct.tenChiTieu }}
+              </span>
+            </td>
+
+            <!-- Cấp độ -->
+            <td class="center">
+              <span class="cap-badge">{{ ct.capDo + 1 }}</span>
+            </td>
+
+            <!-- Loại lưu trữ -->
+            <td>
+              <span class="badge" [class]="'badge-' + ct.loaiLuuTru.toLowerCase()">
+                {{ tenLoaiLuuTru(ct.loaiLuuTru) }}
+              </span>
+            </td>
+
+            <!-- Loại tài khoản -->
+            <td class="center">
+              <span class="loai-tk-badge" [class.loai-tk-nhom]="ct.loaiTaiKhoan === 1">
+                {{ tenLoaiTaiKhoan(ct.loaiTaiKhoan) }}
+              </span>
+            </td>
+
+            <!-- Đơn vị tính -->
+            <td>{{ ct.donViTinh || '—' }}</td>
+
+            <!-- Thứ tự -->
+            <td class="center">{{ ct.thuTu }}</td>
+
+            <!-- Thao tác -->
+            <td class="center">
+              <div class="action-group">
+                <button class="action-btn"
+                        [id]="'btn-sua-' + ct.maChiTieu"
+                        title="Sửa"
+                        (click)="moFormSua(ct)">
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button class="action-btn"
+                        [id]="'btn-xem-' + ct.maChiTieu"
+                        title="Xem chi tiết"
+                        (click)="xemChiTiet(ct)">
+                  <i class="pi pi-eye"></i>
+                </button>
+                <button class="action-btn danger"
+                        [id]="'btn-xoa-' + ct.maChiTieu"
+                        title="Xóa"
+                        (click)="xacNhanXoa(ct)">
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          @if (!dangTai()) {
+            <tr>
+              <td colspan="9" class="empty-row">
+                <i class="pi pi-inbox"></i>
+                Không có dữ liệu chỉ tiêu
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+
+    <!-- Phân trang / Tổng bản ghi -->
+    <div class="pagination-bar">
+      <span class="pagination-info">
+        Tổng cộng <strong>{{ tongSoBanGhi() }}</strong> chỉ tiêu
+      </span>
+    </div>
+  </div>
+
+  <!-- === DIALOG THÊM / SỬA === -->
+  @if (hienDialog()) {
+    <div class="dialog-overlay" (click)="dongDialog()">
+      <div class="dialog-box" (click)="$event.stopPropagation()">
+
+        <div class="dialog-header">
+          <h3>{{ dangSua() ? 'Sửa chỉ tiêu' : 'Thêm chỉ tiêu mới' }}</h3>
+          <button class="close-btn" (click)="dongDialog()">
+            <i class="pi pi-times"></i>
           </button>
         </div>
+
+        <div class="dialog-body">
+
+          <!-- Mã chỉ tiêu -->
+          <div class="form-row">
+            <label for="input-ma-chi-tieu">Mã chỉ tiêu <span class="required">*</span></label>
+            <input type="text"
+                   id="input-ma-chi-tieu"
+                   [(ngModel)]="form.maChiTieu"
+                   [disabled]="dangSua()"
+                   placeholder="VD: DT_BAN_DIEN"
+                   style="font-family: monospace; text-transform: uppercase">
+          </div>
+
+          <!-- Tên chỉ tiêu -->
+          <div class="form-row">
+            <label for="input-ten-chi-tieu">Tên chỉ tiêu <span class="required">*</span></label>
+            <input type="text"
+                   id="input-ten-chi-tieu"
+                   [(ngModel)]="form.tenChiTieu"
+                   placeholder="VD: Doanh thu bán điện">
+          </div>
+
+          <!-- Chỉ tiêu cha (chọn từ danh sách theo UUID) -->
+          <div class="form-row">
+            <label for="select-chi-tieu-cha">Chỉ tiêu cha</label>
+            <select id="select-chi-tieu-cha" [(ngModel)]="form.idChiTieuCha">
+              <option [ngValue]="null">— Gốc (không có cha) —</option>
+              @for (ct of danhSach(); track ct.id) {
+                @if (ct.id !== idDangSua) {
+                  <option [value]="ct.id">
+                    {{ '  '.repeat(ct.capDo) }}{{ ct.maChiTieu }} — {{ ct.tenChiTieu }}
+                  </option>
+                }
+              }
+            </select>
+          </div>
+
+          <!-- Loại lưu trữ + Loại tài khoản -->
+          <div class="form-row-2col">
+            <div class="form-row">
+              <label for="select-loai-luu-tru">Loại lưu trữ</label>
+              <select id="select-loai-luu-tru" [(ngModel)]="form.loaiLuuTru">
+                <option value="STORE">Lưu trữ (Store)</option>
+                <option value="DYNAMIC_CALC">Tính toán (Dynamic)</option>
+                <option value="LABEL_ONLY">Nhãn (Label)</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="select-loai-tai-khoan">Loại tài khoản</label>
+              <select id="select-loai-tai-khoan" [(ngModel)]="form.loaiTaiKhoan">
+                <option [ngValue]="0">0 — Thường</option>
+                <option [ngValue]="1">1 — Nhóm</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Đơn vị tính + Thứ tự -->
+          <div class="form-row-2col">
+            <div class="form-row">
+              <label for="input-don-vi-tinh">Đơn vị tính</label>
+              <input type="text"
+                     id="input-don-vi-tinh"
+                     [(ngModel)]="form.donViTinh"
+                     placeholder="VD: Tỷ đồng, kWh, %">
+            </div>
+            <div class="form-row">
+              <label for="input-thu-tu">Thứ tự hiển thị</label>
+              <input type="number"
+                     id="input-thu-tu"
+                     [(ngModel)]="form.thuTu"
+                     min="0"
+                     placeholder="0">
+            </div>
+          </div>
+
+          <!-- Công thức (chỉ hiện khi DYNAMIC_CALC) -->
+          @if (form.loaiLuuTru === 'DYNAMIC_CALC') {
+            <div class="form-row">
+              <label for="input-cong-thuc">Công thức</label>
+              <input type="text"
+                     id="input-cong-thuc"
+                     [(ngModel)]="form.congThuc"
+                     placeholder="VD: =DT_BAN_DIEN + DT_KHAC"
+                     style="font-family: monospace">
+              <span class="field-hint">Nhập công thức tính toán tự động</span>
+            </div>
+          }
+
+          <!-- Lỗi form -->
+          @if (loiForm()) {
+            <div class="form-error">
+              <i class="pi pi-exclamation-circle"></i> {{ loiForm() }}
+            </div>
+          }
+        </div>
+
+        <div class="dialog-footer">
+          <button class="btn-secondary" id="btn-huy-dialog" (click)="dongDialog()">Hủy</button>
+          <button class="btn-primary"
+                  id="btn-luu-chi-tieu"
+                  (click)="luuChiTieu()"
+                  [disabled]="dangLuu()">
+            @if (dangLuu()) { <i class="pi pi-spin pi-spinner"></i> }
+            {{ dangSua() ? 'Cập nhật' : 'Tạo mới' }}
+          </button>
+        </div>
+
       </div>
-
-      <!-- === BẢNG DỮ LIỆU === -->
-      <div class="table-card">
-        @if (dangTai()) {
-          <div class="loading-overlay">
-            <i class="pi pi-spin pi-spinner"></i> Đang tải dữ liệu...
-          </div>
-        }
-
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th style="width:50px">STT</th>
-              <th style="width:160px">Mã chỉ tiêu</th>
-              <th>Tên chỉ tiêu</th>
-              <th style="width:130px">Loại lưu trữ</th>
-              <th style="width:100px">Tổng hợp</th>
-              <th style="width:110px">Đơn vị tính</th>
-              <th style="width:80px">Trạng thái</th>
-              <th style="width:140px">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (ct of danhSach(); track ct.id; let i = $index) {
-              <tr>
-                <td class="center">{{ i + 1 }}</td>
-                <td>
-                  <span class="ma-chi-tieu" [style.padding-left.px]="(ct.capDo - 1) * 20">
-                    @if (ct.capDo > 1) {
-                      <span class="tree-indent">└─</span>
-                    }
-                    {{ ct.maChiTieu }}
-                  </span>
-                </td>
-                <td>
-                  <span [class.ten-nhom]="ct.loaiLuuTru === 'LABEL_ONLY'">
-                    {{ ct.tenChiTieu }}
-                  </span>
-                </td>
-                <td>
-                  <span class="badge" [class]="'badge-' + ct.loaiLuuTru.toLowerCase()">
-                    {{ tenLoaiLuuTru(ct.loaiLuuTru) }}
-                  </span>
-                </td>
-                <td class="center">{{ ct.phuongThucTongHop }}</td>
-                <td>{{ ct.donViTinh }}</td>
-                <td class="center">
-                  <span class="dot" [class.active]="ct.trangThai"></span>
-                </td>
-                <td class="center">
-                  <div class="action-group">
-                    <button class="action-btn" title="Sửa" (click)="moFormSua(ct)">
-                      <i class="pi pi-pencil"></i>
-                    </button>
-                    <button class="action-btn" title="Xem chi tiết" (click)="xemChiTiet(ct)">
-                      <i class="pi pi-eye"></i>
-                    </button>
-                    <button class="action-btn danger" title="Xóa" (click)="xacNhanXoa(ct)">
-                      <i class="pi pi-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="8" class="empty-row">
-                  <i class="pi pi-inbox"></i> Không có dữ liệu
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-
-        <!-- Phân trang -->
-        <div class="pagination-bar">
-          <span class="pagination-info">
-            Hiển thị {{ danhSach().length }} / {{ tongSoBanGhi() }} bản ghi
-          </span>
-        </div>
-      </div>
-
-      <!-- === DIALOG THÊM/SỬA === -->
-      @if (hienDialog()) {
-        <div class="dialog-overlay" (click)="dongDialog()">
-          <div class="dialog-box" (click)="$event.stopPropagation()">
-            <div class="dialog-header">
-              <h3>{{ dangSua() ? 'Sửa chỉ tiêu' : 'Thêm chỉ tiêu mới' }}</h3>
-              <button class="close-btn" (click)="dongDialog()">
-                <i class="pi pi-times"></i>
-              </button>
-            </div>
-
-            <div class="dialog-body">
-              <div class="form-row">
-                <label>Mã chỉ tiêu <span class="required">*</span></label>
-                <input type="text" [(ngModel)]="form.maChiTieu"
-                       [disabled]="dangSua()"
-                       placeholder="VD: DT_BAN_DIEN">
-              </div>
-
-              <div class="form-row">
-                <label>Tên chỉ tiêu <span class="required">*</span></label>
-                <input type="text" [(ngModel)]="form.tenChiTieu"
-                       placeholder="VD: Doanh thu bán điện">
-              </div>
-
-              <div class="form-row">
-                <label>Mã chỉ tiêu cha</label>
-                <select [(ngModel)]="form.maChiTieuCha">
-                  <option [ngValue]="null">— Gốc (không có cha) —</option>
-                  @for (ct of danhSach(); track ct.id) {
-                    <option [value]="ct.maChiTieu">{{ ct.maChiTieu }} — {{ ct.tenChiTieu }}</option>
-                  }
-                </select>
-              </div>
-
-              <div class="form-row-2col">
-                <div class="form-row">
-                  <label>Loại lưu trữ</label>
-                  <select [(ngModel)]="form.loaiLuuTru">
-                    <option value="STORE">Lưu trữ (Store)</option>
-                    <option value="DYNAMIC_CALC">Tính toán (Dynamic)</option>
-                    <option value="LABEL_ONLY">Nhãn (Label)</option>
-                  </select>
-                </div>
-                <div class="form-row">
-                  <label>Phương thức tổng hợp</label>
-                  <select [(ngModel)]="form.phuongThucTongHop">
-                    <option value="SUM">SUM (Cộng)</option>
-                    <option value="AVG">AVG (Trung bình)</option>
-                    <option value="NONE">NONE (Không)</option>
-                    <option value="FORMULA">FORMULA (Công thức)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <label>Đơn vị tính</label>
-                <input type="text" [(ngModel)]="form.donViTinh"
-                       placeholder="VD: Tỷ đồng, kWh, %">
-              </div>
-
-              @if (form.loaiLuuTru === 'DYNAMIC_CALC') {
-                <div class="form-row">
-                  <label>Công thức</label>
-                  <input type="text" [(ngModel)]="form.congThuc"
-                         placeholder="VD: =DOANH_THU - CHI_PHI">
-                </div>
-              }
-
-              <div class="form-row">
-                <label>Ghi chú</label>
-                <textarea [(ngModel)]="form.ghiChu" rows="2"
-                          placeholder="Ghi chú bổ sung..."></textarea>
-              </div>
-
-              @if (loiForm()) {
-                <div class="form-error">
-                  <i class="pi pi-exclamation-circle"></i> {{ loiForm() }}
-                </div>
-              }
-            </div>
-
-            <div class="dialog-footer">
-              <button class="btn-secondary" (click)="dongDialog()">Hủy</button>
-              <button class="btn-primary" (click)="luuChiTieu()" [disabled]="dangLuu()">
-                @if (dangLuu()) { <i class="pi pi-spin pi-spinner"></i> }
-                {{ dangSua() ? 'Cập nhật' : 'Tạo mới' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      }
-
-      <!-- === DIALOG XEM CHI TIẾT === -->
-      @if (chiTietDangXem()) {
-        <div class="dialog-overlay" (click)="dongChiTiet()">
-          <div class="dialog-box detail-box" (click)="$event.stopPropagation()">
-            <div class="dialog-header">
-              <h3>Chi tiết chỉ tiêu</h3>
-              <button class="close-btn" (click)="dongChiTiet()">
-                <i class="pi pi-times"></i>
-              </button>
-            </div>
-            <div class="dialog-body">
-              <div class="detail-row">
-                <span class="detail-label">Mã chỉ tiêu</span>
-                <span class="detail-value ma-code">{{ chiTietDangXem()!.maChiTieu }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Tên chỉ tiêu</span>
-                <span class="detail-value"><strong>{{ chiTietDangXem()!.tenChiTieu }}</strong></span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Cấp độ</span>
-                <span class="detail-value">{{ chiTietDangXem()!.capDo }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Chỉ tiêu cha</span>
-                <span class="detail-value">{{ chiTietDangXem()!.maChiTieuCha || '— Gốc —' }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Loại lưu trữ</span>
-                <span class="detail-value">
-                  <span class="badge" [class]="'badge-' + chiTietDangXem()!.loaiLuuTru.toLowerCase()">
-                    {{ tenLoaiLuuTru(chiTietDangXem()!.loaiLuuTru) }}
-                  </span>
-                </span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Phương thức tổng hợp</span>
-                <span class="detail-value">{{ chiTietDangXem()!.phuongThucTongHop }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Đơn vị tính</span>
-                <span class="detail-value">{{ chiTietDangXem()!.donViTinh }}</span>
-              </div>
-              @if (chiTietDangXem()!.congThuc) {
-                <div class="detail-row">
-                  <span class="detail-label">Công thức</span>
-                  <span class="detail-value ma-code">{{ chiTietDangXem()!.congThuc }}</span>
-                </div>
-              }
-              <div class="detail-row">
-                <span class="detail-label">Trạng thái</span>
-                <span class="detail-value">
-                  <span class="dot" [class.active]="chiTietDangXem()!.trangThai"></span>
-                  {{ chiTietDangXem()!.trangThai ? 'Hoạt động' : 'Ngừng' }}
-                </span>
-              </div>
-            </div>
-            <div class="dialog-footer">
-              <button class="btn-secondary" (click)="dongChiTiet()">Đóng</button>
-              <button class="btn-primary" (click)="dongChiTiet(); moFormSua(chiTietDangXem()!)">
-                <i class="pi pi-pencil"></i> Sửa
-              </button>
-            </div>
-          </div>
-        </div>
-      }
-
-      <!-- === THÔNG BÁO TOAST === -->
-      @if (thongBao()) {
-        <div class="toast" [class]="'toast-' + thongBao()!.loai">
-          <i class="pi" [class.pi-check-circle]="thongBao()!.loai === 'success'"
-             [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
-          {{ thongBao()!.noiDung }}
-        </div>
-      }
     </div>
+  }
+
+  <!-- === DIALOG XEM CHI TIẾT === -->
+  @if (chiTietDangXem()) {
+    <div class="dialog-overlay" (click)="dongChiTiet()">
+      <div class="dialog-box detail-box" (click)="$event.stopPropagation()">
+
+        <div class="dialog-header">
+          <h3>Chi tiết chỉ tiêu</h3>
+          <button class="close-btn" (click)="dongChiTiet()">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+
+        <div class="dialog-body">
+          <div class="detail-row">
+            <span class="detail-label">Mã chỉ tiêu</span>
+            <span class="detail-value ma-code">{{ chiTietDangXem()!.maChiTieu }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Tên chỉ tiêu</span>
+            <span class="detail-value"><strong>{{ chiTietDangXem()!.tenChiTieu }}</strong></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Chỉ tiêu cha</span>
+            <span class="detail-value">{{ tenChiTieuCha(chiTietDangXem()!) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Cấp độ</span>
+            <span class="detail-value">Cấp {{ chiTietDangXem()!.capDo + 1 }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Loại lưu trữ</span>
+            <span class="detail-value">
+              <span class="badge" [class]="'badge-' + chiTietDangXem()!.loaiLuuTru.toLowerCase()">
+                {{ tenLoaiLuuTru(chiTietDangXem()!.loaiLuuTru) }}
+              </span>
+            </span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Loại tài khoản</span>
+            <span class="detail-value">{{ tenLoaiTaiKhoan(chiTietDangXem()!.loaiTaiKhoan) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Đơn vị tính</span>
+            <span class="detail-value">{{ chiTietDangXem()!.donViTinh || '—' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Thứ tự</span>
+            <span class="detail-value">{{ chiTietDangXem()!.thuTu }}</span>
+          </div>
+          @if (chiTietDangXem()!.congThuc) {
+            <div class="detail-row">
+              <span class="detail-label">Công thức</span>
+              <span class="detail-value ma-code">{{ chiTietDangXem()!.congThuc }}</span>
+            </div>
+          }
+          <div class="detail-row">
+            <span class="detail-label">ID (UUID)</span>
+            <span class="detail-value uuid-text">{{ chiTietDangXem()!.id }}</span>
+          </div>
+        </div>
+
+        <div class="dialog-footer">
+          <button class="btn-secondary" id="btn-dong-chi-tiet" (click)="dongChiTiet()">Đóng</button>
+          <button class="btn-primary"
+                  id="btn-mo-sua-tu-chi-tiet"
+                  (click)="dongChiTiet(); moFormSua(chiTietDangXem()!)">
+            <i class="pi pi-pencil"></i> Sửa
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- === THÔNG BÁO TOAST === -->
+  @if (thongBao()) {
+    <div class="toast" [class]="'toast-' + thongBao()!.loai">
+      <i class="pi"
+         [class.pi-check-circle]="thongBao()!.loai === 'success'"
+         [class.pi-exclamation-circle]="thongBao()!.loai === 'error'"></i>
+      {{ thongBao()!.noiDung }}
+    </div>
+  }
+
+</div>

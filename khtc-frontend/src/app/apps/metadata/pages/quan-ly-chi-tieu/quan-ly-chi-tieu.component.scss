@@ -193,6 +193,31 @@
     margin-right: 4px;
 }
 
+// Cấp độ badge
+.cap-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: $gray-100;
+    color: $gray-500;
+    border-radius: 50%;
+    font-size: 0.625rem;
+    font-weight: $font-weight-bold;
+}
+
+// Loại tài khoản badge
+.loai-tk-badge {
+    font-size: $font-size-xs;
+    color: $gray-500;
+
+    &.loai-tk-nhom {
+        color: $primary;
+        font-weight: $font-weight-semibold;
+    }
+}
+
 // Tên nhóm (LABEL_ONLY) in đậm
 .ten-nhom {
     font-weight: $font-weight-bold;
@@ -477,6 +502,20 @@
     font-size: $font-size-xs;
     color: $primary;
     font-weight: $font-weight-medium;
+}
+
+.uuid-text {
+    font-family: $font-family-mono;
+    font-size: 0.625rem;
+    color: $gray-400;
+    word-break: break-all;
+}
+
+.field-hint {
+    display: block;
+    font-size: $font-size-xs;
+    color: $gray-400;
+    margin-top: 4px;
 }
 
 @keyframes fadeIn {
