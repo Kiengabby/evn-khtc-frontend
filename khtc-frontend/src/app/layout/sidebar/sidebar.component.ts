@@ -31,7 +31,6 @@ export class SidebarComponent {
   navItems: NavItem[] = [
     // --- Core workflow ---
     { label: 'Tổng quan', icon: 'pi-th-large', route: '/app/dashboard' },
-    { label: 'Tạo báo cáo', icon: 'pi-plus-circle', route: '/app/report-wizard' },
     { label: 'Biểu mẫu', icon: 'pi-list', route: '/app/form-designer/templates' },
     { label: 'Nhập liệu', icon: 'pi-file-edit', route: '/app/data-entry' },
     {

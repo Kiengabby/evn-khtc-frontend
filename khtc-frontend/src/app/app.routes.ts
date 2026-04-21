@@ -56,12 +56,6 @@ export const routes: Routes = [
                 loadChildren: () => import('./apps/analytics/analytics.routes').then(m => m.analyticsRoutes),
             },
 
-            // Report Wizard — Tạo mẫu báo cáo
-            {
-                path: 'report-wizard',
-                loadComponent: () => import('./apps/report-wizard/pages/tao-bao-cao-wizard.component').then(m => m.TaoBaoCaoWizardComponent),
-            },
-
             // System Admin — Quản trị hệ thống
             {
                 path: 'admin',

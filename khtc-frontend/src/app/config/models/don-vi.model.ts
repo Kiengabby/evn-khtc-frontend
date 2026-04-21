@@ -43,7 +43,7 @@ export interface DimEntityForm {
 
 // ============================================
 // Legacy types — backward compatibility
-// Các component cũ (report-wizard, analytics...) vẫn dùng DonVi
+// Các component cũ (analytics...) vẫn dùng DonVi
 // ============================================
 
 /** @deprecated Dùng DimEntity thay thế */
